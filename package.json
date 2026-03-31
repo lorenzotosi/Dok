@@ -1,0 +1,28 @@
+{
+  "name": "progetto-web",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lorenzotosi/progetto-web.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lorenzotosi/progetto-web/issues"
+  },
+  "homepage": "https://github.com/lorenzotosi/progetto-web#readme",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1"
+  }
+}
