@@ -12,6 +12,8 @@ import { io } from 'socket.io-client';
 import { Awareness } from 'y-protocols/awareness';
 import * as awarenessProtocol from 'y-protocols/awareness';
 import CollaborationCaret from '@tiptap/extension-collaboration-caret';
+import { Color } from '@tiptap/extension-color';
+import { ref } from 'vue';
 
 const props = defineProps<{
   documentId: string;
@@ -52,6 +54,27 @@ awareness.on('update', ({ added, updated, removed }: any) => {
   socket.emit('awareness-update', { documentId: props.documentId, update });
 });
 
+// Palette Colori
+type HexColor = string;
+
+const predefinedColors: HexColor[] = [
+  '#000000', '#434343', '#666666', '#999999', // Scala di grigi
+  '#F44336', '#E91E63', '#9C27B0', '#673AB7', // Rossi/Viola
+  '#3F51B5', '#2196F3', '#00BCD4', '#009688', // Blu/Azzurri
+  '#4CAF50', '#8BC34A', '#CDDC39', '#FFEB3B', // Verdi/Gialli
+  '#FF9800', '#FF5722', '#795548', '#607D8B'  // Aranci/Marroni
+];
+
+const showColorPalette = ref<boolean>(false);
+
+// Metodo per applicare il colore e chiudere la palette
+const applyColor = (color: HexColor) => {
+  if (editor.value) {
+    editor.value.chain().focus().setColor(color).run();
+  }
+  showColorPalette.value = false; // Nascondi la palette dopo la selezione
+};
+// Fine palette colori
 
 const editor = useEditor({
   extensions: [
@@ -76,6 +99,7 @@ const editor = useEditor({
     TextStyle,
     FontSize,
     FontFamily,
+    Color.configure({ types: ['textStyle'] }),
   ],
   editorProps: {
     attributes: {
@@ -141,6 +165,18 @@ onBeforeUnmount(() => {
       <button @click="editor.chain().focus().toggleUnderline().run()" :class="{ 'is-active': editor.isActive('underline') }" title="Sottolineato">
         <svg width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M12 17c3.31 0 6-2.69 6-6V3h-2.5v8c0 1.93-1.57 3.5-3.5 3.5S8.5 12.93 8.5 11V3H6v8c0 3.31 2.69 6 6 6zm-7 2v2h14v-2H5z"/></svg>
       </button>
+      <button 
+        @click="showColorPalette = !showColorPalette" 
+        :class="{ 'is-active': showColorPalette }"
+        title="Colore testo"
+      >
+        <span 
+          class="color-indicator" 
+          :style="{ borderBottomColor: editor?.getAttributes('textStyle').color || '#000000' }"
+        >
+          A
+        </span>
+      </button>
       <div class="divider"></div>
 
       <button @click="editor.chain().focus().setTextAlign('left').run()" :class="{ 'is-active': editor.isActive({ textAlign: 'left' }) }" title="Allinea a sinistra">
@@ -163,6 +199,17 @@ onBeforeUnmount(() => {
       <button @click="editor.chain().focus().toggleOrderedList().run()" :class="{ 'is-active': editor.isActive('orderedList') }" title="Elenco numerato">
         <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M2 17h2v.5H3v1h1v.5H2v1h3v-4H2v1zm1-9h1V4H2v1h1v3zm-1 3h1.8L2 13.1v.9h3v-1H3.2L5 10.9V10H2v1zm5-6v2h14V5H7zm0 14h14v-2H7v2zm0-6h14v-2H7v2z"/></svg>
       </button>
+    </div>
+
+    <!-- Palette fluttuante fuori dalla toolbar principale -->
+    <div v-if="showColorPalette" class="color-palette-bar">
+      <button
+        v-for="color in predefinedColors"
+        :key="color"
+        class="color-swatch"
+        :style="{ backgroundColor: color }"
+        @click="applyColor(color)"
+      ></button>
     </div>
 
     <div class="document-page" @click="editor?.commands.focus()">
@@ -315,6 +362,57 @@ onBeforeUnmount(() => {
   top: -1.3em;
   user-select: none;
   white-space: nowrap;
+}
+
+/* Stile per la "A" col trattino colorato sotto */
+.color-indicator {
+  font-family: 'Times New Roman', serif;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #444746;
+  border-bottom: 3px solid #000000;
+  padding-bottom: 1px;
+  line-height: 1;
+  display: inline-block;
+}
+
+/* Contenitore della palette - appare come una barra secondaria */
+.color-palette-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 16px;
+  background-color: #f8f9fa;
+  border: 1px solid #e1e5ea;
+  border-radius: 8px;
+  max-width: 95vw;
+  margin-top: -1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  animation: slideDown 0.2s ease-out;
+  position: sticky;
+  top: 4.5rem;
+  z-index: 9;
+}
+
+/* I singoli quadratini di colore - Grandezza ottimizzata per il touch (Mobile) */
+.color-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  border: 1px solid rgba(0,0,0,0.1);
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.color-swatch:hover, .color-swatch:active {
+  transform: scale(1.1);
+  border-color: rgba(0,0,0,0.3);
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @media (max-width: 768px) {
