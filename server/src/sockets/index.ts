@@ -74,11 +74,14 @@ export const setupSockets = (io: Server) => {
       }
     });
 
-    // 3. IL CLIENT ESCE DALLA STANZA
+    // 3. AWARENESS SYNC (MULTI-CURSORI)
+    socket.on('awareness-update', ({ documentId, update }: { documentId: string, update: ArrayBuffer }) => {
+      socket.broadcast.to(documentId).emit('awareness-update', update);
+    });
+
+    // 4. IL CLIENT ESCE DALLA STANZA
     socket.on('leave-document', (documentId: string) => {
       socket.leave(documentId);
-      // Ottimizzazione memoria: se nessuno è più nella stanza, potremmo rimuovere ydoc dalla Map,
-      // ma per ora lo teniamo "caldo" in cache per prestazioni.
     });
 
     socket.on('disconnect', () => {
