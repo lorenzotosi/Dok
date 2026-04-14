@@ -1,8 +1,12 @@
 import { Router } from 'express';
 import { createFolder, getFoldersInsideParent, getAllFolders, deleteFolder } from '../controllers/folder.controller.js';
 import { createDoc, getDoc, getAllDocuments, deleteDocument } from '../controllers/document.controller.js';
+import authRoutes from './auth.routes.js';
 
 const router = Router();
+
+//rotte in cu-el file di nome auth.routes
+router.use('/auth', authRoutes);
 
 // Endpoint per le Cartelle
 router.post('/folders', createFolder); // Crea una cartella
