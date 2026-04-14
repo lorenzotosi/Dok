@@ -15,13 +15,23 @@ import * as awarenessProtocol from 'y-protocols/awareness';
 import CollaborationCaret from '@tiptap/extension-collaboration-caret';
 import { Color } from '@tiptap/extension-color';
 import Highlight from '@tiptap/extension-highlight';
+import { useAuthStore } from '../../stores/auth.store.js';
+
+const wsUrl = import.meta.env.VITE_WS_URL || 'http://localhost:3000';
 
 const props = defineProps<{
   documentId: string;
 }>();
 
+const authStore = useAuthStore();
 const ydoc = new Y.Doc();
-const socket = io('http://localhost:3000');
+//const socket = io('http://localhost:3000');
+
+const socket = io(wsUrl, {
+  auth: {
+    token: authStore.token 
+  }
+});
 
 socket.emit('join-document', props.documentId);
 
@@ -66,9 +76,9 @@ const editor = useEditor({
       document: ydoc,
     }),
     CollaborationCaret.configure({
-      provider,
+      provider: provider,
       user: {
-        name: 'Utente ' + Math.floor(Math.random() * 1000),
+        name: authStore.user?.username || authStore.user?.email || 'Utente',
         color: getRandomColor(),
       },
     }),
@@ -118,16 +128,15 @@ onBeforeUnmount(() => {
   align-items: center;
   background-color: #f8f9fa; 
   min-height: 100vh;
-  padding-top: 1rem;
+  padding: 1rem;
 }
-
 
 .document-page {
   background: white;
   width: 100%;
-  max-width: 21cm;
-  min-height: 29.7cm;
-  padding: 2.5cm;
+  max-width: 850px;
+  min-height: 100vh;
+  padding: 4rem 3rem;
   box-shadow: 0 1px 3px rgba(0,0,0,0.12);
   border-radius: 2px;
   margin-bottom: 2rem;
@@ -135,6 +144,7 @@ onBeforeUnmount(() => {
   cursor: text; 
 }
 
+/*
 :deep(.ProseMirror) {
   min-height: 24cm;
   outline: none;
@@ -142,6 +152,14 @@ onBeforeUnmount(() => {
   font-size: 11pt;
   line-height: 1.5;
   color: #000000;
+}
+*/
+
+:deep(.ProseMirror) {
+  min-height: 600px;
+  outline: none;
+  font-family: Arial, sans-serif;
+  line-height: 1.6;
 }
 
 :deep(.ProseMirror p) {
@@ -183,10 +201,33 @@ onBeforeUnmount(() => {
   white-space: nowrap;
 }
 
+/*
 @media (max-width: 768px) {
   .document-page {
     padding: 1rem;
     min-height: calc(100vh - 100px);
   }
 }
+*/
+
+@media screen and (max-width: 768px) {
+  .editor-wrapper {
+    padding: 0;
+    background-color: #fff;
+  }
+
+  .document-page {
+    padding: 1.5rem;
+    box-shadow: none;
+    max-width: 100%;
+    margin-bottom: 0;
+    border-radius: 0;
+  }
+
+  :deep(.ProseMirror) {
+    min-height: calc(100vh - 120px);
+    font-size: 16px;
+  }
+}
+
 </style>
