@@ -5,12 +5,6 @@ import { log } from 'node:console';
 export const createFolder = async (req: Request, res: Response) => {
     try {
         const { name, parentId } = req.body;
-
-        if (!name) {
-            res.status(400).json({ error: 'Il nome della cartella è obbligatorio' });
-            return;
-        }
-
         const folder = await FolderService.createFolder(name, parentId);
         res.status(201).json(folder);
     } catch (error) {

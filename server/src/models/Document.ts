@@ -11,14 +11,11 @@ const DocumentSchema: Schema = new Schema({
   title: { type: String, default: 'Documento Senza Titolo' },
   folderId: { type: Schema.Types.ObjectId, ref: 'Folder', default: null },
   
-  // Salviamo lo stato binario di Y.js. type: Buffer in Node si mappa su BinData in Mongo
-  yjsState: { type: Buffer, default: Buffer.from('') }, 
-  
-  // Un oggetto flessibile per salvare la struttura JSON di Tiptap
+  yjsState: { type: Buffer, default: Buffer.from('') },
   tiptapJson: { type: Schema.Types.Mixed, default: {} }
-}, { 
+}, {
   timestamps: true,
-  optimisticConcurrency: true // Previene scritture sovrapposte accidentali
+  optimisticConcurrency: true
 });
 
 export default mongoose.model<IDocument>('Document', DocumentSchema);
