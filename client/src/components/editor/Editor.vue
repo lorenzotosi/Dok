@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount } from 'vue';
+import { onBeforeUnmount, ref } from 'vue';
 import { useEditor, EditorContent } from '@tiptap/vue-3';
 import StarterKit from '@tiptap/starter-kit';
 import TextAlign from '@tiptap/extension-text-align';
@@ -62,11 +62,31 @@ socket.on('awareness-update', (update: ArrayBuffer) => {
   awarenessProtocol.applyAwarenessUpdate(awareness, new Uint8Array(update), socket);
 });
 
+// Utenti attivi (escluso se stessi)
+const activeUsers = ref<string[]>([]);
+
+const updateActiveUsers = () => {
+  const states = awareness.getStates();
+  const names: string[] = [];
+  states.forEach((state, clientId) => {
+    if (clientId !== awareness.clientID && state?.user?.name) {
+      const name = state.user.name as string;
+      if (!names.includes(name)) {
+        names.push(name);
+      }
+    }
+  });
+  activeUsers.value = names;
+};
+
 awareness.on('update', ({ added, updated, removed }: any) => {
   const changedClients = added.concat(updated, removed);
   const update = awarenessProtocol.encodeAwarenessUpdate(awareness, changedClients);
   socket.emit('awareness-update', { documentId: props.documentId, update });
+  updateActiveUsers();
 });
+
+defineExpose({ activeUsers });
 
 // Solo logic Tiptap ed Yjs di seguito:
 
@@ -81,7 +101,7 @@ const editor = useEditor({
     CollaborationCaret.configure({
       provider: provider,
       user: {
-        name: authStore.user?.username || authStore.user?.email || 'Utente',
+        name: authStore.user?.username || authStore.user?.email || 'Utente' + Math.random().toString(36).substring(2, 7),
         color: getRandomColor(),
       },
     }),
