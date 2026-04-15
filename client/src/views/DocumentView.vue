@@ -30,46 +30,156 @@ onMounted(async () => {
 <template>
   <div class="view-container">
     <header class="doc-header">
-      <button class="back-btn" @click="router.push('/')">← Torna al Drive</button>
-      <h2 v-if="documentData">{{ documentData.title }}</h2>
+      <div class="logo-area">
+        <button class="icon-btn back-btn" @click="router.push('/')" title="Torna alla Home">
+          ←
+        </button>
+        <span class="dok-icon">📄</span>
+        <div class="doc-title-container" v-if="documentData">
+          <input type="text" class="doc-title-input" v-model="documentData.title" />
+        </div>
+      </div>
+      <div class="actions">
+        <button class="share-btn">Condividi</button>
+        <div class="avatar" title="Account Google fittizio">U</div>
+      </div>
     </header>
 
     <div v-if="isLoading" class="loading">
       Caricamento editor in corso...
     </div>
 
-    <Editor 
-      v-else-if="documentData" 
-      :documentId="documentId"
-    />
+    <div v-else-if="documentData" class="editor-area">
+      <Editor :documentId="documentId" />
+    </div>
   </div>
 </template>
 
 <style scoped>
+.view-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  background-color: #f8f9fa; /* Sfondo generale grigio chiaro come Drive */
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  overflow: hidden;
+}
+
 .doc-header {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  background-color: red;
-  border-bottom: 1px solid #e0e0e0;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background-color: #f1f3f4; /* Header leggermente più scuro per staccare dal body */
+  height: 64px;
+  flex-shrink: 0;
 }
 
-.back-btn {
-  background: transparent;
-  border: 1px solid #ccc;
-  padding: 0.5rem 1rem;
+.logo-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dok-icon {
+  font-size: 36px;
+  color: #1a73e8;
+}
+
+.doc-title-container {
+  display: flex;
+  align-items: center;
+}
+
+.doc-title-input {
+  font-size: 18px;
+  font-weight: 400;
+  color: #1f1f1f;
+  border: 1px solid transparent;
   border-radius: 4px;
+  padding: 2px 8px;
+  background: transparent;
+  outline: none;
+  font-family: inherit;
+  width: 300px;
+}
+
+.doc-title-input:hover {
+  border-color: #dadce0;
+}
+
+.doc-title-input:focus {
+  border-color: #1a73e8;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.icon-btn {
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+  cursor: pointer;
+  color: #5f6368;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.icon-btn:hover {
+  background-color: rgba(0,0,0,0.05);
+}
+
+.share-btn {
+  background-color: #c2e7ff;
+  color: #001d35;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.share-btn:hover {
+  background-color: #b3dcf4;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #1a73e8;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
   cursor: pointer;
 }
 
-.back-btn:hover {
-  background: #f1f3f4;
+.editor-area {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .loading {
   text-align: center;
   margin-top: 3rem;
-  color: #666;
+  color: #5f6368;
+  font-size: 16px;
 }
 </style>

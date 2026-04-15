@@ -129,8 +129,8 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background-color: #f8f9fa; 
-  min-height: 100vh;
+  background-color: transparent; 
+  width: 100%;
   padding: 1rem;
 }
 
@@ -138,7 +138,7 @@ onBeforeUnmount(() => {
   background: white;
   width: 100%;
   max-width: 850px;
-  min-height: 100vh;
+  min-height: 1100px;
   padding: 4rem 3rem;
   box-shadow: 0 1px 3px rgba(0,0,0,0.12);
   border-radius: 2px;
