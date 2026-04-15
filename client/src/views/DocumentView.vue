@@ -8,23 +8,34 @@ const route = useRoute();
 const router = useRouter();
 const documentId = route.params.id as string;
 
-// Stato del componente
 const documentData = ref<any>(null);
 const isLoading = ref(true);
 
 onMounted(async () => {
   try {
-    // Leggiamo il documento dal Database via API REST
     const response = await api.get(`/documents/${documentId}`);
     documentData.value = response.data;
   } catch (error) {
     console.error("Errore nel caricamento del documento", error);
     alert("Documento non trovato!");
-    router.push('/'); // Torna alla dashboard se c'è un errore
+    router.push('/');
   } finally {
     isLoading.value = false;
   }
 });
+
+const handleRename = async () => {
+  if (!documentData.value || !documentData.value.title.trim()) return;
+  
+  try {
+    await api.put('/documents/rename', {
+      id: documentId,
+      newTitle: documentData.value.title
+    });
+  } catch (error) {
+    console.error("Errore durante la rinomina del documento", error);
+  }
+};
 </script>
 
 <template>
@@ -36,7 +47,12 @@ onMounted(async () => {
         </button>
         <span class="dok-icon">📄</span>
         <div class="doc-title-container" v-if="documentData">
-          <input type="text" class="doc-title-input" v-model="documentData.title" />
+          <input 
+            type="text" 
+            class="doc-title-input" 
+            v-model="documentData.title" 
+            @change="handleRename"
+          />
         </div>
       </div>
       <div class="actions">
@@ -61,7 +77,7 @@ onMounted(async () => {
   flex-direction: column;
   height: 100vh;
   width: 100vw;
-  background-color: #f8f9fa; /* Sfondo generale grigio chiaro come Drive */
+  background-color: #f8f9fa;
   font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   overflow: hidden;
 }
@@ -71,7 +87,7 @@ onMounted(async () => {
   align-items: center;
   justify-content: space-between;
   padding: 8px 16px;
-  background-color: #f1f3f4; /* Header leggermente più scuro per staccare dal body */
+  background-color: #f1f3f4;
   height: 64px;
   flex-shrink: 0;
 }

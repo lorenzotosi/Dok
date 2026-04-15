@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { createFolder, getFoldersInsideParent, getAllFolders, deleteFolder } from '../controllers/folder.controller.js';
-import { createDoc, getDoc, getAllDocuments, deleteDocument } from '../controllers/document.controller.js';
+import { createDoc, getDoc, getAllDocuments, deleteDocument, renameDocument } from '../controllers/document.controller.js';
 import { requireBodyField, validateMongoIdParam } from '../middlewares/validation.middleware.js';
 import authRoutes from './auth.routes.js';
 
@@ -20,5 +20,6 @@ router.post('/documents', requireBodyField('title'), createDoc); // Crea documen
 router.get('/documents/:id', getDoc);
 router.get('/documents', getAllDocuments);
 router.delete('/documents/:id', validateMongoIdParam('id'), deleteDocument); // Elimina doc (ID valido richiesto)
+router.put('/documents/rename', requireBodyField('id'), requireBodyField('newTitle'), renameDocument);
 
 export default router;

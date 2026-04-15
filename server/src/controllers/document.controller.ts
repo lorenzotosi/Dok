@@ -46,4 +46,14 @@ export const deleteDocument = async (req: Request, res: Response) => {
     } catch (error) {
         res.status(500).json({ error: 'Errore eliminazione documento' })
     }
-}
+};
+
+export const renameDocument = async (req: Request, res: Response) => {
+    try {
+        const { id, newTitle } = req.body;
+        const doc = await DocumentService.renameDocument(id, newTitle);
+        res.status(200).json(doc);
+    } catch (error) {
+        res.status(500).json({ error: 'Errore rinomina documento' });
+    }
+};

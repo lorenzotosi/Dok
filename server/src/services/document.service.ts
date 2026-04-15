@@ -23,4 +23,8 @@ export class DocumentService {
     static async deleteDocument(id: string) {
         return await Document.findByIdAndDelete(id)
     }
+
+    static async renameDocument(id: string, newTitle: string) {
+        return await Document.findByIdAndUpdate(id, { title: newTitle }, { new: true });
+    }
 }
