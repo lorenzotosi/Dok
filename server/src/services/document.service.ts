@@ -16,8 +16,8 @@ export class DocumentService {
         return await Document.findById(id);
     }
 
-    static async getAllDocuments() {
-        return await Document.find().sort({ createdAt: -1 });
+    static async getAllDocuments(folderId: string | null = null) {
+        return await Document.find({ folderId }).sort({ createdAt: -1 });
     }
 
     static async deleteDocument(id: string) {

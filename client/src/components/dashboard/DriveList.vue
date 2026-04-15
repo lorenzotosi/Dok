@@ -11,6 +11,7 @@ defineProps<{
 const emit = defineEmits<{
   (e: 'delete-folder', id: string): void;
   (e: 'delete-document', id: string): void;
+  (e: 'enter-folder', id: string): void;
 }>();
 const formatDate = (dateString?: string) => {
   if (!dateString) return '---';
@@ -34,7 +35,12 @@ const formatDate = (dateString?: string) => {
     <div class="list-body">
       <!-- Sezione Cartelle -->
       <template v-if="folders.length > 0">
-        <div v-for="folder in folders" :key="folder._id" class="list-row folder-row">
+        <div 
+          v-for="folder in folders" 
+          :key="folder._id" 
+          class="list-row folder-row"
+          @click="emit('enter-folder', folder._id)"
+        >
           <div class="col-name">
             <span class="icon">🗂️</span>
             <span class="name">{{ folder.name }}</span>

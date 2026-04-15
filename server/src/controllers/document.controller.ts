@@ -26,7 +26,8 @@ export const getDoc = async (req: Request, res: Response) => {
 
 export const getAllDocuments = async (req: Request, res: Response) => {
     try {
-        const docs = await DocumentService.getAllDocuments();
+        const parentId = (req.query.parentId as string) || null;
+        const docs = await DocumentService.getAllDocuments(parentId);
         if (!docs) {
             res.status(404).json({ error: 'Nessun documento trovato' });
             return;

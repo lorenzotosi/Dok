@@ -7,11 +7,14 @@ defineProps<{
   title: string;
   folders: any[];
   documents: any[];
+  showBack?: boolean;
 }>();
 
 const emit = defineEmits<{
   (e: 'delete-folder', id: string): void;
   (e: 'delete-document', id: string): void;
+  (e: 'enter-folder', id: string): void;
+  (e: 'back'): void;
 }>();
 
 const isGridView = ref(true);
@@ -20,7 +23,12 @@ const isGridView = ref(true);
 <template>
   <main class="workspace">
     <div class="workspace-header">
-      <h1 class="title">{{ title }}</h1>
+      <div class="title-container">
+        <button v-if="showBack" class="back-btn" @click="emit('back')" title="Torna indietro">
+          ←
+        </button>
+        <h1 class="title">{{ title }}</h1>
+      </div>
       <div class="view-toggle">
         <button 
           class="toggle-btn" 
@@ -56,6 +64,7 @@ const isGridView = ref(true);
         :documents="documents"
         @delete-folder="id => emit('delete-folder', id)"
         @delete-document="id => emit('delete-document', id)"
+        @enter-folder="id => emit('enter-folder', id)"
       />
       <DriveList 
         v-else
@@ -63,6 +72,7 @@ const isGridView = ref(true);
         :documents="documents"
         @delete-folder="id => emit('delete-folder', id)"
         @delete-document="id => emit('delete-document', id)"
+        @enter-folder="id => emit('enter-folder', id)"
       />
     </div>
   </main>
@@ -87,6 +97,31 @@ const isGridView = ref(true);
   justify-content: space-between;
   margin-bottom: 24px;
   height: 48px;
+}
+
+.title-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.back-btn {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  color: #5f6368;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.back-btn:hover {
+  background-color: rgba(0,0,0,0.05);
+  color: #1a73e8;
 }
 
 .title {

@@ -11,6 +11,7 @@ defineProps<{
 const emit = defineEmits<{
   (e: 'delete-folder', id: string): void;
   (e: 'delete-document', id: string): void;
+  (e: 'enter-folder', id: string): void;
 }>();
 </script>
 
@@ -19,7 +20,12 @@ const emit = defineEmits<{
     <div v-if="folders.length > 0" class="section">
       <h3 class="section-title">Cartelle</h3>
       <div class="grid">
-        <div v-for="folder in folders" :key="folder._id" class="grid-card folder-card">
+        <div 
+          v-for="folder in folders" 
+          :key="folder._id" 
+          class="grid-card folder-card"
+          @click="emit('enter-folder', folder._id)"
+        >
           <div class="card-content">
             <span class="icon">🗂️</span>
             <span class="name">{{ folder.name }}</span>
