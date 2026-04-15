@@ -4,6 +4,7 @@ import DriveGrid from './DriveGrid.vue';
 import DriveList from './DriveList.vue';
 
 defineProps<{
+  title: string;
   folders: any[];
   documents: any[];
 }>();
@@ -19,7 +20,7 @@ const isGridView = ref(true);
 <template>
   <main class="workspace">
     <div class="workspace-header">
-      <h1 class="title">Il Mio Dok</h1>
+      <h1 class="title">{{ title }}</h1>
       <div class="view-toggle">
         <button 
           class="toggle-btn" 

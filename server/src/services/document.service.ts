@@ -1,10 +1,11 @@
 import Document from '../models/Document.js';
 
 export class DocumentService {
-    static async createDocument(title: string, folderId: string | null = null) {
+    static async createDocument(title: string, folderId: string | null = null, visibility: 'private' | 'public' = 'private') {
         const doc = new Document({
             title,
             folderId,
+            visibility,
             // Inizializziamo il documento vuoto per Tiptap
             tiptapJson: { type: 'doc', content: [{ type: 'paragraph' }] }
         });

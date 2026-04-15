@@ -3,8 +3,8 @@ import { DocumentService } from '../services/document.service.js';
 
 export const createDoc = async (req: Request, res: Response) => {
     try {
-        const { title, folderId } = req.body;
-        const doc = await DocumentService.createDocument(title || 'Documento Senza Titolo', folderId);
+        const { title, folderId, visibility } = req.body;
+        const doc = await DocumentService.createDocument(title || 'Documento Senza Titolo', folderId, visibility);
         res.status(201).json(doc);
     } catch (error) {
         res.status(500).json({ error: 'Errore creazione documento' });

@@ -6,6 +6,7 @@ export interface IDocument {
     _id: string;
     title: string;
     folderId: string | null;
+    visibility: 'private' | 'public';
     yjsState: any;
     tiptapJson: Record<string, any>;
     createdAt?: string;
@@ -24,9 +25,9 @@ export const useDocumentStore = defineStore('document', () => {
         }
     };
 
-    const createDocument = async (name: string, parentId: string | null = null) => {
+    const createDocument = async (name: string, visibility: 'private' | 'public' = 'private', parentId: string | null = null) => {
         try {
-            await api.post('/documents', { title: name, folderId: parentId });
+            await api.post('/documents', { title: name, folderId: parentId, visibility });
             await fetchDocuments(parentId);
         } catch (error) {
             console.error('Errore nella creazione', error);

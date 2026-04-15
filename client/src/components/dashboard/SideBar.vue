@@ -4,7 +4,15 @@ import { ref } from 'vue';
 const emit = defineEmits<{
   (e: 'create-document', name: string): void;
   (e: 'create-folder', name: string): void;
+  (e: 'section-change', section: 'private' | 'public'): void;
 }>();
+
+const activeSection = ref<'private' | 'public'>('private');
+
+const setSection = (section: 'private' | 'public') => {
+  activeSection.value = section;
+  emit('section-change', section);
+};
 
 const showMenu = ref(false);
 const showFolderInput = ref(false);
@@ -73,7 +81,11 @@ const handleCreateFolder = () => {
     </div>
 
     <nav class="nav-list">
-      <div class="nav-item is-active">
+      <div 
+        class="nav-item" 
+        :class="{ 'is-active': activeSection === 'private' }"
+        @click="setSection('private')"
+      >
         <span class="icon">🏠</span>
         <span class="label">Il Mio Dok</span>
       </div>
@@ -82,8 +94,11 @@ const handleCreateFolder = () => {
         <span class="icon">👥</span>
         <span class="label">Condivisi con me</span>
       </div>
-      <!-- TODO: Da implementare in futuro -->
-      <div class="nav-item is-disabled">
+      <div 
+        class="nav-item"
+        :class="{ 'is-active': activeSection === 'public' }"
+        @click="setSection('public')"
+      >
         <span class="icon">🌍</span>
         <span class="label">Dok globali</span>
       </div>
