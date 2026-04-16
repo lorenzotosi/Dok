@@ -20,7 +20,7 @@ router.delete('/folders/:_id', validateMongoIdParam('_id'), deleteFolder);    //
 router.post('/documents', requireAuth, requireBodyField('title'), createDoc); // Crea documento, 'title' obbligatorio
 router.get('/documents/:id', getDoc);
 router.get('/documents', getAllDocuments);
-router.delete('/documents/:id', validateMongoIdParam('id'), deleteDocument); // Elimina doc (ID valido richiesto)
-router.put('/documents/rename', requireBodyField('id'), requireBodyField('newTitle'), renameDocument);
+router.delete('/documents/:id', requireAuth, validateMongoIdParam('id'), deleteDocument); // Elimina doc (ID valido richiesto)
+router.put('/documents/rename', requireAuth, requireBodyField('id'), requireBodyField('newTitle'), renameDocument);
 
 export default router;

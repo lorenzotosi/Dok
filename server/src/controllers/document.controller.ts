@@ -40,7 +40,7 @@ export const getAllDocuments = async (req: Request, res: Response) => {
     }
 };
 
-export const deleteDocument = async (req: Request, res: Response) => {
+export const deleteDocument = async (req: AuthRequest, res: Response) => {
     try {
         const documentId = req.params.id as string
         const doc = await DocumentService.deleteDocument(documentId)
@@ -50,7 +50,7 @@ export const deleteDocument = async (req: Request, res: Response) => {
     }
 };
 
-export const renameDocument = async (req: Request, res: Response) => {
+export const renameDocument = async (req: AuthRequest, res: Response) => {
     try {
         const { id, newTitle } = req.body;
         const doc = await DocumentService.renameDocument(id, newTitle);
