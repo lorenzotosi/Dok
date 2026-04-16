@@ -43,8 +43,23 @@ export const getAllDocuments = async (req: Request, res: Response) => {
 export const deleteDocument = async (req: AuthRequest, res: Response) => {
     try {
         const documentId = req.params.id as string
-        const doc = await DocumentService.deleteDocument(documentId)
-        res.status(200).json(doc)
+        const ownerId = req.user!.id;
+        const doc = await DocumentService.getDocumentById(documentId);
+        console.log(doc)
+        console.log(ownerId)
+        if (!doc) {
+            console.log('Documento non trovato')
+            res.status(404).json({ error: 'Documento non trovato' });
+            return;
+        }
+        if (doc.ownerId.toString() !== ownerId) {
+            console.log('Non hai il permesso di eliminare questo documento')
+            res.status(403).json({ error: 'Non hai il permesso di eliminare questo documento' });
+            return;
+        }
+        const docOk = await DocumentService.deleteDocument(documentId)
+        console.log('Documento eliminato')
+        res.status(200).json(docOk)
     } catch (error) {
         res.status(500).json({ error: 'Errore eliminazione documento' })
     }
