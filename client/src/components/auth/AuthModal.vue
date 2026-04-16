@@ -29,7 +29,7 @@ const handleSubmit = async () => {
     authStore.setToken(data.token);
     emit('close');
   } catch (err) {
-    alert("Errore: controllare le credenziali o i dati inseriti" + err);
+    alert("Errore: " + err);
   } finally {
     isLoading.value = false;
   }
@@ -38,7 +38,7 @@ const handleSubmit = async () => {
 
 <template>
   <Teleport to="body">
-    <div v-if="isOpen" class="modal-overlay" @click.self="$emit('close')">
+    <div v-if="props.isOpen" class="modal-overlay" @click.self="$emit('close')">
       <div class="modal-content">
         <button class="close-btn" @click="$emit('close')">&times;</button>
 

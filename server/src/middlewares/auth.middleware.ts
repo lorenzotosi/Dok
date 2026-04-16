@@ -2,7 +2,6 @@ import type {Request, Response, NextFunction} from 'express';
 import jwt, {type JwtPayload} from 'jsonwebtoken';
 import { UserRole } from '../models/User.js';
 
-// Estendiamo l'interfaccia Request di Express per includere l'utente decodificato
 export interface AuthRequest extends Request {
     user?: { id: string; role: UserRole };
 }
@@ -14,7 +13,6 @@ export interface AuthPayload extends JwtPayload {
 
 const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-change-in-production';
 
-// Pattern: Token Bearer Validation
 export const requireAuth = (req: AuthRequest, res: Response, next: NextFunction): void => {
     const authHeader = req.headers.authorization;
 
