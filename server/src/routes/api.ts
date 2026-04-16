@@ -3,7 +3,7 @@ import { createFolder, getFoldersInsideParent, getAllFolders, deleteFolder } fro
 import { createDoc, getDoc, getAllDocuments, deleteDocument, renameDocument } from '../controllers/document.controller.js';
 import { requireBodyField, validateMongoIdParam } from '../middlewares/validation.middleware.js';
 import authRoutes from './auth.routes.js';
-import { requireAuth } from '../middlewares/auth.middleware.js';
+import { requireAuth, optionalAuth } from '../middlewares/auth.middleware.js';
 
 const router = Router();
 
@@ -18,8 +18,8 @@ router.delete('/folders/:_id', validateMongoIdParam('_id'), deleteFolder);    //
 
 // Endpoint per i Documenti
 router.post('/documents', requireAuth, requireBodyField('title'), createDoc); // Crea documento, 'title' obbligatorio
-router.get('/documents/:id', getDoc);
-router.get('/documents', getAllDocuments);
+router.get('/documents/:id', optionalAuth, getDoc);
+router.get('/documents', optionalAuth, getAllDocuments);
 router.delete('/documents/:id', requireAuth, validateMongoIdParam('id'), deleteDocument); // Elimina doc (ID valido richiesto)
 router.put('/documents/rename', requireAuth, requireBodyField('id'), requireBodyField('newTitle'), renameDocument);
 

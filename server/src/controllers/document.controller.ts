@@ -13,7 +13,7 @@ export const createDoc = async (req: AuthRequest, res: Response) => {
     }
 };
 
-export const getDoc = async (req: Request, res: Response) => {
+export const getDoc = async (req: AuthRequest, res: Response) => {
     try {
         const doc = await DocumentService.getDocumentById(req.params.id as string);
         if (!doc) {
@@ -26,10 +26,11 @@ export const getDoc = async (req: Request, res: Response) => {
     }
 };
 
-export const getAllDocuments = async (req: Request, res: Response) => {
+export const getAllDocuments = async (req: AuthRequest, res: Response) => {
     try {
         const parentId = (req.query.parentId as string) || null;
-        const docs = await DocumentService.getAllDocuments(parentId);
+        const userId = req.user?.id || null;
+        const docs = await DocumentService.getAllDocuments(userId, parentId);
         if (!docs) {
             res.status(404).json({ error: 'Nessun documento trovato' });
             return;

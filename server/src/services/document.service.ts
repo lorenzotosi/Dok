@@ -17,8 +17,16 @@ export class DocumentService {
         return await Document.findById(id);
     }
 
-    static async getAllDocuments(folderId: string | null = null) {
-        return await Document.find({ folderId }).sort({ createdAt: -1 });
+    static async getAllDocuments(ownerId: string | null, folderId: string | null = null) {
+        if (!ownerId) {
+            return await Document.find({ visibility: 'public', folderId }).sort({ createdAt: -1 });
+        }
+        return await Document.find({ 
+            $or: [
+                { ownerId, folderId },
+                { visibility: 'public', folderId }
+            ]
+        }).sort({ createdAt: -1 });
     }
 
     static async deleteDocument(id: string) {
@@ -29,15 +37,8 @@ export class DocumentService {
         return await Document.findByIdAndUpdate(id, { title: newTitle }, { new: true });
     }
 
+    //da testare se va
     static async getSharedDocuments(userId: string) {
         return await Document.find({ 'sharedWith.userId': userId }).sort({ createdAt: -1 });
-    }
-
-    static async getPublicDocuments() {
-        return await Document.find({ visibility: 'public' }).sort({ createdAt: -1 });
-    }
-
-    static async getMyDocuments(userId: string) {
-        return await Document.find({ ownerId: userId }).sort({ createdAt: -1 });
     }
 }

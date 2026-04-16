@@ -46,6 +46,35 @@ export const requireAuth = (req: AuthRequest, res: Response, next: NextFunction)
     }
 };
 
+export const optionalAuth = (req: AuthRequest, res: Response, next: NextFunction): void => {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return next();
+    }
+
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+        return next();
+    }
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        if (typeof decoded === 'string') {
+            return next();
+        }
+
+        const payload = decoded as AuthPayload;
+        if (!payload.id || !payload.role) {
+            return next();
+        }
+
+        req.user = { id: payload.id, role: payload.role };
+    } catch (error) {
+        return next();
+    }
+    next();
+};
+
 export const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction): void => {
     if (!req.user) {
         res.status(401).json({ error: 'Utente non autenticato.' });
