@@ -3,6 +3,7 @@ import { createFolder, getFoldersInsideParent, getAllFolders, deleteFolder } fro
 import { createDoc, getDoc, getAllDocuments, deleteDocument, renameDocument } from '../controllers/document.controller.js';
 import { requireBodyField, validateMongoIdParam } from '../middlewares/validation.middleware.js';
 import authRoutes from './auth.routes.js';
+import { requireAuth } from '../middlewares/auth.middleware.js';
 
 const router = Router();
 
@@ -16,7 +17,7 @@ router.get('/folders/all', getAllFolders);    // Ottieni la lista di tutte le ca
 router.delete('/folders/:_id', validateMongoIdParam('_id'), deleteFolder);    // Elimina cartella (ID valido richiesto)
 
 // Endpoint per i Documenti
-router.post('/documents', requireBodyField('title'), createDoc); // Crea documento, 'title' obbligatorio
+router.post('/documents', requireAuth, requireBodyField('title'), createDoc); // Crea documento, 'title' obbligatorio
 router.get('/documents/:id', getDoc);
 router.get('/documents', getAllDocuments);
 router.delete('/documents/:id', validateMongoIdParam('id'), deleteDocument); // Elimina doc (ID valido richiesto)

@@ -1,10 +1,12 @@
 import { type Request, type Response } from 'express';
 import { DocumentService } from '../services/document.service.js';
+import { type AuthRequest } from '../middlewares/auth.middleware.js';
 
-export const createDoc = async (req: Request, res: Response) => {
+export const createDoc = async (req: AuthRequest, res: Response) => {
     try {
         const { title, folderId, visibility } = req.body;
-        const doc = await DocumentService.createDocument(title || 'Documento Senza Titolo', folderId, visibility);
+        const ownerId = req.user!.id;
+        const doc = await DocumentService.createDocument(title || 'Documento Senza Titolo', ownerId, folderId, visibility);
         res.status(201).json(doc);
     } catch (error) {
         res.status(500).json({ error: 'Errore creazione documento' });
