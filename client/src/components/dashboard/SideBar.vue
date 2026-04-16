@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useAuthStore } from '../../stores/auth.store';
+
+const authStore = useAuthStore();
 
 const props = defineProps<{
   activeSection: 'private' | 'public';
@@ -42,7 +45,7 @@ const handleCreateFolder = () => {
 
 <template>
   <aside class="sidebar">
-    <div class="new-btn-wrapper">
+    <div v-if="authStore.isAuthenticated()" class="new-btn-wrapper">
       <button class="btn-nuovo" @click="showMenu = !showMenu">
         <span class="plus-icon">➕</span> Nuovo
       </button>
