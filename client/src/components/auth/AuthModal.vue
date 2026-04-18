@@ -13,21 +13,22 @@ const emit = defineEmits(['close']);
 const authStore = useAuthStore();
 const isLoginView = ref(true);
 const isLoading = ref(false);
+const serverError = ref('');
 
 const modalTitle = computed(() => isLoginView.value ? 'Accedi a Dok' : 'Crea un Account');
 
 const toggleView = () => {
   isLoginView.value = !isLoginView.value;
+  serverError.value = '';
 };
 
-// Polimorfismo nell'handler
 const handleAuthAction = async (payload: LoginPayload | RegisterPayload) => {
   isLoading.value = true;
+  serverError.value = '';
+
   try {
     let data;
     if (isLoginView.value) {
-      // TypeScript infers payload as LoginPayload in this branch functionally,
-      // but explicitly passing properties guarantees safety.
       data = await AuthClientService.login(payload.email, payload.password);
     } else {
       const regPayload = payload as RegisterPayload;
@@ -42,8 +43,7 @@ const handleAuthAction = async (payload: LoginPayload | RegisterPayload) => {
     authStore.setToken(data.token);
     emit('close');
   } catch (err: any) {
-    // Gestione errore migliorata (evitare alert grezzi in produzione)
-    alert(err?.response?.data?.message || "Errore di autenticazione");
+    serverError.value = err?.response?.data?.error || "Errore di connessione";
   } finally {
     isLoading.value = false;
   }
@@ -60,6 +60,7 @@ const handleAuthAction = async (payload: LoginPayload | RegisterPayload) => {
       <LoginForm
           v-if="isLoginView"
           :is-loading="isLoading"
+          :error-message="serverError"
           @submit="handleAuthAction"
           @switch-view="toggleView"
       />
