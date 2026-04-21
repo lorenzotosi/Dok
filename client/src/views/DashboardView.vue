@@ -76,7 +76,7 @@ const handleCreateDocument = async (name: string) => {
 };
 
 const handleCreateFolder = async (name: string) => {
-  await folderStore.createFolder(name, currentFolderId.value);
+  await folderStore.createFolder(name, currentFolderId.value, currentSection.value);
 };
 
 const handleDeleteFolder = async (id: string) => {
@@ -98,10 +98,11 @@ const filteredDocuments = computed(() => {
 });
 
 const filteredFolders = computed(() => {
-  const folders = currentSection.value === 'public' ? [] : folderStore.folders;
-  return folders.filter(folder => 
-    folder.name.toLowerCase().includes(searchQuery.value.toLowerCase())
-  );
+  return folderStore.folders.filter(folder => {
+    const matchesVisibility = folder.visibility === currentSection.value;
+    const matchesSearch = folder.name.toLowerCase().includes(searchQuery.value.toLowerCase());
+    return matchesVisibility && matchesSearch;
+  });
 });
 
 // Calcola il titolo dinamico prendendolo dall'ultimo elemento dello stack

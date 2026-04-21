@@ -6,7 +6,9 @@ import { api } from '../services/api';
 export interface IFolder {
   _id: string;
   name: string;
+  ownerId: string;
   parentId: string | null;
+  visibility: 'private' | 'public';
 }
 
 export const useFolderStore = defineStore('folder', () => {
@@ -23,9 +25,10 @@ export const useFolderStore = defineStore('folder', () => {
     }
   };
 
-  const createFolder = async (name: string, parentId: string | null = null) => {
+  const createFolder = async (name: string, parentId: string | null = null, 
+    visibility: 'private' | 'public' = 'private') => {
     try {
-      await api.post('/folders', { name, parentId });
+      await api.post('/folders', { name, parentId, visibility });
       await fetchFolders(parentId);
     } catch (error) {
       console.error('Errore nella creazione', error);

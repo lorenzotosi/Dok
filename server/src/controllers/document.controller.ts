@@ -75,9 +75,23 @@ export const deleteDocument = async (req: AuthRequest, res: Response) => {
 export const renameDocument = async (req: AuthRequest, res: Response) => {
     try {
         const { id, newTitle } = req.body;
-        const doc = await DocumentService.renameDocument(id, newTitle);
-        res.status(200).json(doc);
+        const userId = req.user!.id;
+
+        const doc = await DocumentService.getDocumentById(id);
+        if (!doc) {
+            res.status(404).json({ error: 'Documento non trovato' });
+            return;
+        }
+
+        if (doc.ownerId.toString() !== userId) {
+            res.status(403).json({ error: 'Non hai il permesso di rinominare questo documento' });
+            return;
+        }
+
+        const updatedDoc = await DocumentService.renameDocument(id, newTitle);
+        res.status(200).json(updatedDoc);
     } catch (error) {
+        console.error("Errore rinomina documento:", error);
         res.status(500).json({ error: 'Errore rinomina documento' });
     }
 };

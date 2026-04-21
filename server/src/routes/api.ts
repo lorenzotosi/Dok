@@ -12,8 +12,8 @@ router.use('/auth', authRoutes);
 
 // Endpoint per le Cartelle
 router.post('/folders', requireAuth, requireBodyField('name'), createFolder); // Crea una cartella, 'name' obbligatorio
-router.get('/folders', getFoldersInsideParent);    // Ottieni la lista delle cartelle
-router.get('/folders/all', getAllFolders);    // Ottieni la lista di tutte le cartelle
+router.get('/folders', optionalAuth, getFoldersInsideParent);    // Ottieni la lista delle cartelle
+router.get('/folders/all', optionalAuth, getAllFolders);    // Ottieni la lista di tutte le cartelle
 router.delete('/folders/:_id', requireAuth, validateMongoIdParam('_id'), deleteFolder);    // Elimina cartella (ID valido richiesto)
 
 // Endpoint per i Documenti

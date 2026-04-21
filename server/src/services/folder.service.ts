@@ -2,19 +2,36 @@ import Folder from '../models/Folder.js';
 import Document from '../models/Document.js';
 
 export class FolderService {
-  static async createFolder(name: string, parentId: string | null = null) {
-    const folder = new Folder({ name, parentId });
+  static async createFolder(name: string, ownerId: string, parentId: string | null = null, visibility: 'private' | 'public' = 'private') {
+    const folder = new Folder({ name, ownerId, parentId, visibility });
     return await folder.save();
   }
 
-  static async getFoldersInsideParent(parentId: string | null = null) {
-    return await Folder.find({ parentId })
+  static async getFoldersInsideParent(parentId: string | null = null, userId?: string) {
+    const query: any = { parentId };
+    if (userId) {
+      query.$or = [{ ownerId: userId }, { visibility: 'public' }];
+    } else {
+      query.visibility = 'public';
+    }
+
+    return await Folder.find(query)
       .populate('ownerId', 'firstName lastName')
       .sort({ createdAt: -1 });
   }
 
-  static async getAllFolders() {
-    return await Folder.find().sort({ createdAt: -1 });
+  static async getFolderById(id: string) {
+    return await Folder.findById(id);
+  }
+
+  static async getAllFolders(userId?: string) {
+    const query: any = {};
+    if (userId) {
+      query.$or = [{ ownerId: userId }, { visibility: 'public' }];
+    } else {
+      query.visibility = 'public';
+    }
+    return await Folder.find(query).sort({ createdAt: -1 });
   }
 
   static async deleteFolder(id: string) {
