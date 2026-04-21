@@ -11,10 +11,10 @@ const router = Router();
 router.use('/auth', authRoutes);
 
 // Endpoint per le Cartelle
-router.post('/folders', requireBodyField('name'), createFolder); // Crea una cartella, 'name' obbligatorio
+router.post('/folders', requireAuth, requireBodyField('name'), createFolder); // Crea una cartella, 'name' obbligatorio
 router.get('/folders', getFoldersInsideParent);    // Ottieni la lista delle cartelle
 router.get('/folders/all', getAllFolders);    // Ottieni la lista di tutte le cartelle
-router.delete('/folders/:_id', validateMongoIdParam('_id'), deleteFolder);    // Elimina cartella (ID valido richiesto)
+router.delete('/folders/:_id', requireAuth, validateMongoIdParam('_id'), deleteFolder);    // Elimina cartella (ID valido richiesto)
 
 // Endpoint per i Documenti
 router.post('/documents', requireAuth, requireBodyField('title'), createDoc); // Crea documento, 'title' obbligatorio
