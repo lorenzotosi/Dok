@@ -31,15 +31,15 @@ const folderStack = ref<{id: string | null, name: string}[]>([
 ]);
 
 watch([currentSection, folderStack], ([newSection, newStack]) => {
-  localStorage.setItem('dok_last_section', newSection);
-  localStorage.setItem('dok_last_stack', JSON.stringify(newStack));
-  localStorage.setItem('dok_last_folder_id', currentFolderId.value || '');
+  sessionStorage.setItem('dok_last_section', newSection);
+  sessionStorage.setItem('dok_last_stack', JSON.stringify(newStack));
+  sessionStorage.setItem('dok_last_folder_id', currentFolderId.value || '');
 }, { deep: true });
 
 onMounted(() => {
-  const savedSection = localStorage.getItem('dok_last_section') as 'private' | 'public';
-  const savedStack = localStorage.getItem('dok_last_stack');
-  const savedFolderId = localStorage.getItem('dok_last_folder_id');
+  const savedSection = sessionStorage.getItem('dok_last_section') as 'private' | 'public';
+  const savedStack = sessionStorage.getItem('dok_last_stack');
+  const savedFolderId = sessionStorage.getItem('dok_last_folder_id');
 
   if (savedSection) {
     currentSection.value = savedSection;

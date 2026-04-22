@@ -18,10 +18,7 @@ const searchQuery = ref('');
 let debounceTimeout: ReturnType<typeof setTimeout> | null = null;
 
 const handleSearch = () => {
-  // Se c'è un timer attivo, lo cancelliamo
   if (debounceTimeout) clearTimeout(debounceTimeout);
-  
-  // Facciamo partire un nuovo timer di 300ms
   debounceTimeout = setTimeout(() => {
     emit('search', searchQuery.value);
   }, 300);
