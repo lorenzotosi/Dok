@@ -3,6 +3,7 @@ import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { api } from '../services/api';
 import Editor from '../components/editor/Editor.vue';
+import ShareDropdown from '../components/share/ShareDropdown.vue';
 import { useAuthStore } from '../stores/auth.store';
 
 const authStore = useAuthStore();
@@ -18,14 +19,7 @@ const showViewersDropdown = ref(false);
 
 const activeUsers = computed<string[]>(() => editorRef.value?.activeUsers ?? []);
 
-const handleOutsideClick = (e: MouseEvent) => {
-  if (viewersWrapperRef.value && !viewersWrapperRef.value.contains(e.target as Node)) {
-    showViewersDropdown.value = false;
-  }
-};
-
-onMounted(async () => {
-  document.addEventListener('click', handleOutsideClick);
+const fetchDocumentData = async () => {
   try {
     const response = await api.get(`/documents/${documentId}`);
     documentData.value = response.data;
@@ -36,6 +30,17 @@ onMounted(async () => {
   } finally {
     isLoading.value = false;
   }
+};
+
+const handleOutsideClick = (e: MouseEvent) => {
+  if (viewersWrapperRef.value && !viewersWrapperRef.value.contains(e.target as Node)) {
+    showViewersDropdown.value = false;
+  }
+};
+
+onMounted(async () => {
+  document.addEventListener('click', handleOutsideClick);
+  await fetchDocumentData();
 });
 
 onBeforeUnmount(() => {
@@ -83,7 +88,7 @@ const handleRename = async () => {
             <svg class="viewers-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
               <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
             </svg>
-            <span class="viewers-count">{{ activeUsers.length }}</span>
+            <span class="viewers-count-badge">{{ activeUsers.length }}</span>
           </button>
           <transition name="dropdown">
             <div class="viewers-dropdown" v-if="showViewersDropdown">
@@ -98,8 +103,18 @@ const handleRename = async () => {
             </div>
           </transition>
         </div>
-        <!-- TODO: AGGIUNGERE FUNZIONALITà DI CONDIVISIONE -->
-        <button class="share-btn">Condividi</button>
+
+        <!-- Il nuovo componente di condivisione -->
+        <ShareDropdown 
+          v-if="documentData"
+          :document-id="documentId"
+          :shared-with="documentData.sharedWith || []"
+          :is-owner="authStore.user?.id === (documentData.ownerId?._id || documentData.ownerId)"
+          :owner-data="documentData || null"
+          :my-user-id="authStore.user?.id as string"
+          @refresh="fetchDocumentData"
+        />
+
         <div class="avatar" title="Account Google fittizio">U</div>
       </div>
     </header>

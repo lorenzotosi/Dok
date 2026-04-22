@@ -23,7 +23,7 @@ router.get('/documents/:id', optionalAuth, getDoc);
 router.get('/documents', optionalAuth, getAllDocuments);
 router.delete('/documents/:id', requireAuth, validateMongoIdParam('id'), deleteDocument);
 router.put('/documents/rename', requireAuth, requireBodyField('id'), requireBodyField('newTitle'), renameDocument);
-router.put('/documents/share', requireAuth, requireBodyField('id'), requireBodyField('userId'), requireBodyField('role'), shareDoc);
+router.put('/documents/share', requireAuth, requireBodyField('id'), requireBodyField('email'), requireBodyField('role'), shareDoc);
 router.put('/documents/unshare', requireAuth, requireBodyField('id'), requireBodyField('userId'), unshareDoc);
 
 export default router;

@@ -24,7 +24,8 @@ export class DocumentService {
                 { ownerId: userId },
                 { 'sharedWith.userId': userId }
             ]
-        });
+        }).populate('ownerId', 'firstName lastName email')
+            .populate('sharedWith.userId', 'firstName lastName email');
     }
 
     static async getPublicDocumentById(id: string) {
