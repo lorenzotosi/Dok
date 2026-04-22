@@ -32,20 +32,35 @@ export class DocumentService {
         return await Document.findOne({ _id: id, visibility: 'public' });
     }
 
-    static async getAllDocuments(ownerId: string | null, folderId: string | null = null) {
-        if (!ownerId) {
-            return await Document.find({ visibility: 'public', folderId })
-                .populate('ownerId', 'firstName lastName')
-                .sort({ createdAt: -1 });
-        }
-        return await Document.find({ 
-            $or: [
-                { ownerId, folderId },
+    static async getAllDocuments(userId: string | null, folderId: string | null = null) {
+        let query: any = { folderId };
+        if (!userId) {
+            query.visibility = 'public';
+        } else {
+            query.$or = [
+                { ownerId: userId, folderId },
                 { visibility: 'public', folderId }
-            ]
-        })
-        .populate('ownerId', 'firstName lastName')
-        .sort({ createdAt: -1 });
+            ];
+        }
+
+        const docs = await Document.find(query)
+            .populate('ownerId', 'firstName lastName')
+            .sort({ createdAt: -1 })
+            .lean();
+
+        if (userId) {
+            return docs.map(doc => {
+                const ownerIdStr = doc.ownerId._id ? doc.ownerId._id.toString() : doc.ownerId.toString();
+                if (ownerIdStr === userId) return doc;
+
+                const shareEntry = (doc.sharedWith as any[])?.find(s => s.userId.toString() === userId);
+                return {
+                    ...doc,
+                    myRole: shareEntry ? shareEntry.role : null
+                };
+            });
+        }
+        return docs;
     }
 
     static async deleteDocument(id: string) {
@@ -57,8 +72,17 @@ export class DocumentService {
     }
 
     static async getSharedDocuments(userId: string) {
-        return await Document.find({ 'sharedWith.userId': userId })
+        const docs = await Document.find({ 'sharedWith.userId': userId })
             .populate('ownerId', 'firstName lastName')
-            .sort({ createdAt: -1 });
+            .sort({ createdAt: -1 })
+            .lean();
+
+        return docs.map(doc => {
+            const shareEntry = (doc.sharedWith as any[])?.find(s => s.userId.toString() === userId);
+            return {
+                ...doc,
+                myRole: shareEntry ? shareEntry.role : null
+            };
+        });
     }
 }

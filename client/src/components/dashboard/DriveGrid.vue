@@ -59,6 +59,9 @@ const emit = defineEmits<{
               <span class="icon">📄</span>
               <span class="name">{{ document.title }}</span>
               <span v-if="isPublic && (document.ownerId._id || document.ownerId) === authStore.user?.id" class="owner-tag">owner</span>
+              <span v-if="document.myRole && !(isPublic && document.myRole === 'viewer')" class="role-tag" :class="document.myRole">
+                {{ document.myRole }}
+              </span>
             </div>
             <button v-if="authStore.isAuthenticated() && authStore.user?.id === (document.ownerId?._id || document.ownerId)" class="delete-btn" @click.stop="emit('delete-document', document._id)" title="Elimina documento">🗑️</button>
           </div>
@@ -182,6 +185,26 @@ const emit = defineEmits<{
   border-radius: 4px;
   text-transform: uppercase;
   margin-left: 4px;
+}
+
+.role-tag {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-left: 8px;
+  text-transform: capitalize;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.role-tag.editor {
+  background-color: #e1f5fe;
+  color: #0288d1;
+}
+
+.role-tag.viewer {
+  background-color: #f5f5f5;
+  color: #616161;
 }
 
 .delete-btn {

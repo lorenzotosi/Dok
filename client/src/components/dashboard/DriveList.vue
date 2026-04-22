@@ -81,6 +81,9 @@ const getOwnerName = (owner: any) => {
             <span class="icon">📄</span>
             <span class="name">{{ document.title }}</span>
             <span v-if="isPublic && (document.ownerId._id || document.ownerId) === authStore.user?.id" class="owner-tag">owner</span>
+            <span v-if="document.myRole && !(isPublic && document.myRole === 'viewer')" class="role-tag" :class="document.myRole">
+              {{ document.myRole }}
+            </span>
           </div>
           <div class="col-owner">{{ getOwnerName(document.ownerId) }}</div>
           <div class="col-date">{{ formatDate(document.updatedAt) }}</div>
@@ -175,5 +178,25 @@ const getOwnerName = (owner: any) => {
   text-transform: uppercase;
   margin-left: 8px;
   flex-shrink: 0;
+}
+
+.role-tag {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-left: 8px;
+  text-transform: capitalize;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.role-tag.editor {
+  background-color: #e1f5fe;
+  color: #0288d1;
+}
+
+.role-tag.viewer {
+  background-color: #f5f5f5;
+  color: #616161;
 }
 </style>
