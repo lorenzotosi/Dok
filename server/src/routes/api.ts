@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { createFolder, getFoldersInsideParent, getAllFolders, deleteFolder } from '../controllers/folder.controller.js';
-import { createDoc, getDoc, getAllDocuments, deleteDocument, renameDocument, getSharedDocs } from '../controllers/document.controller.js';
+import { createDoc, getDoc, getAllDocuments, deleteDocument, renameDocument, getSharedDocs, shareDoc, unshareDoc } from '../controllers/document.controller.js';
 import { requireBodyField, validateMongoIdParam } from '../middlewares/validation.middleware.js';
 import authRoutes from './auth.routes.js';
 import { requireAuth, optionalAuth } from '../middlewares/auth.middleware.js';
@@ -21,7 +21,9 @@ router.post('/documents', requireAuth, requireBodyField('title'), createDoc);
 router.get('/documents/shared', requireAuth, getSharedDocs);
 router.get('/documents/:id', optionalAuth, getDoc);
 router.get('/documents', optionalAuth, getAllDocuments);
-router.delete('/documents/:id', requireAuth, validateMongoIdParam('id'), deleteDocument); // Elimina doc (ID valido richiesto)
+router.delete('/documents/:id', requireAuth, validateMongoIdParam('id'), deleteDocument);
 router.put('/documents/rename', requireAuth, requireBodyField('id'), requireBodyField('newTitle'), renameDocument);
+router.put('/documents/share', requireAuth, requireBodyField('id'), requireBodyField('userId'), requireBodyField('role'), shareDoc);
+router.put('/documents/unshare', requireAuth, requireBodyField('id'), requireBodyField('userId'), unshareDoc);
 
 export default router;

@@ -7,7 +7,6 @@ export class DocumentService {
             ownerId,
             folderId,
             visibility,
-            // Inizializziamo il documento vuoto per Tiptap
             tiptapJson: { type: 'doc', content: [{ type: 'paragraph' }] }
         });
         return await doc.save();
@@ -84,5 +83,25 @@ export class DocumentService {
                 myRole: shareEntry ? shareEntry.role : null
             };
         });
+    }
+
+    static async shareDocument(id: string, userId: string, role: 'editor' | 'viewer') {
+        const updated = await Document.findOneAndUpdate(
+            { _id: id, 'sharedWith.userId': userId },
+            { $set: { 'sharedWith.$.role': role } },
+            { new: true }
+        );
+
+        if (updated) return updated;
+
+        return await Document.findByIdAndUpdate(
+            id,
+            { $push: { sharedWith: { userId, role } } },
+            { new: true }
+        );
+    }
+
+    static async unshareDocument(id: string, userId: string) {
+        return await Document.findByIdAndUpdate(id, { $pull: { sharedWith: { userId } } }, { new: true });
     }
 }

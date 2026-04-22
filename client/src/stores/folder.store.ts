@@ -25,7 +25,7 @@ export const useFolderStore = defineStore('folder', () => {
     }
   };
 
-  const createFolder = async (name: string, parentId: string | null = null, 
+  const createFolder = async (name: string, parentId: string | null = null,
     visibility: 'private' | 'public' = 'private') => {
     try {
       await api.post('/folders', { name, parentId, visibility });
@@ -35,11 +35,11 @@ export const useFolderStore = defineStore('folder', () => {
     }
   };
 
-  const deleteFolder = async (folderId: string) => {
+  const deleteFolder = async (folderId: string, parentId: string | null = null) => {
     try {
       console.log('Cancellazione cartella', folderId);
       await api.delete(`/folders/${folderId}`);
-      await fetchFolders();
+      await fetchFolders(parentId);
     } catch (error) {
       console.error('Errore nella cancellazione', error);
     }

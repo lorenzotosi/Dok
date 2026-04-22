@@ -1,6 +1,7 @@
 import { type Request, type Response } from 'express';
 import { DocumentService } from '../services/document.service.js';
 import { type AuthRequest } from '../middlewares/auth.middleware.js';
+import { UserModel } from '../models/User.js';
 
 export const createDoc = async (req: AuthRequest, res: Response) => {
     try {
@@ -104,5 +105,54 @@ export const getSharedDocs = async (req: AuthRequest, res: Response) => {
         res.json(docs);
     } catch (error) {
         res.status(500).json({ error: 'Errore recupero documenti condivisi' });
+    }
+};
+
+export const shareDoc = async (req: AuthRequest, res: Response) => {
+    try {
+        const { id, email, role } = req.body;
+        const requesterId = req.user!.id;
+
+        const userToShareWith = await UserModel.findOne({ email });
+        if (!userToShareWith) {
+            return res.status(404).json({ error: 'Utente non trovato con questa email' });
+        }
+
+        const userId = userToShareWith._id.toString();
+
+        if (userId === requesterId) {
+            return res.status(400).json({ error: 'Non puoi condividere un documento con te stesso' });
+        }
+
+        const doc = await DocumentService.getDocumentById(id);
+        if (!doc) return res.status(404).json({ error: 'Documento non trovato' });
+
+        if (doc.ownerId.toString() !== requesterId) {
+            return res.status(403).json({ error: 'Solo il proprietario può condividere questo documento' });
+        }
+
+        const updatedDoc = await DocumentService.shareDocument(id, userId, role);
+        res.json(updatedDoc);
+    } catch (error) {
+        res.status(500).json({ error: 'Errore condivisione documento' });
+    }
+};
+
+export const unshareDoc = async (req: AuthRequest, res: Response) => {
+    try {
+        const { id, userId } = req.body;
+        const requesterId = req.user!.id;
+
+        const doc = await DocumentService.getDocumentById(id);
+        if (!doc) return res.status(404).json({ error: 'Documento non trovato' });
+
+        if (doc.ownerId.toString() !== requesterId) {
+            return res.status(403).json({ error: 'Solo il proprietario può rimuovere la condivisione' });
+        }
+
+        const updatedDoc = await DocumentService.unshareDocument(id, userId);
+        res.json(updatedDoc);
+    } catch (error) {
+        res.status(500).json({ error: 'Errore rimozione condivisione' });
     }
 };

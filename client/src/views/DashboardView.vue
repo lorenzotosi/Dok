@@ -110,13 +110,11 @@ const handleCreateFolder = async (name: string) => {
 };
 
 const handleDeleteFolder = async (id: string) => {
-  await folderStore.deleteFolder(id);
-  refreshData();
+  await folderStore.deleteFolder(id, currentFolderId.value);
 };
 
 const handleDeleteDocument = async (id: string) => {
-  await documentStore.deleteDocument(id);
-  refreshData();
+  await documentStore.deleteDocument(id, currentFolderId.value);
 };
 
 const filteredDocuments = computed(() => {

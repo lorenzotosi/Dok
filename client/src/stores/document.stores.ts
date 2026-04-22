@@ -21,7 +21,7 @@ export const useDocumentStore = defineStore('document', () => {
             const response = await api.get('/documents', { params: { parentId } });
             documents.value = response.data;
         } catch (error) {
-            console.error('Errore nel caricamento cartelle', error);
+            console.error('Errore nel caricamento documenti', error);
         }
     };
 
@@ -34,11 +34,11 @@ export const useDocumentStore = defineStore('document', () => {
         }
     };
 
-    const deleteDocument = async (documentId: string) => {
+    const deleteDocument = async (documentId: string, parentId: string | null = null) => {
         try {
             console.log('Cancellazione documento', documentId);
             await api.delete(`/documents/${documentId}`);
-            await fetchDocuments();
+            await fetchDocuments(parentId);
         } catch (error) {
             console.error('Errore nella cancellazione', error);
         }
@@ -53,5 +53,23 @@ export const useDocumentStore = defineStore('document', () => {
         }
     };
 
-    return { documents, fetchDocuments, createDocument, deleteDocument, fetchSharedDocuments };
+    const shareDocument = async (documentId: string, email: string, role: 'editor' | 'viewer') => {
+        try {
+            await api.put('/documents/share', { id: documentId, email, role });
+            await fetchSharedDocuments();
+        } catch (error) {
+            console.error('Errore nella condivisione', error);
+        }
+    };
+
+    const unshareDocument = async (documentId: string, userId: string) => {
+        try {
+            await api.put('/documents/unshare', { id: documentId, userId });
+            await fetchSharedDocuments();
+        } catch (error) {
+            console.error('Errore nella rimozione condivisione', error);
+        }
+    };
+
+    return { documents, fetchDocuments, createDocument, deleteDocument, fetchSharedDocuments, shareDocument, unshareDocument };
 });
