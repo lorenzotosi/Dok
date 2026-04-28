@@ -34,6 +34,7 @@ onMounted(async () => {
             class="doc-title-input" 
             v-model="documentData.title" 
             @change="handleRename"
+            @blur="handleRename"
           />
           <span v-else v-text="documentData.title"></span>
         </div>

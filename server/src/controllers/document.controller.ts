@@ -77,6 +77,7 @@ export const renameDocument = async (req: AuthRequest, res: Response) => {
     try {
         const { id, newTitle } = req.body;
         const userId = req.user!.id;
+        console.log(newTitle)
 
         const doc = await DocumentService.getDocumentById(id);
         if (!doc) {
@@ -90,6 +91,7 @@ export const renameDocument = async (req: AuthRequest, res: Response) => {
         }
 
         const updatedDoc = await DocumentService.renameDocument(id, newTitle);
+        console.log(updatedDoc)
         res.status(200).json(updatedDoc);
     } catch (error) {
         console.error("Errore rinomina documento:", error);

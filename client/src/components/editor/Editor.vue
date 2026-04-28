@@ -13,6 +13,8 @@ import { Color } from '@tiptap/extension-color';
 import Highlight from '@tiptap/extension-highlight';
 import { useAuthStore } from '../../stores/auth.store';
 import { useCollaboration } from '../../composables/useCollaboration';
+import BubbleMenu from '@tiptap/extension-bubble-menu';
+import AIBubbleMenu from './BubbleMenu.vue';
 
 const wsUrl = import.meta.env.VITE_WS_URL || 'http://localhost:3000';
 
@@ -46,6 +48,7 @@ const editor = useEditor({
     StarterKit.configure({
       undoRedo: false,
     }),
+    BubbleMenu,
     Collaboration.configure({
       document: ydoc,
     }),
@@ -86,6 +89,7 @@ watch(canEdit, (newEditableState) => {
   <div class="editor-wrapper" v-if="editor">
     <EditorToolbar :editor="editor" />
 
+    <AIBubbleMenu v-if="canEdit" :editor="editor" />
     <div class="document-page" @click="editor.isEditable && editor.commands.focus()">
       <EditorContent :editor="editor" class="editor-content" />
     </div>
