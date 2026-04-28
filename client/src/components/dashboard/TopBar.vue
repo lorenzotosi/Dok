@@ -3,13 +3,10 @@ import { ref } from 'vue';
 import { useAuthStore } from '../../stores/auth.store';
 import AuthModal from '../auth/AuthModal.vue';
 import UserAvatar from "../common/UserAvatar.vue";
+import UserMenu from "./UserMenu.vue";
 
 const authStore = useAuthStore();
 const isModalOpen = ref(false);
-
-const handleLogout = () => {
-  if(confirm("Vuoi uscire?")) authStore.logout();
-};
 
 const emit = defineEmits<{
   (e: 'search', query: string): void;
@@ -39,8 +36,8 @@ const handleSearch = () => {
       </div>
     </div>
     <div class="user-section">
-      <div v-if="authStore.isAuthenticated()" @click="handleLogout">
-        <UserAvatar :user="authStore.user" size="md" />
+      <div v-if="authStore.isAuthenticated()" >
+        <UserMenu />
       </div>
       <button v-else class="login-trigger" @click="isModalOpen = true">
         Accedi
