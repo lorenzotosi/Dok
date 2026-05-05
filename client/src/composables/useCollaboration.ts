@@ -1,17 +1,22 @@
 import { ref, onBeforeUnmount } from 'vue';
 import * as Y from 'yjs';
-import { socketService } from '../services/socket.service';
 import { Awareness } from 'y-protocols/awareness';
 import * as awarenessProtocol from 'y-protocols/awareness';
+import { io } from 'socket.io-client';
 
 export function useCollaboration(documentId: string, token?: string) {
   const ydoc = new Y.Doc();
   
-  if (!socketService.getSocket()) {
-    socketService.connect(token || null);
-  }
-  
-  const socket = socketService.getSocket()!;
+  // Crea una connessione socket dedicata al documento.
+  // Includendo 'documentId' nella query, Nginx userà il documentId per 
+  // le sticky session, instradando tutti i client sullo stesso server backend.
+  const socket = io('http://localhost:3000', {
+      auth: { token: token || null },
+      query: { documentId },
+      transports: ['websocket'],
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000
+  });
 
   socket.emit('join-document', documentId);
 
@@ -70,6 +75,7 @@ export function useCollaboration(documentId: string, token?: string) {
       socket.off('sync-document', handleSyncDocument);
       socket.off('crdt-update', handleCrdtUpdate);
       socket.off('awareness-update', handleAwarenessUpdate);
+      socket.disconnect(); // Fondamentale: chiudiamo la connessione dedicata
     }
     if (ydoc) {
       ydoc.destroy();
