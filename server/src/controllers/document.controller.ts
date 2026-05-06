@@ -119,25 +119,30 @@ export const renameDocument = async (req: AuthRequest, res: Response) => {
         }
 
         const updatedDoc = await DocumentService.renameDocument(id, newTitle);
-        if (io && updatedDoc) {
-            // Se pubblico, aggiorna la dashboard globale
-            if (updatedDoc.visibility === 'public') {
-                io.to('global-dashboard').emit('global-document-renamed', updatedDoc);
+        if (!updatedDoc) return;
+
+        // Popoliamo per le notifiche real-time
+        const fullDoc = await Document.findById(id)
+            .populate('ownerId', 'firstName lastName')
+            .populate('sharedWith.userId', 'firstName lastName email')
+            .lean();
+
+        if (io && fullDoc) {
+            if (fullDoc.visibility === 'public') {
+                io.to('global-dashboard').emit('global-document-renamed', fullDoc);
             }
 
-            // Notifica tutti i collaboratori della rinomina (indipendentemente dalla visibilità)
-            if (updatedDoc.sharedWith && updatedDoc.sharedWith.length > 0) {
-                updatedDoc.sharedWith.forEach((share: any) => {
+            if (fullDoc.sharedWith && fullDoc.sharedWith.length > 0) {
+                fullDoc.sharedWith.forEach((share: any) => {
                     const collaboratorId = share.userId._id || share.userId;
-                    // Inviamo l'oggetto con myRole specifico per quel collaboratore
                     io.to(`user:${collaboratorId.toString()}`).emit('document-renamed', {
-                        ...updatedDoc.toObject(),
+                        ...fullDoc,
                         myRole: share.role
                     });
                 });
             }
         }
-        res.status(200).json(updatedDoc);
+        res.status(200).json(fullDoc);
     } catch (error) {
         console.error("Errore rinomina documento:", error);
         res.status(500).json({ error: 'Errore rinomina documento' });
@@ -180,15 +185,14 @@ export const shareDoc = async (req: AuthRequest, res: Response) => {
 
         const updatedDoc = await DocumentService.shareDocument(id, userId, role);
 
-        // Prepariamo l'oggetto per il real-time aggiungendo myRole e popolando ownerId
+        // Prepariamo l'oggetto per il real-time popolando TUTTO ciò che serve al frontend
         const docForNotify = await Document.findById(id)
             .populate('ownerId', 'firstName lastName')
+            .populate('sharedWith.userId', 'firstName lastName email')
             .lean();
 
         const io = req.app.get('io');
         if (io && docForNotify) {
-            // Notifichiamo TUTTI gli utenti con cui il file è condiviso
-            // Ognuno deve ricevere l'oggetto con il PROPRIO ruolo specifico
             docForNotify.sharedWith.forEach((share: any) => {
                 const collaboratorId = share.userId._id || share.userId;
                 

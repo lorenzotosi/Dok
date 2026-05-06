@@ -100,8 +100,8 @@ useClickOutside(dropdownRef, () => {
               <div class="collab-info">
                 <div class="collab-avatar">{{ item.userId.firstName?.[0] || '?' }}</div>
                 <div class="collab-details">
-                  <span class="collab-name">{{ item.userId.firstName }} {{ item.userId.lastName }}</span>
-                  <span class="collab-email">{{ item.userId.email }}</span>
+                  <span class="collab-name">{{ item.userId.firstName || '?'}} {{ item.userId.lastName || '?'}}</span>
+                  <span class="collab-email">{{ item.userId.email || '?' }} {{ console.log(item.userId) }}</span>
                 </div>
                 <span v-if="item.userId._id === props.myUserId" class="owner-badge"> You</span>
               </div>

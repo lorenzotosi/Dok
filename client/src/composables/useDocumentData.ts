@@ -44,11 +44,17 @@ export function useDocumentData(documentId: string) {
   const handleDocumentUnshared = (id: string) => {
     const incomingId = typeof id === 'object' ? (id as any).id || (id as any)._id : id;
     console.log("[Socket] Ricevuto document-unshared per ID:", incomingId, "Documento corrente:", documentId);
-    
+
     if (incomingId === documentId) {
+      documentData.value = null;
+
       alert("I permessi di accesso a questo documento ti sono stati revocati.");
-      router.replace('/').catch(err => {
-        console.error("Errore durante il redirect:", err);
+
+      router.replace('/').then(() => {
+        if (window.location.pathname !== '/') {
+          window.location.href = '/';
+        }
+      }).catch(() => {
         window.location.href = '/';
       });
     }
@@ -74,7 +80,7 @@ export function useDocumentData(documentId: string) {
 
   const handleRename = async () => {
     if (!documentData.value || !documentData.value.title.trim()) return;
-    
+
     try {
       await api.put('/documents/rename', {
         id: documentId,

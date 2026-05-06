@@ -75,7 +75,7 @@ export function useCollaboration(documentId: string, token?: string) {
       socket.off('sync-document', handleSyncDocument);
       socket.off('crdt-update', handleCrdtUpdate);
       socket.off('awareness-update', handleAwarenessUpdate);
-      socket.disconnect(); // Fondamentale: chiudiamo la connessione dedicata
+      socket.disconnect();
     }
     if (ydoc) {
       ydoc.destroy();
