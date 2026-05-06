@@ -128,6 +128,9 @@ export const renameDocument = async (req: AuthRequest, res: Response) => {
             .lean();
 
         if (io && fullDoc) {
+            // Aggiorna tutti quelli che hanno aperto il documento
+            io.to(id).emit('document-renamed', fullDoc);
+
             if (fullDoc.visibility === 'public') {
                 io.to('global-dashboard').emit('global-document-renamed', fullDoc);
             }
@@ -193,6 +196,9 @@ export const shareDoc = async (req: AuthRequest, res: Response) => {
 
         const io = req.app.get('io');
         if (io && docForNotify) {
+            // Notifica tutti quelli che stanno guardando il documento
+            io.to(id).emit('document-shared', docForNotify);
+
             docForNotify.sharedWith.forEach((share: any) => {
                 const collaboratorId = share.userId._id || share.userId;
                 
@@ -228,7 +234,13 @@ export const unshareDoc = async (req: AuthRequest, res: Response) => {
 
         const io = req.app.get('io');
         if (io) {
+            // Notifica chi è stato rimosso
             io.to(`user:${userId}`).emit('document-unshared', id);
+            
+            // Notifica tutti gli altri che sono nel documento per aggiornare la lista collaboratori
+            if (docForNotify) {
+                io.to(id).emit('document-shared', docForNotify);
+            }
         }
         res.json(docForNotify);
     } catch (error) {

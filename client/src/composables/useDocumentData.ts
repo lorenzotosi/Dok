@@ -34,7 +34,6 @@ export function useDocumentData(documentId: string) {
           break;
         }
       }
-      
       if (changed) {
         documentData.value = { ...documentData.value, ...doc };
       }
@@ -45,7 +44,7 @@ export function useDocumentData(documentId: string) {
     const incomingId = typeof id === 'object' ? (id as any).id || (id as any)._id : id;
     console.log("[Socket] Ricevuto document-unshared per ID:", incomingId, "Documento corrente:", documentId);
 
-    if (incomingId === documentId) {
+    if (incomingId === documentId && documentData.value.visibility === 'private') {
       documentData.value = null;
 
       alert("I permessi di accesso a questo documento ti sono stati revocati.");
@@ -63,6 +62,7 @@ export function useDocumentData(documentId: string) {
   onMounted(() => {
     const socket = socketService.getSocket();
     if (socket) {
+      socket.emit('join-document', documentId);
       socket.on('document-shared', handleDocumentUpdate);
       socket.on('document-renamed', handleDocumentUpdate);
       socket.on('document-unshared', handleDocumentUnshared);
@@ -72,6 +72,7 @@ export function useDocumentData(documentId: string) {
   onBeforeUnmount(() => {
     const socket = socketService.getSocket();
     if (socket) {
+      socket.emit('leave-document', documentId);
       socket.off('document-shared', handleDocumentUpdate);
       socket.off('document-renamed', handleDocumentUpdate);
       socket.off('document-unshared', handleDocumentUnshared);
