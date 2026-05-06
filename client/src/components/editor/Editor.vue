@@ -86,7 +86,7 @@ watch(canEdit, (newEditableState) => {
   <div class="editor-wrapper" v-if="editor">
     <EditorToolbar :editor="editor" />
 
-    <AIBubbleMenu v-if="canEdit" :editor="editor" />
+    <AIBubbleMenu v-show="canEdit" :editor="editor" />
     <div class="document-page" @click="editor.isEditable && editor.commands.focus()">
       <EditorContent :editor="editor" class="editor-content" />
     </div>
