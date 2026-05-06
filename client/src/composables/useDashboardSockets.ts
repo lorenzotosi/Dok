@@ -3,11 +3,13 @@ import { socketService } from '../services/socket.service';
 import { useDocumentStore } from '../stores/document.stores';
 import { useFolderStore } from '../stores/folder.store';
 import { useAuthStore } from '../stores/auth.store';
+import { useNotificationStore } from '../stores/notification.store';
 
 export function useDashboardSockets(currentSection: Ref<'private' | 'public' | 'shared'>) {
   const documentStore = useDocumentStore();
   const folderStore = useFolderStore();
   const authStore = useAuthStore();
+  const notificationStore = useNotificationStore();
 
   const handleGlobalDocumentCreated = (doc: any) => {
     if (!documentStore.documents.find(d => d._id === doc._id)) {
@@ -48,8 +50,7 @@ export function useDashboardSockets(currentSection: Ref<'private' | 'public' | '
         documentStore.documents.unshift(doc);
       }
     }
-    console.log("SHare ricevuto!")
-    // TODO: NOTIFICA!
+    console.log("SHare ricevuto!");
   };
 
   const handleDocumentUnshared = (documentId: string) => {
@@ -99,6 +100,7 @@ export function useDashboardSockets(currentSection: Ref<'private' | 'public' | '
     socket.off('document-renamed');
     socket.off('private-document-created');
     socket.off('private-document-deleted');
+    socket.off('new-notification');
   };
 
   const registerListeners = (socket: any) => {
@@ -120,6 +122,11 @@ export function useDashboardSockets(currentSection: Ref<'private' | 'public' | '
     socket.on('document-renamed', handleDocumentRenamed);
     socket.on('private-document-created', handlePrivateDocumentCreated);
     socket.on('private-document-deleted', handlePrivateDocumentDeleted);
+    
+    // Ascolta le nuove notifiche persistenti
+    socket.on('new-notification', (notif: any) => {
+        notificationStore.addNotification(notif);
+    });
   };
 
   const setupSocketSync = () => {

@@ -1,5 +1,6 @@
 import { type Request, type Response } from 'express';
 import { DocumentService } from '../services/document.service.js';
+import { NotificationService } from '../services/notification.service.js';
 import { type AuthRequest } from '../middlewares/auth.middleware.js';
 import { UserModel } from '../models/User.js';
 import Document from '../models/Document.js';
@@ -186,16 +187,38 @@ export const shareDoc = async (req: AuthRequest, res: Response) => {
             return res.status(403).json({ error: 'Solo il proprietario può condividere questo documento' });
         }
 
+        const isAlreadyShared = doc.sharedWith.some((share: any) => 
+            (share.userId._id || share.userId).toString() === userId
+        );
+
         const updatedDoc = await DocumentService.shareDocument(id, userId, role);
 
         // Prepariamo l'oggetto per il real-time popolando TUTTO ciò che serve al frontend
         const docForNotify = await Document.findById(id)
             .populate('ownerId', 'firstName lastName')
             .populate('sharedWith.userId', 'firstName lastName email')
-            .lean();
+            .lean() as any;
 
         const io = req.app.get('io');
         if (io && docForNotify) {
+            const notificationTitle = isAlreadyShared ? 'Permessi Aggiornati' : 'Nuova Condivisione';
+            const notificationType = isAlreadyShared ? 'PERM_CHANGE' : 'SHARE';
+            const actionVerb = isAlreadyShared ? 'ha aggiornato i tuoi permessi per' : 'ha condiviso con te';
+
+            const notification = await NotificationService.createNotification(
+                userId,
+                requesterId,
+                notificationType,
+                notificationTitle,
+                `${docForNotify.ownerId.firstName} ${docForNotify.ownerId.lastName} ${actionVerb} il documento: ${docForNotify.title}`,
+                id,
+                `/document/${id}`
+            );
+
+            const fullNotification = await notification.populate('sender', 'firstName lastName');
+
+            io.to(`user:${userId}`).emit('new-notification', fullNotification);
+
             // Notifica tutti quelli che stanno guardando il documento
             io.to(id).emit('document-shared', docForNotify);
 
@@ -230,11 +253,26 @@ export const unshareDoc = async (req: AuthRequest, res: Response) => {
         const docForNotify = await Document.findById(id)
             .populate('ownerId', 'firstName lastName')
             .populate('sharedWith.userId', 'firstName lastName email')
-            .lean();
+            .lean() as any;
 
         const io = req.app.get('io');
         if (io) {
-            // Notifica chi è stato rimosso
+            // Crea una notifica nel database per l'utente rimosso
+            const notification = await NotificationService.createNotification(
+                userId,
+                requesterId,
+                'SYSTEM',
+                'Accesso Rimosso',
+                `${docForNotify.ownerId.firstName} ${docForNotify.ownerId.lastName} ha rimosso il tuo accesso al documento: ${docForNotify.title}`,
+                id
+            );
+
+            const fullNotification = await notification.populate('sender', 'firstName lastName');
+
+            // Notifica l'utente della nuova notifica
+            io.to(`user:${userId}`).emit('new-notification', fullNotification);
+
+            // Notifica chi è stato rimosso per gestire il redirect o la chiusura
             io.to(`user:${userId}`).emit('document-unshared', id);
             
             // Notifica tutti gli altri che sono nel documento per aggiornare la lista collaboratori
