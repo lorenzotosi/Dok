@@ -36,22 +36,19 @@ export function useDashboardSockets(currentSection: Ref<'private' | 'public' | '
   };
 
   const handleDocumentShared = (doc: any) => {
-    // Caso 1: Siamo nella sezione 'shared' -> Aggiungi il documento se non c'è
-    if (currentSection.value === 'shared') {
-      if (!documentStore.documents.find(d => d._id === doc._id)) {
+    // 1. Cerchiamo se il documento esiste già in memoria (in qualunque sezione siamo)
+    const index = documentStore.documents.findIndex(d => d._id === doc._id);
+
+    if (index !== -1) {
+      // Se esiste, aggiorniamo il ruolo (fondamentale se passiamo da VIEWER a EDITOR)
+      documentStore.documents[index] = { ...doc };
+    } else {
+      // Se non esiste e siamo in 'shared', lo aggiungiamo
+      if (currentSection.value === 'shared') {
         documentStore.documents.unshift(doc);
-      } else {
-        // Se c'è già, aggiornalo per sicurezza (es. cambio ruolo)
-        documentStore.documents = documentStore.documents.map(d => d._id === doc._id ? doc : d);
       }
     }
-    // Caso 2: Siamo nella sezione 'public' -> Se il documento è pubblico, aggiorna solo il tag myRole
-    else if (currentSection.value === 'public' && doc.visibility === 'public') {
-      documentStore.documents = documentStore.documents.map(d =>
-        d._id === doc._id ? { ...d, myRole: doc.myRole } : d
-      );
-    }
-    // TODO: Qui si potrebbe aggiungere una notifica push/toast UI per avvisare l'utente
+    console.log("SHare ricevuto!")
   };
 
   const handleDocumentUnshared = (documentId: string) => {
@@ -125,9 +122,9 @@ export function useDashboardSockets(currentSection: Ref<'private' | 'public' | '
   };
 
   const setupSocketSync = () => {
-    if (!socketService.getSocket()) {
-      socketService.connect(authStore.token || null);
-    }
+    // Chiamiamo sempre connect: se il token è uguale il servizio non fa nulla,
+    // se è cambiato si riconnette automaticamente.
+    socketService.connect(authStore.token || null);
 
     const socket = socketService.getSocket();
     if (!socket) return;
@@ -136,7 +133,7 @@ export function useDashboardSockets(currentSection: Ref<'private' | 'public' | '
     registerListeners(socket);
   };
 
-  watch(currentSection, () => {
+  watch([currentSection, () => authStore.token], () => {
     setupSocketSync();
   }, { immediate: true });
 

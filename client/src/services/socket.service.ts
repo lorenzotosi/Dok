@@ -4,7 +4,13 @@ class SocketClientService {
     private socket: Socket | null = null;
 
     connect(token?: string | null): void {
-        if (this.socket?.connected) return;
+        if (this.socket) {
+            const currentToken = (this.socket.auth as any)?.token;
+            if (this.socket.connected && currentToken === token) {
+                return;
+            }
+            this.socket.disconnect();
+        }
 
         this.socket = io('http://localhost:3000', {
             auth: { token: token || null },

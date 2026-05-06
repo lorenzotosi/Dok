@@ -57,8 +57,12 @@ export const useDocumentStore = defineStore('document', () => {
 
     const shareDocument = async (documentId: string, email: string, role: 'editor' | 'viewer') => {
         try {
-            await api.put('/documents/share', { id: documentId, email, role });
-            await fetchSharedDocuments();
+            const response = await api.put('/documents/share', { id: documentId, email, role });
+            const updatedDoc = response.data;
+            const index = documents.value.findIndex(d => d._id === documentId);
+            if (index !== -1) {
+                documents.value[index] = { ...updatedDoc, myRole: documents.value[index].myRole };
+            }
         } catch (error) {
             console.error('Errore nella condivisione', error);
         }
@@ -66,8 +70,12 @@ export const useDocumentStore = defineStore('document', () => {
 
     const unshareDocument = async (documentId: string, userId: string) => {
         try {
-            await api.put('/documents/unshare', { id: documentId, userId });
-            await fetchSharedDocuments();
+            const response = await api.put('/documents/unshare', { id: documentId, userId });
+            const updatedDoc = response.data;
+            const index = documents.value.findIndex(d => d._id === documentId);
+            if (index !== -1) {
+                documents.value[index] = { ...updatedDoc, myRole: documents.value[index].myRole };
+            }
         } catch (error) {
             console.error('Errore nella rimozione condivisione', error);
         }

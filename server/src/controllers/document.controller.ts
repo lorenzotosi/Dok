@@ -198,7 +198,7 @@ export const shareDoc = async (req: AuthRequest, res: Response) => {
                 });
             });
         }
-        res.json(updatedDoc);
+        res.json(docForNotify);
     } catch (error) {
         res.status(500).json({ error: 'Errore condivisione documento' });
     }
@@ -217,11 +217,16 @@ export const unshareDoc = async (req: AuthRequest, res: Response) => {
         }
 
         const updatedDoc = await DocumentService.unshareDocument(id, userId);
+        const docForNotify = await Document.findById(id)
+            .populate('ownerId', 'firstName lastName')
+            .populate('sharedWith.userId', 'firstName lastName email')
+            .lean();
+
         const io = req.app.get('io');
         if (io) {
             io.to(`user:${userId}`).emit('document-unshared', id);
         }
-        res.json(updatedDoc);
+        res.json(docForNotify);
     } catch (error) {
         res.status(500).json({ error: 'Errore rimozione condivisione' });
     }
