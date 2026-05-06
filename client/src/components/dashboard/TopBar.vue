@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import { useAuthStore } from '../../stores/auth.store';
 import AuthModal from '../auth/AuthModal.vue';
 import UserMenu from "./UserMenu.vue";
+import Notification from "./Notification.vue";
 
 const authStore = useAuthStore();
 const isModalOpen = ref(false);
@@ -33,6 +34,10 @@ const handleSearch = () => {
         <span class="search-icon">🔍</span>
         <input v-model="searchQuery" type="text" placeholder="Cerca in Dok" @input="handleSearch"/>
       </div>
+    </div>
+    <!--Qui ci va il pulsante delle notifiche-->
+    <div v-if="authStore.isAuthenticated()">
+      <Notification />
     </div>
     <div class="user-section">
       <div v-if="authStore.isAuthenticated()" >
