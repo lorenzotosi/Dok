@@ -27,7 +27,7 @@ const io = new Server(httpServer, {
 
 app.set('io', io);
 
-setupSockets(io);
+await setupSockets(io);
 
 //Letsgonski Letsgo
 httpServer.listen(PORT, () => {
