@@ -138,9 +138,9 @@ onUnmounted(() => {
           </div>
         </div>
         
-        <div class="dropdown-footer">
+        <!--<div class="dropdown-footer">
           <button class="view-all-btn">Vedi tutte le attività</button>
-        </div>
+        </div>-->
       </div>
     </Transition>
   </div>
@@ -322,6 +322,7 @@ onUnmounted(() => {
   color: #94a3b8;
   line-height: 1.4;
   display: -webkit-box;
+  line-clamp: 2;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
