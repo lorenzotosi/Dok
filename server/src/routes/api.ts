@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { createFolder, getFoldersInsideParent, getAllFolders, deleteFolder } from '../controllers/folder.controller.js';
 import { createDoc, getDoc, getAllDocuments, deleteDocument, renameDocument, getSharedDocs, shareDoc, unshareDoc } from '../controllers/document.controller.js';
 import { getNotifications, getUnreadNotifications, markAsRead, markAllAsRead, deleteNotification } from '../controllers/notification.controller.js';
+import { rewriteText } from '../controllers/llm.controller.js';
 import { requireBodyField, validateMongoIdParam } from '../middlewares/validation.middleware.js';
 import authRoutes from './auth.routes.js';
 import { requireAuth, optionalAuth } from '../middlewares/auth.middleware.js';
@@ -35,5 +36,8 @@ router.delete('/documents/:id', requireAuth, validateMongoIdParam('id'), deleteD
 router.put('/documents/rename', requireAuth, requireBodyField('id'), requireBodyField('newTitle'), renameDocument);
 router.put('/documents/share', requireAuth, requireBodyField('id'), requireBodyField('email'), requireBodyField('role'), shareDoc);
 router.put('/documents/unshare', requireAuth, requireBodyField('id'), requireBodyField('userId'), unshareDoc);
+
+// Endpoint per LLM
+router.post('/llm/rewrite', requireAuth, rewriteText);
 
 export default router;
