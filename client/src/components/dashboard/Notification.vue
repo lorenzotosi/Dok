@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted } from 'vue';
+import { useClickOutside } from '../../composables/useClickOutside';
 import { useNotificationStore, type INotification } from '../../stores/notification.store';
 import { useRouter } from 'vue-router';
 
@@ -15,11 +16,9 @@ const toggleDropdown = () => {
   }
 };
 
-const handleClickOutside = (event: MouseEvent) => {
-  if (dropdownRef.value && !dropdownRef.value.contains(event.target as Node)) {
-    isOpen.value = false;
-  }
-};
+useClickOutside(dropdownRef, () => {
+  isOpen.value = false;
+});
 
 const handleNotificationClick = async (notification: INotification) => {
   if (!notification.read) {
@@ -53,11 +52,6 @@ const timeAgo = (date: string) => {
 
 onMounted(() => {
   notificationStore.fetchNotifications();
-  document.addEventListener('click', handleClickOutside);
-});
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside);
 });
 </script>
 
