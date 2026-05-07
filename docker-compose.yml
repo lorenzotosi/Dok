@@ -14,9 +14,10 @@ services:
   backend1:
     build: ./server # Punta alla tua cartella server con il Dockerfile
     environment:
-      - PORT=3000
-      - MONGO_URI=mongodb://mongo:27017/dok
-      - REDIS_URL=redis://redis:6379
+      - PORT=${PORT:-3000}
+      - MONGO_URI=${MONGO_URI:-mongodb://mongo:27017/dok}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
     volumes: # TODO da tenere solo durante lo sviluppo
       - ./server:/app
       - /app/node_modules
@@ -28,9 +29,10 @@ services:
   backend2:
     build: ./server
     environment:
-      - PORT=3000
-      - MONGO_URI=mongodb://mongo:27017/dok
-      - REDIS_URL=redis://redis:6379
+      - PORT=${PORT:-3000}
+      - MONGO_URI=${MONGO_URI:-mongodb://mongo:27017/dok}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
     volumes: # TODO da tenere solo durante lo sviluppo
       - ./server:/app
       - /app/node_modules

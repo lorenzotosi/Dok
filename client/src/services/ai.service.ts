@@ -1,11 +1,11 @@
 import { api } from './api';
 
 export const aiService = {
-  async rewriteText(text: string, prompt: string): Promise<string> {
+  async rewriteText(text: string, instruction: string): Promise<string> {
     try {
-      const response = await api.post('/ai/rewrite', {
+      const response = await api.post('/llm/rewrite', {
         text,
-        prompt
+        instruction
       });
       return response.data.rewrittenText;
     } catch (error) {
