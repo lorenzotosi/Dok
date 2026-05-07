@@ -64,6 +64,7 @@ export const useNotificationStore = defineStore('notification', () => {
 
   const deleteNotification = async (id: string) => {
     try {
+      console.log(id)
       await api.delete(`/notifications/${id}`);
       notifications.value = notifications.value.filter(n => n._id !== id);
     } catch (error) {

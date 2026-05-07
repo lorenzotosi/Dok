@@ -22,15 +22,19 @@ export class NotificationService {
         return await Notification.find({ recipient: userId, read: false }).sort({ createdAt: -1 });
     }
 
-    static async markAsRead(id: string) {
-        return await Notification.findByIdAndUpdate(id, { read: true }, { new: true });
+    static async markAsRead(id: string, userId: string) {
+        return await Notification.findOneAndUpdate(
+            { _id: id, recipient: userId },
+            { read: true },
+            { new: true }
+        );
     }
 
     static async markAllAsRead(userId: string) {
         return await Notification.updateMany({ recipient: userId }, { read: true });
     }
 
-    static async deleteNotification(id: string) {
-        return await Notification.findByIdAndDelete(id);
+    static async deleteNotification(id: string, userId: string) {
+        return await Notification.findOneAndDelete({ _id: id, recipient: userId });
     }
 }

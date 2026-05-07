@@ -36,7 +36,8 @@ export const getUnreadNotifications = async (req: AuthRequest, res: Response) =>
 export const markAsRead = async (req: AuthRequest, res: Response) => {
     try {
         const userId = req.user!.id;
-        const updatedNotification = await NotificationService.markAsRead(userId);
+        const notificationId = req.params.id as string;
+        const updatedNotification = await NotificationService.markAsRead(notificationId, userId);
 
         if (!updatedNotification) {
             return res.status(404).json({ error: 'Notifica non trovata' });
@@ -69,7 +70,8 @@ export const markAllAsRead = async (req: AuthRequest, res: Response) => {
 export const deleteNotification = async (req: AuthRequest, res: Response) => {
     try {
         const userId = req.user!.id;
-        const deleted = await NotificationService.deleteNotification(userId);
+        const notificationId = req.params.id as string;
+        const deleted = await NotificationService.deleteNotification(notificationId, userId);
 
         if (!deleted) {
             return res.status(404).json({ error: 'Notifica non trovata' });
