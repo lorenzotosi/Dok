@@ -23,7 +23,11 @@ class SocketClientService {
         });
 
         this.socket.on('connect', () => {
-            console.log('[Socket] Connesso con ID:', this.socket?.id);
+            if (token) {
+                console.log('[Socket] Connesso con ACCOUNT. ID:', this.socket?.id);
+            } else {
+                console.log('[Socket] Connesso come GUEST (non loggato). ID:', this.socket?.id);
+            }
         });
 
         this.socket.on('disconnect', (reason) => {

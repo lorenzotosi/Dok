@@ -72,9 +72,13 @@ export const setupSockets = async (io: Server) => {
   });
 
   io.on('connection', (socket: Socket) => {
-    console.log(`🟢 Nuovo client connesso: ${socket.id}`);
-
     const userId = socket.data.user?.id;
+    if (userId) {
+      console.log(`🟢 Nuovo client ACCOUNT connesso (ID: ${userId}): ${socket.id}`);
+    } else {
+      console.log(`🟢 Nuovo client GUEST connesso: ${socket.id}`);
+    }
+
     const userRole = socket.data.user?.role;
 
     if (userId) {
