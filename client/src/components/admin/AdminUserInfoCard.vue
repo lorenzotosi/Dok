@@ -1,0 +1,101 @@
+<script setup lang="ts">
+import { useRouter } from 'vue-router';
+import type {AdminUserDetail} from "../../types/admin.types.ts";
+
+defineProps<{ user: AdminUserDetail | null }>();
+
+const router = useRouter();
+</script>
+
+<template>
+  <div class="user-info-card shadow-md">
+    <button @click="router.back()" class="back-btn">
+      ← Torna alla Dashboard
+    </button>
+
+    <div v-if="user" class="info-grid">
+      <div class="profile-section">
+        <div class="avatar-placeholder">{{ user.firstName[0] }}{{ user.lastName[0] }}</div>
+        <div class="details">
+          <h2>{{ user.firstName }} {{ user.lastName }}</h2>
+          <p class="email">{{ user.email }}</p>
+          <span class="badge" :class="user.role.toLowerCase()">{{ user.role }}</span>
+          <span class="status" :class="{ online: user.isOnline }">
+            {{ user.isOnline ? 'Online' : 'Offline' }}
+          </span>
+        </div>
+      </div>
+
+      <div class="metrics-section">
+        <div class="metric">
+          <span class="value">{{ user.docsCreated }}</span>
+          <span class="label">Creati</span>
+        </div>
+        <div class="metric">
+          <span class="value">{{ user.docsSharedByMe }}</span>
+          <span class="label">Condivisi</span>
+        </div>
+        <div class="metric">
+          <span class="value">{{ user.docsSharedWithMe }}</span>
+          <span class="label">Ricevuti</span>
+        </div>
+      </div>
+    </div>
+    <div v-else class="loading">Caricamento dati utente...</div>
+  </div>
+</template>
+
+<style scoped>
+.user-info-card {
+  background-color: #2b2d31;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  color: #dbdee1;
+}
+
+.back-btn {
+  background: none;
+  border: 1px solid #3f3f3f;
+  color: #dbdee1;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+}
+
+.back-btn:hover { background-color: #3f4147; }
+
+.info-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+@media (min-width: 768px) {
+  .info-grid { flex-direction: row; justify-content: space-between; align-items: center; }
+}
+
+.profile-section { display: flex; align-items: center; gap: 15px; }
+
+.avatar-placeholder {
+  width: 60px; height: 60px;
+  background-color: #5865F2;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem; font-weight: bold; color: white;
+}
+
+.details h2 { margin: 0 0 5px 0; font-size: 1.5rem; }
+.email { margin: 0 0 10px 0; color: #949ba4; font-size: 0.9rem; }
+.badge { padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; margin-right: 10px; }
+.badge.admin { background-color: #f23f42; color: white; }
+.badge.user { background-color: #23a559; color: white; }
+.status.online { color: #23a559; }
+
+.metrics-section { display: flex; gap: 20px; }
+.metric { display: flex; flex-direction: column; align-items: center; background-color: #1e1f22; padding: 10px 20px; border-radius: 6px; }
+.metric .value { font-size: 1.5rem; font-weight: bold; color: #5865F2; }
+.metric .label { font-size: 0.8rem; color: #949ba4; text-transform: uppercase; }
+</style>

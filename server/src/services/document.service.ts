@@ -1,4 +1,6 @@
-import Document from '../models/Document.js';
+import Document, {type IDocument} from '../models/Document.js';
+import {NotificationManager} from "../sockets/notificationManager.js";
+import {NotificationService} from "./notification.service.js";
 
 export class DocumentService {
     static async createDocument(title: string, ownerId: string, folderId: string | null = null, visibility: 'private' | 'public' = 'private') {
@@ -9,27 +11,36 @@ export class DocumentService {
             visibility,
             tiptapJson: { type: 'doc', content: [{ type: 'paragraph' }] }
         });
+        NotificationManager.notifyDocumentCreated(doc);
+        this.updateAdminMetricsAsync(ownerId).catch(err =>
+            console.error('[Background Task] Errore update admin metrics:', err)
+        );
         return await doc.save();
     }
 
+    private static async updateAdminMetricsAsync(ownerId: string) {
+        const docsCount = await Document.countDocuments({ ownerId });
+        NotificationManager.notifyAdminMetricsUpdate(ownerId, docsCount);
+    }
+
     static async getDocumentById(id: string) {
-        return await Document.findById(id);
+        return Document.findById(id);
     }
 
     static async getPrivateDocumentById(id: string, userId: string) {
-        return await Document.findOne({
+        return Document.findOne({
             _id: id,
             $or: [
-                { visibility: 'public' },
-                { ownerId: userId },
-                { 'sharedWith.userId': userId }
+                {visibility: 'public'},
+                {ownerId: userId},
+                {'sharedWith.userId': userId}
             ]
         }).populate('ownerId', 'firstName lastName email')
             .populate('sharedWith.userId', 'firstName lastName email');
     }
 
     static async getPublicDocumentById(id: string) {
-        return await Document.findOne({ _id: id, visibility: 'public' });
+        return Document.findOne({_id: id, visibility: 'public'});
     }
 
     static async getAllDocuments(userId: string | null, folderId: string | null = null) {
@@ -63,12 +74,25 @@ export class DocumentService {
         return docs;
     }
 
-    static async deleteDocument(id: string) {
-        return await Document.findByIdAndDelete(id)
+    static async deleteDocument(doc: IDocument) {
+        const docOK = await Document.findByIdAndDelete(doc._id)
+        NotificationManager.notifyDocumentDeleted(doc)
+        return docOK
     }
 
     static async renameDocument(id: string, newTitle: string) {
-        return await Document.findByIdAndUpdate(id, { title: newTitle }, { returnDocument: 'after' });
+        const updatedDoc = await Document.findByIdAndUpdate(id, { title: newTitle }, { returnDocument: 'after' });
+        if (!updatedDoc) return null;
+
+        const fullDoc = await Document.findById(id)
+            .populate('ownerId', 'firstName lastName')
+            .populate('sharedWith.userId', 'firstName lastName email')
+            .lean();
+
+        if (fullDoc) {
+            NotificationManager.notifyDocumentRenamed(fullDoc);
+        }
+        return fullDoc;
     }
 
     static async getSharedDocuments(userId: string) {
@@ -86,23 +110,69 @@ export class DocumentService {
         });
     }
 
-    static async shareDocument(id: string, userId: string, role: 'editor' | 'viewer') {
-        const updated = await Document.findOneAndUpdate(
-            { _id: id, 'sharedWith.userId': userId },
-            { $set: { 'sharedWith.$.role': role } },
-            { returnDocument: 'after' }
-        );
+    static async shareDocument(id: string, requesterId: string, targetUserId: string, role: 'editor' | 'viewer', isAlreadyShared: boolean) {
+        if (isAlreadyShared) {
+            await Document.findOneAndUpdate(
+                { _id: id, 'sharedWith.userId': targetUserId },
+                { $set: { 'sharedWith.$.role': role } },
+                { returnDocument: 'after' }
+            );
+        } else {
+            await Document.findByIdAndUpdate(
+                id,
+                { $push: { sharedWith: { userId: targetUserId, role } } },
+                { returnDocument: 'after' }
+            );
+        }
 
-        if (updated) return updated;
+        const docForNotify = await Document.findById(id)
+            .populate('ownerId', 'firstName lastName')
+            .populate('sharedWith.userId', 'firstName lastName email')
+            .lean() as any;
 
-        return await Document.findByIdAndUpdate(
-            id,
-            { $push: { sharedWith: { userId, role } } },
-            { returnDocument: 'after' }
-        );
+        if (docForNotify) {
+            const notificationTitle = isAlreadyShared ? 'Permessi Aggiornati' : 'Nuova Condivisione';
+            const notificationType = isAlreadyShared ? 'PERM_CHANGE' : 'SHARE';
+            const actionVerb = isAlreadyShared ? 'ha aggiornato i tuoi permessi per' : 'ha condiviso con te';
+
+            const notification = await NotificationService.createNotification(
+                targetUserId,
+                requesterId,
+                notificationType,
+                notificationTitle,
+                `${docForNotify.ownerId.firstName} ${docForNotify.ownerId.lastName} ${actionVerb} il documento: ${docForNotify.title}`,
+                id,
+                `/document/${id}`
+            );
+
+            const fullNotification = await notification.populate('sender', 'firstName lastName');
+
+            NotificationManager.notifyDocumentShared(docForNotify, targetUserId, fullNotification);
+        }
+        return docForNotify;
     }
 
-    static async unshareDocument(id: string, userId: string) {
-        return await Document.findByIdAndUpdate(id, { $pull: { sharedWith: { userId } } }, { returnDocument: 'after' });
+    static async unshareDocument(id: string, requesterId: string, targetUserId: string) {
+        await Document.findByIdAndUpdate(id, { $pull: { sharedWith: { userId: targetUserId } } }, { returnDocument: 'after' });
+
+        const docForNotify = await Document.findById(id)
+            .populate('ownerId', 'firstName lastName')
+            .populate('sharedWith.userId', 'firstName lastName email')
+            .lean() as any;
+
+        if (docForNotify) {
+            const notification = await NotificationService.createNotification(
+                targetUserId,
+                requesterId,
+                'SYSTEM',
+                'Accesso Rimosso',
+                `${docForNotify.ownerId.firstName} ${docForNotify.ownerId.lastName} ha rimosso il tuo accesso al documento: ${docForNotify.title}`,
+                id
+            );
+
+            const fullNotification = await notification.populate('sender', 'firstName lastName');
+            NotificationManager.notifyDocumentUnshared(id, docForNotify, targetUserId, fullNotification);
+        }
+        return docForNotify;
     }
 }
