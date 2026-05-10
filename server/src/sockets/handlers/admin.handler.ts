@@ -14,8 +14,4 @@ export const registerAdminHandlers = (io: Server, socket: Socket) => {
     socket.on('leave_admin_dashboard', () => {
         socket.leave('admin:dashboard');
     });
-
-    socket.on('join-public-dashboard', () => {
-        socket.join('global-dashboard');
-    });
 };

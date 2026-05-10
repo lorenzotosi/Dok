@@ -33,22 +33,34 @@ const handleClientLeave = async (documentId: string) => {
 
 export const registerDocumentHandlers = (io: Server, socket: Socket) => {
     socket.on('join-document', async (documentId: string) => {
+        if (socket.rooms.has(documentId)) return;
         socket.join(documentId);
 
         if (!activeDocuments.has(documentId)) {
             const docFromDb = await Document.findById(documentId);
+            if (!docFromDb) {
+                socket.emit('error', { message: 'Documento non trovato' });
+                return;
+            }
             const ydoc = new Y.Doc();
-            if (docFromDb?.yjsState) {
+            if (docFromDb && docFromDb.yjsState && docFromDb.yjsState.length > 0) {
                 Y.applyUpdate(ydoc, new Uint8Array(docFromDb.yjsState));
             }
-            activeDocuments.set(documentId, { ydoc, clientsCount: 0 });
+
+            activeDocuments.set(documentId, {
+                ydoc,
+                clientsCount: 1,
+                saveTimeout: null
+            });
+
+            console.log(`📄 Documento ${documentId} caricato in RAM.`);
+        } else {
+            const state = activeDocuments.get(documentId)!;
+            state.clientsCount += 1;
         }
 
         const state = activeDocuments.get(documentId)!;
-        state.clientsCount += 1;
-
-        const currentUpdate = Y.encodeStateAsUpdate(state.ydoc);
-        socket.emit('document-init', currentUpdate);
+        socket.emit('sync-document', Y.encodeStateAsUpdate(state.ydoc));
     });
 
     socket.on('crdt-update', ({ documentId, update }: { documentId: string, update: Uint8Array }) => {
@@ -67,8 +79,9 @@ export const registerDocumentHandlers = (io: Server, socket: Socket) => {
                     yjsState: Buffer.from(binaryState),
                     tiptapJson: tiptapJson
                 });
+                console.log(`💾 Documento ${documentId} persistito su DB dopo inattività.`);
             } catch (error) {
-                console.error("Errore salvataggio asincrono:", error);
+                console.error("Errore salvataggio debounced:", error);
             }
         }, 3000);
     });
@@ -86,9 +99,17 @@ export const registerDocumentHandlers = (io: Server, socket: Socket) => {
     socket.on('disconnecting', async () => {
         const rooms = Array.from(socket.rooms).filter(r => r !== socket.id);
         for (const documentId of rooms) {
-            if (documentId.length > 15) {
-                await handleClientLeave(documentId);
-            }
+            await handleClientLeave(documentId);
         }
+    });
+
+    socket.on('join-public-dashboard', () => {
+        socket.join('global-dashboard');
+        console.log(`[Real-time] Utente ${socket.id} monitora la dashboard pubblica`);
+    });
+
+    socket.on('join-shared-dashboard', () => {
+        socket.join('shared-dashboard');
+        console.log(`[Real-time] Utente ${socket.id} monitora la dashboard condivisa`);
     });
 };
