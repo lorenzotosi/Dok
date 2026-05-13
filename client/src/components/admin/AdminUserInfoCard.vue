@@ -87,7 +87,7 @@ const router = useRouter();
   font-size: 1.5rem; font-weight: bold; color: white;
 }
 
-.details h2 { margin: 0 0 5px 0; font-size: 1.5rem; }
+.details h2 { margin: 0 0 5px 0; font-size: 1.5rem; color: #4338ca}
 .email { margin: 0 0 10px 0; color: #949ba4; font-size: 0.9rem; }
 .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; margin-right: 10px; }
 .badge.admin { background-color: #f23f42; color: white; }

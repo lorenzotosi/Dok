@@ -3,19 +3,19 @@ import {ref, onMounted, onUnmounted} from 'vue';
 import {useRoute} from 'vue-router';
 import AdminUserInfoCard from '../components/admin/AdminUserInfoCard.vue';
 import AdminAccessLogsDrawer from '../components/admin/AdminAccessLogsDrawer.vue';
-import AdminItemDetailsDrawer from '../components/admin/AdminItemDetailsDrawer.vue';
+import AdminItemDetailsPanel from '../components/admin/AdminItemDetailsPanel.vue';
 import {socketService} from "../services/socket.service.ts";
 import type {AdminUserDetail} from "../types/admin.types.ts";
 import {AdminService} from "../services/admin.service.ts";
+import VirtualFileSystem from '../components/admin/VirtualFileSystem.vue';
 
 const route = useRoute();
 const userId = route.params.id as string;
 
 const isLeftDrawerOpen = ref(false);
-const isRightDrawerOpen = ref(false);
 
 const userDetail = ref<AdminUserDetail | null>(null);
-const selectedItem = ref<any>(null); //TODO
+const selectedItem = ref<any>(null); //apre il pannello di destra
 const errorMessage = ref<string | null>(null);
 
 const fetchUserDetail = async () => {
@@ -24,6 +24,14 @@ const fetchUserDetail = async () => {
   } catch (error) {
     errorMessage.value = "Impossibile recuperare i dati dell'utente.";
   }
+};
+
+const onFileSystemItemSelected = (node: any) => {
+  selectedItem.value = node;
+};
+
+const closeItemDetails = () => {
+  selectedItem.value = null;
 };
 
 onMounted(() => {
@@ -71,34 +79,108 @@ onUnmounted(() => {
   <div class="admin-detail-layout">
     <div v-if="errorMessage" class="error-msg">{{ errorMessage }}</div>
 
-    <AdminUserInfoCard v-else :user="userDetail" />
+    <div v-else class="split-layout">
 
-    <div class="actions-bar">
-      <button @click="isLeftDrawerOpen = true" class="action-btn">
-        <span class="icon">📜</span> Vedi Log Accessi
-      </button>
-      <button @click="isRightDrawerOpen = true" class="action-btn">
-        <span class="icon">ℹ️</span> Simula Click Elemento
-      </button>
-    </div>
+      <div class="main-column">
+        <AdminUserInfoCard :user="userDetail" />
 
-    <div class="tree-container shadow-md">
-      <h3>Virtual File System</h3>
-      <p class="placeholder-text">L'albero dei documenti e delle cartelle verrà renderizzato qui.</p>
+        <div class="actions-bar">
+          <button @click="isLeftDrawerOpen = true" class="action-btn">
+            <span class="icon">📜</span> Vedi Log Accessi
+          </button>
+        </div>
+
+        <div class="tree-container shadow-md">
+          <h3>Virtual File System (Admin View)</h3>
+          <p class="privacy-notice">Nota: I titoli dei documenti sono offuscati per privacy.</p>
+
+          <VirtualFileSystem @item-selected="onFileSystemItemSelected" />
+        </div>
+      </div>
+
+      <aside v-if="selectedItem" class="details-sidebar">
+        <AdminItemDetailsPanel
+            :item="selectedItem"
+            @close="closeItemDetails"
+        />
+      </aside>
+
     </div>
 
     <AdminAccessLogsDrawer
         :is-open="isLeftDrawerOpen"
         @close="isLeftDrawerOpen = false"
     />
-
-    <AdminItemDetailsDrawer
-        :is-open="isRightDrawerOpen"
-        :item-details="selectedItem"
-        @close="isRightDrawerOpen = false"
-    />
   </div>
 </template>
+
+<style scoped>
+.admin-detail-layout {
+  min-height: 100vh;
+  background-color: #1e1f22;
+  padding: 20px;
+  overflow-x: hidden;
+}
+
+.split-layout {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.main-column {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.details-sidebar {
+  width: 350px;
+  flex-shrink: 0;
+  height: calc(100vh - 40px);
+  position: sticky;
+  top: 20px;
+}
+
+@media (max-width: 1024px) {
+  .split-layout {
+    flex-direction: column;
+  }
+  .details-sidebar {
+    width: 100%;
+    height: auto;
+    position: static;
+  }
+}
+
+.actions-bar {
+  display: flex; gap: 15px;
+}
+
+.action-btn {
+  background-color: #5865F2; color: white; border: none;
+  padding: 10px 15px; border-radius: 4px; cursor: pointer;
+  display: flex; align-items: center; gap: 8px; font-weight: 500;
+}
+
+.action-btn:hover { background-color: #4752c4; }
+
+.tree-container {
+  background-color: #2b2d31; border-radius: 8px; padding: 20px;
+  color: #dbdee1;
+}
+
+.privacy-notice {
+  font-size: 0.8rem;
+  color: #e3a008;
+  margin-bottom: 15px;
+  font-style: italic;
+}
+</style>
 
 <style scoped>
 .admin-detail-layout {
@@ -124,6 +206,13 @@ onUnmounted(() => {
 .tree-container {
   background-color: #2b2d31; border-radius: 8px; padding: 20px;
   color: #dbdee1; min-height: 400px;
+}
+
+.privacy-notice {
+  font-size: 0.8rem;
+  color: #e3a008;
+  margin-bottom: 15px;
+  font-style: italic;
 }
 
 .placeholder-text { color: #949ba4; font-style: italic; }
