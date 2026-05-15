@@ -78,11 +78,11 @@ export const NotificationManager = {
         }
     },
 
-    notifyAdminMetricsUpdate(userId: string, docsCount: number) {
+    notifyAdminMetricsUpdate(userId: string, metrics: Partial<{ docsCreated: number, docsSharedByMe: number, docsSharedWithMe: number }>) {
         if (!ioInstance) return;
         ioInstance.to('admin:dashboard').emit('user_metrics_update', {
             userId,
-            metrics: { docsCreated: docsCount }
+            metrics
         });
     }
 };

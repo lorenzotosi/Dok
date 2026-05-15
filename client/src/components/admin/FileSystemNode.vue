@@ -1,18 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-
-// TODO sistemare dto
-export interface FSNode {
-  id: string;
-  name: string;
-  type: 'folder' | 'document';
-  visibility: 'private' | 'public';
-  children?: FSNode[];
-  createdAt?: string;
-  docsCount?: number;
-  subfoldersCount?: number;
-  sharedWithCount?: number;
-}
+import type {FSNode} from "../../types/admin.types.ts";
 
 const props = defineProps<{
   node: FSNode;

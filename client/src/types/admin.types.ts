@@ -7,3 +7,16 @@ export interface AdminUserDetail extends User {
     docsSharedByMe: number;
     docsSharedWithMe: number;
 }
+
+export interface FSNode {
+    id: string;
+    name: string;
+    type: 'folder' | 'document';
+    visibility: 'private' | 'public';
+    children?: FSNode[];
+    createdAt?: string;
+    docsCount?: number;
+    subfoldersCount?: number;
+    sharedWithCount?: number;
+    sharedWith?: any;
+}

@@ -11,16 +11,18 @@ export class DocumentService {
             visibility,
             tiptapJson: { type: 'doc', content: [{ type: 'paragraph' }] }
         });
-        NotificationManager.notifyDocumentCreated(doc);
+        const savedDoc = await doc.save();
+
+        NotificationManager.notifyDocumentCreated(savedDoc);
         this.updateAdminMetricsAsync(ownerId).catch(err =>
             console.error('[Background Task] Errore update admin metrics:', err)
         );
-        return await doc.save();
+        return savedDoc;
     }
 
     private static async updateAdminMetricsAsync(ownerId: string) {
         const docsCount = await Document.countDocuments({ ownerId });
-        NotificationManager.notifyAdminMetricsUpdate(ownerId, docsCount);
+        NotificationManager.notifyAdminMetricsUpdate(ownerId, { docsCreated: docsCount });
     }
 
     static async getDocumentById(id: string) {

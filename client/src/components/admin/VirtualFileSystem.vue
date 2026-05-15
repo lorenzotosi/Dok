@@ -1,48 +1,27 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import FileSystemNode, { type FSNode } from './FileSystemNode.vue';
+import { ref, onMounted } from 'vue';
+import { AdminService } from '../../services/admin.service';
+import type {FSNode} from "../../types/admin.types.ts";
+import FileSystemNode from "./FileSystemNode.vue";
 
+const props = defineProps<{ userId: string }>();
 const emit = defineEmits(['item-selected']);
 
-// TODO Struttura ad albero nidificata thisisamock
-const mockTree = ref<FSNode[]>([
-  {
-    id: 'f-1',
-    name: 'Progetti 2026',
-    type: 'folder',
-    visibility: 'private',
-    createdAt: '2026-01-15T10:30:00Z',
-    docsCount: 14,
-    subfoldersCount: 2,
-    children: [
-      {
-        id: 'f-2',
-        name: 'Design System',
-        type: 'folder',
-        visibility: 'private',
-        children: [
-          { id: 'd-1', name: 'Doc_Criptato_88A.doc', type: 'document', visibility: 'private', sharedWithCount: 2 },
-          { id: 'd-2', name: 'Doc_Criptato_91B.doc', type: 'document', visibility: 'private' }
-        ]
-      },
-      { id: 'd-3', name: 'Doc_Criptato_00F.doc', type: 'document', visibility: 'public' }
-    ]
-  },
-  {
-    id: 'f-3',
-    name: 'Cartella Personale (Vuota)',
-    type: 'folder',
-    visibility: 'private',
-    children: []
-  },
-  {
-    id: 'd-4',
-    name: 'Doc_Criptato_Root.doc',
-    type: 'document',
-    visibility: 'private',
-    sharedWithCount: 5
+const tree = ref<FSNode[]>([]);
+const isLoading = ref(true);
+
+const loadFileSystem = async () => {
+  try {
+    isLoading.value = true;
+    tree.value = await AdminService.getUserFileSystem(props.userId);
+  } catch (error) {
+    console.error("Errore caricamento FS:", error);
+  } finally {
+    isLoading.value = false;
   }
-]);
+};
+
+onMounted(loadFileSystem);
 
 const handleItemClick = (node: FSNode) => {
   emit('item-selected', node);
@@ -51,12 +30,11 @@ const handleItemClick = (node: FSNode) => {
 
 <template>
   <div class="vfs-container">
-    <div v-if="mockTree.length === 0" class="empty-state">
-      L'utente non ha file o cartelle.
-    </div>
+    <div v-if="isLoading" class="loading-text">Costruzione albero virtuale...</div>
+    <div v-else-if="tree.length === 0" class="empty-state">L'utente non ha file.</div>
 
     <FileSystemNode
-        v-for="rootNode in mockTree"
+        v-for="rootNode in tree"
         :key="rootNode.id"
         :node="rootNode"
         @node-click="handleItemClick"

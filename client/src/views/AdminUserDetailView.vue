@@ -94,7 +94,7 @@ onUnmounted(() => {
           <h3>Virtual File System (Admin View)</h3>
           <p class="privacy-notice">Nota: I titoli dei documenti sono offuscati per privacy.</p>
 
-          <VirtualFileSystem @item-selected="onFileSystemItemSelected" />
+          <VirtualFileSystem @item-selected="onFileSystemItemSelected" :userId="userId" />
         </div>
       </div>
 
@@ -215,5 +215,4 @@ onUnmounted(() => {
   font-style: italic;
 }
 
-.placeholder-text { color: #949ba4; font-style: italic; }
 </style>

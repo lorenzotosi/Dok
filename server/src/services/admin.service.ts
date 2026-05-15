@@ -1,5 +1,6 @@
 import { UserModel } from '../models/User.js';
 import DocumentModel from '../models/Document.js';
+import FolderModel from '../models/Folder.js';
 
 export class AdminService {
     /**
@@ -46,5 +47,60 @@ export class AdminService {
                 docsSharedWithMe
             }
         };
+    }
+
+    static async getUserFileSystem(userId: string) {
+        const [folders, docs] = await Promise.all([
+            FolderModel.find({ ownerId: userId }).lean(),
+            DocumentModel.find({ ownerId: userId })
+                .populate('sharedWith.userId', 'firstName lastName email')
+                .lean()
+        ]);
+
+        const buildTree = (parentId: string | null = null, prefix: string = ''): any[] => {
+            const tree: any[] = [];
+
+            const currentFolders = folders.filter(f =>
+                parentId === null ? f.parentId === null : f.parentId?.toString() === parentId
+            );
+
+            currentFolders.forEach((folder, index) => {
+                const char = String.fromCharCode(65 + index);
+                const label = prefix ? `${prefix}.${char}` : char;
+
+                tree.push({
+                    id: folder._id.toString(),
+                    name: `Cartella ${label}`,
+                    type: 'folder',
+                    visibility: folder.visibility,
+                    createdAt: (folder as any).createdAt,
+                    children: buildTree(folder._id.toString(), label),
+                    subfoldersCount: folders.filter(f => f.parentId?.toString() === folder._id.toString()).length,
+                    docsCount: docs.filter(d => d.folderId?.toString() === folder._id.toString()).length
+                });
+            });
+
+            const currentDocs = docs.filter(d =>
+                parentId === null ? d.folderId === null : d.folderId?.toString() === parentId
+            );
+
+            currentDocs.forEach((doc, index) => {
+                const label = prefix ? `${prefix}.${index + 1}` : `${index + 1}`;
+
+                tree.push({
+                    id: doc._id.toString(),
+                    name: `Documento ${label}`,
+                    type: 'document',
+                    visibility: doc.visibility,
+                    createdAt: (doc as any).createdAt,
+                    sharedWith: doc.sharedWith,
+                    sharedWithCount: doc.sharedWith?.length || 0
+                });
+            });
+
+            return tree;
+        };
+
+        return buildTree();
     }
 }

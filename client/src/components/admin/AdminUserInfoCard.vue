@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
 import type {AdminUserDetail} from "../../types/admin.types.ts";
+import UserAvatar from "../common/UserAvatar.vue";
 
 defineProps<{ user: AdminUserDetail | null }>();
 
@@ -15,7 +16,7 @@ const router = useRouter();
 
     <div v-if="user" class="info-grid">
       <div class="profile-section">
-        <div class="avatar-placeholder">{{ user.firstName[0] }}{{ user.lastName[0] }}</div>
+        <UserAvatar :user="user" size="lg"/>
         <div class="details">
           <h2>{{ user.firstName }} {{ user.lastName }}</h2>
           <p class="email">{{ user.email }}</p>
@@ -79,13 +80,6 @@ const router = useRouter();
 
 .profile-section { display: flex; align-items: center; gap: 15px; }
 
-.avatar-placeholder {
-  width: 60px; height: 60px;
-  background-color: #5865F2;
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.5rem; font-weight: bold; color: white;
-}
 
 .details h2 { margin: 0 0 5px 0; font-size: 1.5rem; color: #4338ca}
 .email { margin: 0 0 10px 0; color: #949ba4; font-size: 0.9rem; }

@@ -1,6 +1,6 @@
 import { api } from './api';
 import type { User } from '../types/user.types';
-import type {AdminUserDetail} from "../types/admin.types.ts";
+import type {AdminUserDetail, FSNode} from "../types/admin.types.ts";
 
 export interface AdminDashboardUser extends User {
     isOnline: boolean;
@@ -17,6 +17,11 @@ export const AdminService = {
     async getUserDetail(userId: string): Promise<AdminUserDetail> {
         const response = await api.get<AdminUserDetail>(`/admin/users/${userId}`);
         return response.data;
-    }
+    },
+
+    async getUserFileSystem(userId: string): Promise<FSNode[]> {
+        const response = await api.get<FSNode[]>(`/admin/users/${userId}/filesystem`);
+        return response.data;
+    },
 
 };

@@ -10,13 +10,17 @@ const emit = defineEmits(['close']);
 const isFolder = computed(() => props.item?.type === 'folder');
 const isDocument = computed(() => props.item?.type === 'document');
 
-// Formattazione data mock
 const formattedDate = computed(() => {
   if (!props.item?.createdAt) return 'Data sconosciuta';
   return new Date(props.item.createdAt).toLocaleDateString('it-IT', {
     day: '2-digit', month: 'long', year: 'numeric'
   });
 });
+
+const getInitials = (user: any) => {
+  if (!user) return '?';
+  return `${user.firstName?.charAt(0) || ''}${user.lastName?.charAt(0) || ''}`.toUpperCase();
+};
 </script>
 
 <template>
@@ -53,12 +57,25 @@ const formattedDate = computed(() => {
 
       <div v-else-if="isDocument" class="stats-grid">
         <div class="stat-box">
-          <span class="label">Tipo</span>
-          <span class="value">Documento di Testo</span>
+          <span class="label">Visibilità</span>
+          <span class="value capitalize" :class="item.visibility">{{ item.visibility }}</span>
         </div>
-        <div class="stat-box">
-          <span class="label">Spazio per futuri dati...</span>
-          <span class="value">...</span>
+
+        <div class="sharing-section">
+          <span class="label">Condiviso con ({{ item.sharedWith?.length || 0 }})</span>
+
+          <div v-if="item.sharedWith && item.sharedWith.length > 0" class="collaborators-list">
+            <div v-for="share in item.sharedWith" :key="share.userId._id || share.userId.email" class="collaborator-item">
+              <div class="mini-avatar">
+                {{ getInitials(share.userId) }}
+              </div>
+              <div class="collab-info">
+                <span class="collab-name">{{ share.userId.firstName }} {{ share.userId.lastName }}</span>
+                <span class="collab-role" :class="share.role">{{ share.role }}</span>
+              </div>
+            </div>
+          </div>
+          <p v-else class="no-collabs">Nessun collaboratore esterno.</p>
         </div>
       </div>
     </div>
@@ -134,6 +151,84 @@ const formattedDate = computed(() => {
   font-size: 1rem;
   color: #ffffff;
 }
+
+.details-panel {
+  background-color: #2b2d31; border-radius: 8px; height: 100%;
+  display: flex; flex-direction: column; overflow: hidden;
+  border: 1px solid #3f3f3f; color: #dbdee1;
+}
+
+.panel-header {
+  padding: 15px 20px; background-color: #232428; border-bottom: 1px solid #3f3f3f;
+  display: flex; justify-content: space-between; align-items: center;
+}
+
+.panel-content { padding: 20px; flex-grow: 1; overflow-y: auto; }
+
+.item-name { font-size: 1.2rem; margin-bottom: 20px; color: #fff; }
+
+.stats-grid { display: flex; flex-direction: column; gap: 12px; }
+
+.stat-box {
+  background-color: #1e1f22; padding: 12px; border-radius: 6px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+
+.label { font-size: 0.7rem; color: #949ba4; text-transform: uppercase; font-weight: 700; }
+.value { font-size: 0.95rem; }
+.value.highlight { color: #5865f2; font-weight: bold; }
+
+.sharing-section {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.collaborators-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.collaborator-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background-color: #232428;
+  padding: 8px;
+  border-radius: 6px;
+}
+
+.mini-avatar {
+  width: 32px; height: 32px;
+  background-color: #4f545c;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem; font-weight: bold; color: white;
+}
+
+.collab-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.collab-name { font-size: 0.85rem; font-weight: 500; }
+
+.collab-role {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.collab-role.editor { color: #f23f42; }
+.collab-role.viewer { color: #b5bac1; }
+
+.no-collabs { font-size: 0.85rem; color: #949ba4; font-style: italic; }
+
+.capitalize { text-transform: capitalize; }
+.private { color: #f23f42; }
+.public { color: #23a559; }
 
 .stat-box .value.highlight { color: #5865F2; font-weight: bold; }
 .capitalize { text-transform: capitalize; }

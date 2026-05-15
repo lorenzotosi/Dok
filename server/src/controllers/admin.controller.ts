@@ -65,3 +65,19 @@ export const getUserDetails = async (req: Request, res: Response): Promise<void>
         }
     }
 };
+
+export const getUserFileSystem = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const userId = req.params.id;
+        if (!userId || typeof userId !== 'string') {
+            res.status(400).json({ error: 'ID utente non valido' });
+            return;
+        }
+
+        const fileSystem = await AdminService.getUserFileSystem(userId);
+        res.status(200).json(fileSystem);
+    } catch (error) {
+        console.error('[AdminController] Errore recupero FileSystem:', error);
+        res.status(500).json({ error: 'Errore nel recupero dell\'albero dei file.' });
+    }
+};
