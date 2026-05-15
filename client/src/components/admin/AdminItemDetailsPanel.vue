@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import type {FSNode} from "../../types/admin.types.ts";
+import UserAvatar from "../common/UserAvatar.vue";
 
 const props = defineProps<{
-  item: any | null
+  item: FSNode | null
 }>();
 
 const emit = defineEmits(['close']);
@@ -16,11 +18,6 @@ const formattedDate = computed(() => {
     day: '2-digit', month: 'long', year: 'numeric'
   });
 });
-
-const getInitials = (user: any) => {
-  if (!user) return '?';
-  return `${user.firstName?.charAt(0) || ''}${user.lastName?.charAt(0) || ''}`.toUpperCase();
-};
 </script>
 
 <template>
@@ -57,6 +54,10 @@ const getInitials = (user: any) => {
 
       <div v-else-if="isDocument" class="stats-grid">
         <div class="stat-box">
+          <span class="label">Creata il</span>
+          <span class="value">{{ formattedDate }}</span>
+        </div>
+        <div class="stat-box">
           <span class="label">Visibilità</span>
           <span class="value capitalize" :class="item.visibility">{{ item.visibility }}</span>
         </div>
@@ -66,9 +67,7 @@ const getInitials = (user: any) => {
 
           <div v-if="item.sharedWith && item.sharedWith.length > 0" class="collaborators-list">
             <div v-for="share in item.sharedWith" :key="share.userId._id || share.userId.email" class="collaborator-item">
-              <div class="mini-avatar">
-                {{ getInitials(share.userId) }}
-              </div>
+              <UserAvatar :user="share.userId" size="sm" />
               <div class="collab-info">
                 <span class="collab-name">{{ share.userId.firstName }} {{ share.userId.lastName }}</span>
                 <span class="collab-role" :class="share.role">{{ share.role }}</span>
@@ -198,14 +197,6 @@ const getInitials = (user: any) => {
   background-color: #232428;
   padding: 8px;
   border-radius: 6px;
-}
-
-.mini-avatar {
-  width: 32px; height: 32px;
-  background-color: #4f545c;
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 0.8rem; font-weight: bold; color: white;
 }
 
 .collab-info {

@@ -1,9 +1,16 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { User } from '../../types/user.types';
+
+export interface AvatarUserData {
+  id?: string;
+  _id?: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+}
 
 interface Props {
-  user: User | null | undefined;
+  user: AvatarUserData | null | undefined;
   size?: 'sm' | 'md' | 'lg';
 }
 
@@ -18,14 +25,13 @@ const initials = computed(() => {
   const last = props.user.lastName?.trim().charAt(0) || '';
 
   const combined = (first + last).toUpperCase();
-  return combined.length > 0 ? combined : props.user.email.charAt(0).toUpperCase();
+  return combined.length > 0 ? combined : (props.user.email?.charAt(0).toUpperCase() || '?');
 });
-
 
 const backgroundColor = computed(() => {
   if (!props.user) return '#e0e0e0';
 
-  const seed = props.user.id || props.user.email;
+  const seed = props.user.id || props.user._id || props.user.email || 'default';
   let hash = 0;
   for (let i = 0; i < seed.length; i++) {
     hash = seed.charCodeAt(i) + ((hash << 5) - hash);

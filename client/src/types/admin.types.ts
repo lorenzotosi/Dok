@@ -8,6 +8,16 @@ export interface AdminUserDetail extends User {
     docsSharedWithMe: number;
 }
 
+export interface SharedUserItem {
+    userId: {
+        _id: string;
+        firstName: string;
+        lastName: string;
+        email: string;
+    };
+    role: 'editor' | 'viewer';
+}
+
 export interface FSNode {
     id: string;
     name: string;
@@ -18,5 +28,5 @@ export interface FSNode {
     docsCount?: number;
     subfoldersCount?: number;
     sharedWithCount?: number;
-    sharedWith?: any;
+    sharedWith?: SharedUserItem[];
 }

@@ -5,7 +5,7 @@ import AdminUserInfoCard from '../components/admin/AdminUserInfoCard.vue';
 import AdminAccessLogsDrawer from '../components/admin/AdminAccessLogsDrawer.vue';
 import AdminItemDetailsPanel from '../components/admin/AdminItemDetailsPanel.vue';
 import {socketService} from "../services/socket.service.ts";
-import type {AdminUserDetail} from "../types/admin.types.ts";
+import type {AdminUserDetail, FSNode} from "../types/admin.types.ts";
 import {AdminService} from "../services/admin.service.ts";
 import VirtualFileSystem from '../components/admin/VirtualFileSystem.vue';
 
@@ -26,7 +26,7 @@ const fetchUserDetail = async () => {
   }
 };
 
-const onFileSystemItemSelected = (node: any) => {
+const onFileSystemItemSelected = (node: FSNode) => {
   selectedItem.value = node;
 };
 
