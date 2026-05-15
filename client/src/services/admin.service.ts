@@ -24,4 +24,8 @@ export const AdminService = {
         return response.data;
     },
 
+    async changeUserRole(userId: string, newRole: 'USER' | 'ADMIN'): Promise<void> {
+        await api.patch(`/admin/users/${userId}/role`, { role: newRole });
+    },
+
 };

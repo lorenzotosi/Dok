@@ -1,7 +1,8 @@
-// server/src/controllers/admin.controller.ts
 import type { Request, Response } from 'express';
 import { AdminService } from '../services/admin.service.js';
 import { PresenceManager } from '../sockets/presenceManager.js';
+import type {AuthRequest} from "../middlewares/auth.middleware.js";
+import {NotificationManager} from "../sockets/notificationManager.js";
 
 export const getAllUsers = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -79,5 +80,40 @@ export const getUserFileSystem = async (req: Request, res: Response): Promise<vo
     } catch (error) {
         console.error('[AdminController] Errore recupero FileSystem:', error);
         res.status(500).json({ error: 'Errore nel recupero dell\'albero dei file.' });
+    }
+};
+
+export const changeUserRole = async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+        const targetUserId = req.params.id;
+        const { role } = req.body;
+        const requesterId = req.user!.id;
+
+        if (!targetUserId || typeof targetUserId !== 'string') {
+            res.status(400).json({ error: 'ID utente non valido.' });
+            return;
+        }
+
+        if (role !== 'USER' && role !== 'ADMIN') {
+            res.status(400).json({ error: 'Ruolo specificato non valido.' });
+            return;
+        }
+
+        if (targetUserId === requesterId) {
+            res.status(403).json({ error: 'Operazione negata: Non puoi modificare il tuo stesso ruolo.' });
+            return;
+        }
+        await AdminService.changeUserRole(targetUserId, role);
+
+        NotificationManager.notifyRoleChanged(targetUserId, role);
+
+        res.status(200).json({ message: `Ruolo aggiornato con successo a ${role}` });
+    } catch (error: any) {
+        if (error.message === 'Utente non trovato') {
+            res.status(404).json({ error: error.message });
+        } else {
+            console.error('[AdminController] Errore cambio ruolo:', error);
+            res.status(500).json({ error: 'Errore interno del server durante il cambio ruolo.' });
+        }
     }
 };

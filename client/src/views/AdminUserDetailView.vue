@@ -34,6 +34,25 @@ const closeItemDetails = () => {
   selectedItem.value = null;
 };
 
+const handleToggleRole = async () => {
+  if (!userDetail.value) return;
+  const newRole = userDetail.value.role === 'ADMIN' ? 'USER' : 'ADMIN';
+  const isConfirmed = confirm(
+      newRole === 'ADMIN'
+          ? `Sei sicuro di voler dare i privilegi di Amministratore a ${userDetail.value.firstName} ${userDetail.value.lastName}?`
+          : `Sei sicuro di voler revocare i privilegi di Amministratore a ${userDetail.value.firstName} ${userDetail.value.lastName}?`
+  );
+  if (!isConfirmed) return;
+
+  try {
+    await AdminService.changeUserRole(userId, newRole);
+    userDetail.value.role = newRole;
+
+  } catch (error: any) {
+    alert(error.response?.data?.error || "Errore durante il cambio ruolo.");
+  }
+};
+
 onMounted(() => {
   const socket = socketService.getSocket();
 
@@ -82,7 +101,7 @@ onUnmounted(() => {
     <div v-else class="split-layout">
 
       <div class="main-column">
-        <AdminUserInfoCard :user="userDetail" />
+        <AdminUserInfoCard :user="userDetail" @toggle-role="handleToggleRole" />
 
         <div class="actions-bar">
           <button @click="isLeftDrawerOpen = true" class="action-btn">

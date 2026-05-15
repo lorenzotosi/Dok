@@ -11,6 +11,20 @@ export function useDashboardSockets(currentSection: Ref<'private' | 'public' | '
   const authStore = useAuthStore();
   const notificationStore = useNotificationStore();
 
+  socketService.getSocket()?.on('role-changed', (newRole: 'USER' | 'ADMIN') => {
+    const authStore = useAuthStore();
+    if (authStore.user) {
+      authStore.user.role = newRole;
+      localStorage.setItem('user', JSON.stringify(authStore.user));
+
+      alert(`Attenzione: Il tuo ruolo è stato modificato in ${newRole} da un Amministratore.`);
+
+      if (newRole === 'USER' && window.location.pathname.startsWith('/admin')) {
+        window.location.href = '/';
+      }
+    }
+  });
+
   const handleGlobalDocumentCreated = (doc: any) => {
     if (!documentStore.documents.find(d => d._id === doc._id)) {
       documentStore.documents.unshift(doc);

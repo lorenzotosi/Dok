@@ -84,5 +84,10 @@ export const NotificationManager = {
             userId,
             metrics
         });
+    },
+
+    notifyRoleChanged(userId: string, newRole: string) {
+        if (!ioInstance) return;
+        ioInstance.to(`user:${userId}`).emit('role-changed', newRole);
     }
 };

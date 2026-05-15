@@ -49,6 +49,23 @@ export class AdminService {
         };
     }
 
+    static async changeUserRole(userId: string, newRole: 'USER' | 'ADMIN') {
+        const updatedUser = await UserModel.findByIdAndUpdate(
+            userId,
+            { role: newRole },
+            {
+                returnDocument: 'after',
+                select: '-passwordHash'
+            }
+        ).lean();
+
+        if (!updatedUser) {
+            throw new Error('Utente non trovato');
+        }
+
+        return updatedUser;
+    }
+
     static async getUserFileSystem(userId: string) {
         const [folders, docs] = await Promise.all([
             FolderModel.find({ ownerId: userId }).lean(),
@@ -56,6 +73,10 @@ export class AdminService {
                 .populate('sharedWith.userId', 'firstName lastName email')
                 .lean()
         ]);
+
+        const sharedDocs = await DocumentModel.find({ 'sharedWith.userId': userId })
+            .populate('ownerId', 'firstName lastName email')
+            .lean();
 
         const buildTree = (parentId: string | null = null, prefix: string = ''): any[] => {
             const tree: any[] = [];
@@ -101,6 +122,28 @@ export class AdminService {
             return tree;
         };
 
-        return buildTree();
+        const userFileSystem = buildTree();
+
+        if (sharedDocs.length > 0) {
+            userFileSystem.push({
+                id: 'virtual-shared-folder',
+                name: 'Condivisi con questo utente',
+                type: 'folder',
+                visibility: 'private',
+                docsCount: sharedDocs.length,
+                subfoldersCount: 0,
+                children: sharedDocs.map((doc, index) => ({
+                    id: doc._id.toString(),
+                    name: `Doc_Ricevuto_${index + 1}`,
+                    type: 'document',
+                    visibility: doc.visibility,
+                    createdAt: (doc as any).createdAt,
+                    sharedWithCount: doc.sharedWith?.length || 0,
+                    ownerId: doc.ownerId
+                }))
+            });
+        }
+
+        return userFileSystem;
     }
 }

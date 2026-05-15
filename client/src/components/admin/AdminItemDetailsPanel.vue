@@ -218,8 +218,8 @@ const formattedDate = computed(() => {
 .no-collabs { font-size: 0.85rem; color: #949ba4; font-style: italic; }
 
 .capitalize { text-transform: capitalize; }
-.private { color: #f23f42; }
-.public { color: #23a559; }
+.value.private { color: #f23f42 !important; font-weight: bold; }
+.value.public { color: #23a559 !important; font-weight: bold; }
 
 .stat-box .value.highlight { color: #5865F2; font-weight: bold; }
 .capitalize { text-transform: capitalize; }

@@ -2,10 +2,13 @@
 import { useRouter } from 'vue-router';
 import type {AdminUserDetail} from "../../types/admin.types.ts";
 import UserAvatar from "../common/UserAvatar.vue";
+import { useAuthStore } from '../../stores/auth.store';
 
 defineProps<{ user: AdminUserDetail | null }>();
+const emit = defineEmits(['toggle-role']);
 
 const router = useRouter();
+const authStore = useAuthStore();
 </script>
 
 <template>
@@ -20,7 +23,18 @@ const router = useRouter();
         <div class="details">
           <h2>{{ user.firstName }} {{ user.lastName }}</h2>
           <p class="email">{{ user.email }}</p>
-          <span class="badge" :class="user.role.toLowerCase()">{{ user.role }}</span>
+          <div class="role-row">
+            <span class="badge" :class="user.role.toLowerCase()">{{ user.role }}</span>
+
+            <button
+                v-if="user.id !== authStore.user?.id"
+                @click="emit('toggle-role')"
+                class="role-btn"
+                :class="{ 'demote': user.role === 'ADMIN' }"
+            >
+              {{ user.role === 'ADMIN' ? '↓ Revoca Admin' : '↑ Promuovi ad Admin' }}
+            </button>
+          </div>
           <span class="status" :class="{ online: user.isOnline }">
             {{ user.isOnline ? 'Online' : 'Offline' }}
           </span>
@@ -80,6 +94,32 @@ const router = useRouter();
 
 .profile-section { display: flex; align-items: center; gap: 15px; }
 
+.role-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.role-btn {
+  background-color: #23a559;
+  color: white;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.role-btn:hover { background-color: #1e8c4b; }
+
+.role-btn.demote {
+  background-color: #4f545c;
+}
+
+.role-btn.demote:hover { background-color: #f23f42; }
 
 .details h2 { margin: 0 0 5px 0; font-size: 1.5rem; color: #4338ca}
 .email { margin: 0 0 10px 0; color: #949ba4; font-size: 0.9rem; }
