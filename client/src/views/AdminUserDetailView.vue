@@ -26,7 +26,7 @@ const fetchUserDetail = async () => {
   }
 };
 
-const onFileSystemItemSelected = (node: FSNode) => {
+const onFileSystemItemSelected = (node: FSNode | null) => {
   selectedItem.value = node;
 };
 
@@ -111,9 +111,12 @@ onUnmounted(() => {
 
         <div class="tree-container shadow-md">
           <h3>Virtual File System (Admin View)</h3>
-          <p class="privacy-notice">Nota: I titoli dei documenti sono offuscati per privacy.</p>
 
-          <VirtualFileSystem @item-selected="onFileSystemItemSelected" :userId="userId" />
+          <VirtualFileSystem
+          :user-id="userId"
+          :selected-item-id="selectedItem?.id"
+          @item-selected="onFileSystemItemSelected"
+          />
         </div>
       </div>
 
@@ -193,15 +196,6 @@ onUnmounted(() => {
   color: #dbdee1;
 }
 
-.privacy-notice {
-  font-size: 0.8rem;
-  color: #e3a008;
-  margin-bottom: 15px;
-  font-style: italic;
-}
-</style>
-
-<style scoped>
 .admin-detail-layout {
   min-height: 100vh;
   background-color: #1e1f22;
@@ -225,13 +219,6 @@ onUnmounted(() => {
 .tree-container {
   background-color: #2b2d31; border-radius: 8px; padding: 20px;
   color: #dbdee1; min-height: 400px;
-}
-
-.privacy-notice {
-  font-size: 0.8rem;
-  color: #e3a008;
-  margin-bottom: 15px;
-  font-style: italic;
 }
 
 </style>

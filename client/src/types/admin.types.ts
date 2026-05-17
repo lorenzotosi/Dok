@@ -9,12 +9,7 @@ export interface AdminUserDetail extends User {
 }
 
 export interface SharedUserItem {
-    userId: {
-        _id: string;
-        firstName: string;
-        lastName: string;
-        email: string;
-    };
+    userId: User
     role: 'editor' | 'viewer';
 }
 
@@ -23,10 +18,17 @@ export interface FSNode {
     name: string;
     type: 'folder' | 'document';
     visibility: 'private' | 'public';
+    ownerId?: string | User;
     children?: FSNode[];
     createdAt?: string;
     docsCount?: number;
     subfoldersCount?: number;
     sharedWithCount?: number;
     sharedWith?: SharedUserItem[];
+}
+
+export interface VFSResponse {
+    privateTree: FSNode[];
+    publicTree: FSNode[];
+    sharedDocs: FSNode[];
 }

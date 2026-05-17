@@ -67,83 +67,115 @@ export class AdminService {
     }
 
     static async getUserFileSystem(userId: string) {
-        const [folders, docs] = await Promise.all([
-            FolderModel.find({ ownerId: userId }).lean(),
-            DocumentModel.find({ ownerId: userId })
-                .populate('sharedWith.userId', 'firstName lastName email')
-                .lean()
-        ]);
+        const privateFolders = await FolderModel.find({ ownerId: userId, visibility: 'private' }).lean();
+        const privateDocs = await DocumentModel.find({ ownerId: userId, visibility: 'private' })
+            .populate('sharedWith.userId', 'firstName lastName email').lean();
 
         const sharedDocs = await DocumentModel.find({ 'sharedWith.userId': userId })
             .populate('ownerId', 'firstName lastName email')
-            .lean();
+            .populate('sharedWith.userId', 'firstName lastName email').lean();
 
-        const buildTree = (parentId: string | null = null, prefix: string = ''): any[] => {
-            const tree: any[] = [];
+        const publicFoldersOwned = await FolderModel.find({ ownerId: userId, visibility: 'public' }).populate('ownerId', 'firstName lastName email').lean();
+        const publicDocsOwned = await DocumentModel.find({ ownerId: userId, visibility: 'public' })
+            .populate('ownerId', 'firstName lastName email')
+            .populate('sharedWith.userId', 'firstName lastName email').lean();
 
-            const currentFolders = folders.filter(f =>
-                parentId === null ? f.parentId === null : f.parentId?.toString() === parentId
-            );
+        const allPublicFoldersMap = new Map<string, any>();
+        publicFoldersOwned.forEach(f => allPublicFoldersMap.set(f._id.toString(), f));
 
-            currentFolders.forEach((folder, index) => {
-                const char = String.fromCharCode(65 + index);
-                const label = prefix ? `${prefix}.${char}` : char;
+        let parentIdsToFetch = new Set<string>();
+        publicFoldersOwned.forEach(f => f.parentId && parentIdsToFetch.add(f.parentId.toString()));
+        publicDocsOwned.forEach(d => d.folderId && parentIdsToFetch.add(d.folderId.toString()));
 
-                tree.push({
-                    id: folder._id.toString(),
-                    name: `Cartella ${label}`,
-                    type: 'folder',
-                    visibility: folder.visibility,
-                    createdAt: (folder as any).createdAt,
-                    children: buildTree(folder._id.toString(), label),
-                    subfoldersCount: folders.filter(f => f.parentId?.toString() === folder._id.toString()).length,
-                    docsCount: docs.filter(d => d.folderId?.toString() === folder._id.toString()).length
-                });
-            });
+        while (parentIdsToFetch.size > 0) {
+            const missingParents = await FolderModel.find({ _id: { $in: Array.from(parentIdsToFetch) } })
+                .populate('ownerId', 'firstName lastName email').lean();
 
-            const currentDocs = docs.filter(d =>
-                parentId === null ? d.folderId === null : d.folderId?.toString() === parentId
-            );
-
-            currentDocs.forEach((doc, index) => {
-                const label = prefix ? `${prefix}.${index + 1}` : `${index + 1}`;
-
-                tree.push({
-                    id: doc._id.toString(),
-                    name: `Documento ${label}`,
-                    type: 'document',
-                    visibility: doc.visibility,
-                    createdAt: (doc as any).createdAt,
-                    sharedWith: doc.sharedWith,
-                    sharedWithCount: doc.sharedWith?.length || 0
-                });
-            });
-
-            return tree;
-        };
-
-        const userFileSystem = buildTree();
-
-        if (sharedDocs.length > 0) {
-            userFileSystem.push({
-                id: 'virtual-shared-folder',
-                name: 'Condivisi con questo utente',
-                type: 'folder',
-                visibility: 'private',
-                docsCount: sharedDocs.length,
-                subfoldersCount: 0,
-                children: sharedDocs.map((doc, index) => ({
-                    id: doc._id.toString(),
-                    name: `Doc_Ricevuto_${index + 1}`,
-                    type: 'document',
-                    visibility: doc.visibility,
-                    createdAt: (doc as any).createdAt,
-                    sharedWithCount: doc.sharedWith?.length || 0,
-                    ownerId: doc.ownerId
-                }))
+            parentIdsToFetch.clear();
+            missingParents.forEach(p => {
+                if (!allPublicFoldersMap.has(p._id.toString())) {
+                    allPublicFoldersMap.set(p._id.toString(), p);
+                    if (p.parentId) parentIdsToFetch.add(p.parentId.toString());
+                }
             });
         }
 
-        return userFileSystem;
+        const buildPrivateTree = (parentId: string | null = null, prefix: string = ''): any[] => {
+            const tree: any[] = [];
+            const currFolders = privateFolders.filter(f => parentId === null ? f.parentId === null : f.parentId?.toString() === parentId);
+
+            currFolders.forEach((f: any, idx) => { //f:any altrimenti, anche se Folder ha timestamps:true, non vede createdAt
+                const char = String.fromCharCode(65 + idx);
+                const label = prefix ? `${prefix}.${char}` : char;
+                tree.push({
+                    id: f._id.toString(),
+                    name: `Cartella ${label}`,
+                    type: 'folder',
+                    visibility: 'private',
+                    createdAt: f.createdAt,
+                    ownerId: userId,
+                    children: buildPrivateTree(f._id.toString(), label),
+                    subfoldersCount: privateFolders.filter(sf => sf.parentId?.toString() === f._id.toString()).length,
+                    docsCount: privateDocs.filter(sd => sd.folderId?.toString() === f._id.toString()).length
+                });
+            });
+
+            const currDocs = privateDocs.filter(d => parentId === null ? d.folderId === null : d.folderId?.toString() === parentId);
+            currDocs.forEach((d, idx) => {
+                const label = prefix ? `${prefix}.${idx + 1}` : `${idx + 1}`;
+                tree.push({
+                    id: d._id.toString(), name: `Dok ${label}`, type: 'document', visibility: 'private',
+                    createdAt: (d as any).createdAt, ownerId: userId, sharedWith: d.sharedWith, sharedWithCount: d.sharedWith?.length || 0
+                });
+            });
+            return tree;
+        };
+
+        const allPublicFoldersArray = Array.from(allPublicFoldersMap.values());
+        const buildPublicTree = (parentId: string | null = null): any[] => {
+            const tree: any[] = [];
+            const currFolders = allPublicFoldersArray.filter(f => parentId === null ? f.parentId === null : f.parentId?.toString() === parentId);
+
+            currFolders.forEach(f => {
+                const children = buildPublicTree(f._id.toString());
+                if (f.ownerId._id.toString() === userId || children.length > 0) {
+                    tree.push({
+                        id: f._id.toString(),
+                        name: f.name,
+                        type: 'folder',
+                        visibility: 'public',
+                        createdAt: f.createdAt,
+                        ownerId: f.ownerId,
+                        children,
+                        subfoldersCount: allPublicFoldersArray.filter(sf => sf.parentId?.toString() === f._id.toString()).length,
+                        docsCount: publicDocsOwned.filter(sd => sd.folderId?.toString() === f._id.toString()).length
+                    });
+                }
+            });
+
+            const currDocs = publicDocsOwned.filter(d => parentId === null ? d.folderId === null : d.folderId?.toString() === parentId);
+            currDocs.forEach(d => {
+                tree.push({
+                    id: d._id.toString(), name: d.title, type: 'document', visibility: 'public',
+                    createdAt: (d as any).createdAt, ownerId: d.ownerId, sharedWith: d.sharedWith, sharedWithCount: d.sharedWith?.length || 0
+                });
+            });
+            return tree;
+        };
+
+        return {
+            privateTree: buildPrivateTree(),
+            publicTree: buildPublicTree(),
+            sharedDocs: sharedDocs.map((d, index) => ({
+                id: d._id.toString(),
+                name: `Dok Condiviso ${index + 1}`,
+                type: 'document',
+                visibility: d.visibility,
+                createdAt: (d as any).createdAt,
+                ownerId: d.ownerId,
+                sharedWith: d.sharedWith,
+                sharedWithCount: d.sharedWith?.length || 0
+            }))
+        };
     }
 }

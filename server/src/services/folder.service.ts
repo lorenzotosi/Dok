@@ -1,9 +1,11 @@
 import Folder from '../models/Folder.js';
 import Document from '../models/Document.js';
+import {NotificationManager} from "../sockets/notificationManager.js";
 
 export class FolderService {
   static async createFolder(name: string, ownerId: string, parentId: string | null = null, visibility: 'private' | 'public' = 'private') {
     const folder = new Folder({ name, ownerId, parentId, visibility });
+    NotificationManager.notifyFileSystemUpdate(ownerId);
     return await folder.save();
   }
 
@@ -15,13 +17,13 @@ export class FolderService {
       query.visibility = 'public';
     }
 
-    return await Folder.find(query)
+    return Folder.find(query)
       .populate('ownerId', 'firstName lastName')
       .sort({ createdAt: -1 });
   }
 
   static async getFolderById(id: string) {
-    return await Folder.findById(id);
+    return Folder.findById(id);
   }
 
   static async getAllFolders(userId?: string) {

@@ -1,22 +1,47 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import type {FSNode} from "../../types/admin.types.ts";
+import type {FSNode, SharedUserItem} from "../../types/admin.types.ts";
 import UserAvatar from "../common/UserAvatar.vue";
+import {useRoute} from "vue-router";
 
 const props = defineProps<{
   item: FSNode | null
 }>();
-
 const emit = defineEmits(['close']);
+const route = useRoute();
+
+const inspectedUserId = route.params.id as string;
 
 const isFolder = computed(() => props.item?.type === 'folder');
 const isDocument = computed(() => props.item?.type === 'document');
+const isPublic = computed(() => props.item?.visibility === 'public');
+
+const isForeignNode = computed(() => {
+  if (!props.item?.ownerId) return false;
+  const ownerIdString = typeof props.item.ownerId === 'string' ? props.item.ownerId : (props.item.ownerId as any)._id;
+  return ownerIdString !== inspectedUserId;
+});
+const foreignOwner = computed(() => {
+  if (isForeignNode.value && typeof props.item?.ownerId === 'object') {
+    return props.item.ownerId;
+  }
+  return null;
+});
 
 const formattedDate = computed(() => {
   if (!props.item?.createdAt) return 'Data sconosciuta';
   return new Date(props.item.createdAt).toLocaleDateString('it-IT', {
     day: '2-digit', month: 'long', year: 'numeric'
   });
+});
+
+const visibleCollaborators = computed<SharedUserItem[]>(() => {
+  if (!props.item?.sharedWith) return [];
+
+  if (isPublic.value) {
+    return props.item.sharedWith.filter(share => share.role === 'editor');
+  }
+  return props.item.sharedWith;
 });
 </script>
 
@@ -32,6 +57,14 @@ const formattedDate = computed(() => {
 
     <div class="panel-content" v-if="item">
       <h4 class="item-name">{{ item.name }}</h4>
+
+      <div v-if="isForeignNode && foreignOwner" class="foreign-owner-alert">
+        <span class="icon">⚠️</span>
+        <div class="owner-text">
+          <small>Creato originariamente da:</small>
+          <strong>{{ foreignOwner.firstName }} {{ foreignOwner.lastName }}</strong>
+        </div>
+      </div>
 
       <div v-if="isFolder" class="stats-grid">
         <div class="stat-box">
@@ -63,10 +96,13 @@ const formattedDate = computed(() => {
         </div>
 
         <div class="sharing-section">
-          <span class="label">Condiviso con ({{ item.sharedWith?.length || 0 }})</span>
+            <span class="label">
+              {{ isPublic ? 'Editor Aggiuntivi' : 'Condiviso con' }}
+              ({{ visibleCollaborators.length }})
+            </span>
 
-          <div v-if="item.sharedWith && item.sharedWith.length > 0" class="collaborators-list">
-            <div v-for="share in item.sharedWith" :key="share.userId._id || share.userId.email" class="collaborator-item">
+          <div v-if="visibleCollaborators.length > 0" class="collaborators-list">
+            <div v-for="share in visibleCollaborators" :key="share.userId.id" class="collaborator-item">
               <UserAvatar :user="share.userId" size="sm" />
               <div class="collab-info">
                 <span class="collab-name">{{ share.userId.firstName }} {{ share.userId.lastName }}</span>
@@ -74,7 +110,7 @@ const formattedDate = computed(() => {
               </div>
             </div>
           </div>
-          <p v-else class="no-collabs">Nessun collaboratore esterno.</p>
+          <p v-else class="no-collabs">Nessun utente specifico.</p>
         </div>
       </div>
     </div>
@@ -211,6 +247,14 @@ const formattedDate = computed(() => {
   text-transform: uppercase;
   font-weight: 700;
 }
+
+.foreign-owner-alert {
+  display: flex; gap: 10px; align-items: center;
+  background-color: #3c2a10; border-left: 3px solid #e3a008;
+  padding: 10px; border-radius: 4px; margin-bottom: 20px;
+}
+.owner-text small { display: block; color: #e3a008; font-size: 0.7rem; text-transform: uppercase; }
+.owner-text strong { color: #fff; font-size: 0.85rem; }
 
 .collab-role.editor { color: #f23f42; }
 .collab-role.viewer { color: #b5bac1; }

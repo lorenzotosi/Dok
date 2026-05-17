@@ -89,5 +89,10 @@ export const NotificationManager = {
     notifyRoleChanged(userId: string, newRole: string) {
         if (!ioInstance) return;
         ioInstance.to(`user:${userId}`).emit('role-changed', newRole);
-    }
+    },
+
+    notifyFileSystemUpdate(userId: string) {
+        if (!ioInstance) return;
+        ioInstance.to('admin:dashboard').emit('user_metrics_update', { userId, metrics: {} });
+    },
 };
