@@ -17,15 +17,10 @@ const router = createRouter({
 
 router.beforeEach((to, _from) => {
   const authStore = useAuthStore();
+  const requiresAdmin = to.meta.requiresAdmin;
 
-  if (to.meta.requiresAuth && !authStore.isAuthenticated()) {
-    return'/';
-  }
-
-  if (to.meta.requiresAdmin) {
-    if (!authStore.isAuthenticated() || !authStore.isAdmin()) {
-      return '/';
-    }
+  if (requiresAdmin && (!authStore.user || !authStore.isAdmin() || !authStore.isAuthenticated())) {
+    return '/';
   }
 });
 

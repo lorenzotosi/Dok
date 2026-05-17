@@ -25,6 +25,24 @@ export class DocumentService {
         NotificationManager.notifyAdminMetricsUpdate(ownerId, { docsCreated: docsCount });
     }
 
+    private static async updateSharingMetricsAsync(ownerId: string, targetUserId: string) {
+        try {
+            const [docsSharedByMe, docsSharedWithMe] = await Promise.all([
+                Document.countDocuments({
+                    ownerId: ownerId,
+                    'sharedWith.0': { $exists: true }
+                }),
+                Document.countDocuments({
+                    'sharedWith.userId': targetUserId
+                })
+            ]);
+            NotificationManager.notifyAdminMetricsUpdate(ownerId, { docsSharedByMe });
+            NotificationManager.notifyAdminMetricsUpdate(targetUserId, { docsSharedWithMe });
+        } catch (err) {
+            console.error('[Background Task] Errore update sharing metrics:', err);
+        }
+    }
+
     static async getDocumentById(id: string) {
         return Document.findById(id);
     }
@@ -150,6 +168,9 @@ export class DocumentService {
             const fullNotification = await notification.populate('sender', 'firstName lastName');
 
             NotificationManager.notifyDocumentShared(docForNotify, targetUserId, fullNotification);
+            this.updateSharingMetricsAsync(requesterId, targetUserId).catch(err =>
+                console.error('[Service] Errore aggiornamento metriche:', err)
+            );
         }
         return docForNotify;
     }
@@ -174,6 +195,9 @@ export class DocumentService {
 
             const fullNotification = await notification.populate('sender', 'firstName lastName');
             NotificationManager.notifyDocumentUnshared(id, docForNotify, targetUserId, fullNotification);
+            this.updateSharingMetricsAsync(requesterId, targetUserId).catch(err =>
+                console.error('[Service] Errore aggiornamento metriche:', err)
+            );
         }
         return docForNotify;
     }
