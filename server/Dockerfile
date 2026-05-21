@@ -4,6 +4,8 @@ WORKDIR /app
 
 COPY package*.json ./
 
+RUN apk add --no-cache make gcc g++ musl-dev linux-headers
+
 RUN npm install
 
 COPY . .
