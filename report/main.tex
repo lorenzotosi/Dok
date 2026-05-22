@@ -1,0 +1,120 @@
+\documentclass{report}
+\usepackage[utf8]{inputenc}
+
+\title{
+    Titolo Progetto \\
+    \large Applicazioni e Servizi Web
+}
+
+\author{Nome Autore - 000725342 \{nome.cognome@unibo.it\}}
+\date{01 Gennaio 2020}
+
+\usepackage{natbib}
+\usepackage{graphicx}
+
+\begin{document}
+
+\maketitle
+\section{Introduzione}
+Introduzione \citep{adams1995hitchhiker}
+
+\section{Requisiti}
+Prima di procedere con lo sviluppo di \textbf{Dok}, è stata effettuata un'accurata fase di analisi e definizione dei requisiti, ponendo l'utente al centro del processo di progettazione (\textit{User-Centered Design}). Dok è concepito come un sistema web-based per la gestione, la condivisione e la redazione collaborativa in tempo reale di documenti di testo, integrando funzionalità avanzate di intelligenza artificiale per l'editing di testi.
+
+Di seguito viene riportato l'elenco dettagliato dei requisiti funzionali e non funzionali del sistema.
+
+\subsection{Requisiti Funzionali}
+I requisiti funzionali definiscono le azioni e le caratteristiche operative del sistema. Vengono suddivisi in base alle categorie di attori che interagiscono con la piattaforma.
+
+\subsubsection{Utente Non Autenticato (Guest)}
+L'utente anonimo che visita la piattaforma può:
+\begin{itemize}
+    \item \textbf{RF-G1 (Registrazione):} Creare un nuovo account specificando nome, cognome, indirizzo email e password.
+    \item \textbf{RF-G2 (Autenticazione):} Effettuare l'accesso (login) al sistema per ottenere i privileges di utente registrato.
+    \item \textbf{RF-G3 (Accesso a contenuti pubblici):} Navigare nelle cartelle pubbliche e visualizzare in modalità di sola lettura i documenti contrassegnati con visibilità pubblica.
+\end{itemize}
+
+\subsubsection{Utente Autenticato}
+L'utente che ha effettuato l'accesso può:
+\begin{itemize}
+    \item \textbf{RF-U1 (Gestione Cartelle):} Creare, eliminare e organizzare cartelle in una struttura gerarchica (cartelle nidificate).
+    \item \textbf{RF-U2 (Gestione Documenti):} Creare nuovi documenti di testo all'interno di una determinata cartella o nella radice del proprio spazio di lavoro. Può rinominare ed eliminare i propri documenti.
+    \item \textbf{RF-U3 (Visibilità Risorse):} Configurare la visibilità delle proprie risorse (cartelle e documenti) come "privata" (accessibile solo al proprietario ed a specifici invitati) o "pubblica" (accessibile a chiunque tramite link, compresi gli ospiti).
+    \item \textbf{RF-U4 (Condivisione):} Condividere documenti privati con altri utenti registrati inserendo la loro email e assegnando un ruolo specifico:
+    \begin{itemize}
+        \item \textit{Viewer:} Permette l'accesso al documento in sola lettura.
+        \item \textit{Editor:} Permette la modifica collaborativa.
+    \end{itemize}
+    Il proprietario può inoltre revocare la condivisione per qualsiasi utente in qualsiasi momento.
+    \item \textbf{RF-U5 (Collaborazione Real-Time):} Modificare simultaneamente un documento condiviso insieme ad altri editor, con risoluzione automatica e priva di conflitti delle modifiche concorrenti.
+    \item \textbf{RF-U6 (Rielaborazione Testi tramite AI):} Selezionare una porzione di testo all'interno di un documento e richiedere all'assistente AI (LLM Gemini) di riscriverla in base a un'istruzione testuale fornita dall'utente.
+    \item \textbf{RF-U7 (Sistema di Notifiche):} Ricevere notifiche in tempo reale all'interno dell'applicazione quando un documento viene condiviso con lui, quando vengono modificati i suoi permessi o quando un documento condiviso viene rimosso dal proprietario.
+\end{itemize}
+
+\subsubsection{Amministratore (Admin)}
+L'utente con privilegi amministrativi può:
+\begin{itemize}
+    \item \textbf{RF-A1 (Elenco Utenti):} Accedere ad un pannello di controllo contenente la lista di tutti gli utenti iscritti alla piattaforma.
+    \item \textbf{RF-A2 (Presenza Real-Time):} Monitorare lo stato di presenza degli utenti in tempo reale (online o offline) e visualizzare la data dell'ultimo accesso (\textit{lastSeen}) per gli utenti non connessi.
+    \item \textbf{RF-A3 (Dettagli e Metriche Utente):} Esaminare il profilo specifico di un utente per visualizzare metriche quali il numero di documenti creati, condivisi e ricevuti.
+    \item \textbf{RF-A4 (Ispezione File System):} Sfogliare l'albero delle cartelle e dei documenti di un qualsiasi utente registrato per scopi di moderazione e supporto.
+    \item \textbf{RF-A5 (Gestione Ruoli):} Modificare il ruolo di un utente promuovendolo ad amministratore o revocandone i privilegi. Il sistema notifica immediatamente l'utente interessato in caso di variazione del ruolo.
+\end{itemize}
+
+\subsection{Requisiti Non Funzionali}
+I requisiti non funzionali descrivono gli attributi di qualità, le prestazioni ed i vincoli a cui il sistema deve sottostare.
+
+\begin{itemize}
+    \item \textbf{RNF-1 (Usabilità e Responsive Design):} L'interfaccia utente deve essere chiara, minimale e allineata ai principi KISS (\textit{Keep It Simple, Stupid}). Deve adottare una filosofia \textit{Mobile-First} per garantire una navigazione fluida ed ergonomica sia su desktop che su smartphone e tablet.
+    \item \textbf{RNF-2 (Sincronizzazione Real-Time ed Event-Based):} Lo scambio di dati in tempo reale (notifiche, aggiornamenti della dashboard e sincronizzazione dell'editing collaborativo) deve avvenire tramite un protocollo bidirezionale a bassa latenza (WebSocket), riducendo al minimo il sovraccarico di rete rispetto a tecniche di polling classico.
+    \item \textbf{RNF-3 (Risoluzione Concorrenza):} Per la stesura a più mani dei documenti si deve garantire un comportamento deterministico senza conflitti di unione (\textit{merge conflicts}), implementando strutture dati di tipo CRDT (\textit{Conflict-free Replicated Data Types}). A livello di database, la coerenza dei metadati di file e cartelle deve essere controllata tramite concurrency ottimistica.
+    \item \textbf{RNF-4 (Autenticazione e Sicurezza):} L'autenticazione deve essere gestita in modo sicuro e stateless mediante l'uso di JSON Web Token (JWT) inclusi negli header HTTP delle richieste API e trasmessi all'handshake delle WebSocket. Le password memorizzate nel database devono essere cifrate in modo irreversibile mediante algoritmo di hashing (bcrypt).
+    \item \textbf{RNF-5 (Affidabilità e Tolleranza ai Guasti):} La rilevazione della presenza degli utenti online deve gestire in modo trasparente brevi disconnessioni di rete (\textit{network flaps}) o ricaricamenti di pagina, applicando un periodo di tolleranza (\textit{grace period}) prima di dichiarare un utente disconnesso.
+\end{itemize}
+
+\section{Design}
+La progettazione dell'intero sistema si focalizza sul modello iterativo basato sullo \textit{User-Centered Design}. Di seguito viene riportata l'analisi dei target user tramite la definizione di \textit{Personas} e \textit{Scenarios}, seguita dalla descrizione dell'architettura del sistema e delle interfacce utente.
+
+\subsection{Analisi dei Target User: Personas e Scenari}
+Per comprendere al meglio le esigenze dell'utenza e guidare le scelte di design e architettura, sono stati definiti tre profili utente tipo con i relativi scenari d'uso.
+
+\begin{itemize}
+    \item \textbf{Chiara (Studentessa Universitaria, 22 anni)} \\
+    \textbf{Profilo:} Chiara frequenta la facoltà di Informatica e lavora spesso a progetti di gruppo. Ha bisogno di un ambiente condiviso e organizzato in cui collaborare simultaneamente con i colleghi senza rischiare conflitti di versione. \\
+    \textbf{Scenario:} Chiara crea una cartella denominata "Progetto ASW" sulla piattaforma e inserisce i membri del suo gruppo. All'interno crea un documento condiviso. Durante una chiamata online, lei e i suoi colleghi aprono il documento contemporaneamente e ne redigono le varie sezioni in tempo reale, vedendo istante per istante le modifiche di ciascuno.
+    
+    \item \textbf{Giulia (Copywriter Freelance, 29 anni)} \\
+    \textbf{Profilo:} Giulia lavora per diversi clienti scrivendo articoli e post di blog. Utilizza molto tablet e smartphone durante gli spostamenti e ha spesso bisogno di ottimizzare i tempi di scrittura, correggere bozze o ricevere spunti per rielaborare frasi complesse. \\
+    \textbf{Scenario:} Giulia apre Dok dal suo tablet durante un viaggio in treno. Seleziona una porzione di testo di un articolo a cui sta lavorando e apre lo strumento di riscrittura AI integrato. Specifica un'istruzione come "Rendi il tono più formale e conciso" e invia la richiesta. Il sistema restituisce la frase riscritta, che lei inserisce direttamente nel documento.
+    
+    \item \textbf{Matteo (System Administrator, 35 anni)} \\
+    \textbf{Profilo:} Matteo si occupa della gestione della piattaforma aziendale di documentazione basata su Dok. Ha il compito di supervisionare l'attività dei server, garantire che le risorse non vengano abusate e supportare gli utenti in caso di problemi tecnici. \\
+    \textbf{Scenario:} Matteo accede alla sezione amministrativa di Dok per verificare l'affluenza sulla piattaforma. Dalla dashboard visualizza l'elenco degli utenti registrati, vedendo chi è attualmente online e chi offline. Clicca sul profilo di un utente che ha segnalato un errore e ne esamina le metriche di utilizzo e l'albero delle cartelle per identificare eventuali anomalie organizzative o problemi di permessi.
+\end{itemize}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=0.44]{deathStar2.jpg}
+\caption{Death Star}
+\label{fig:deathstar}
+\end{figure}
+
+\section{Tecnologie}
+Tecnologie adottate e motivazioni.
+
+\section{Codice}
+Solo aspetti rilevanti.
+
+\section{Test}
+Test effettuati sul codice e test con utenti.
+
+\section{Deployment}
+Rilascio, installazione e messa in funzione.
+
+
+\section{Conclusioni}
+Conclusioni
+
+\bibliographystyle{plain}
+\bibliography{references}
+\end{document}
