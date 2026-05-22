@@ -29,47 +29,49 @@ I requisiti funzionali definiscono le azioni e le caratteristiche operative del 
 \subsubsection{Utente Non Autenticato (Guest)}
 L'utente anonimo che visita la piattaforma può:
 \begin{itemize}
-    \item \textbf{RF-G1 (Registrazione):} Creare un nuovo account specificando nome, cognome, indirizzo email e password.
-    \item \textbf{RF-G2 (Autenticazione):} Effettuare l'accesso (login) al sistema per ottenere i privileges di utente registrato.
-    \item \textbf{RF-G3 (Accesso a contenuti pubblici):} Navigare nelle cartelle pubbliche e visualizzare in modalità di sola lettura i documenti contrassegnati con visibilità pubblica.
+    \item \textbf{Registrazione:} Creare un nuovo account specificando nome, cognome, indirizzo email e password.
+    \item \textbf{Autenticazione:} Effettuare l'accesso (login) al sistema per ottenere i privileges di utente registrato.
+    \item \textbf{Accesso a contenuti pubblici:} Navigare nelle cartelle pubbliche e visualizzare in modalità di sola lettura i documenti contrassegnati con visibilità pubblica.
 \end{itemize}
 
 \subsubsection{Utente Autenticato}
 L'utente che ha effettuato l'accesso può:
 \begin{itemize}
-    \item \textbf{RF-U1 (Gestione Cartelle):} Creare, eliminare e organizzare cartelle in una struttura gerarchica (cartelle nidificate).
-    \item \textbf{RF-U2 (Gestione Documenti):} Creare nuovi documenti di testo all'interno di una determinata cartella o nella radice del proprio spazio di lavoro. Può rinominare ed eliminare i propri documenti.
-    \item \textbf{RF-U3 (Visibilità Risorse):} Configurare la visibilità delle proprie risorse (cartelle e documenti) come "privata" (accessibile solo al proprietario ed a specifici invitati) o "pubblica" (accessibile a chiunque tramite link, compresi gli ospiti).
-    \item \textbf{RF-U4 (Condivisione):} Condividere documenti privati con altri utenti registrati inserendo la loro email e assegnando un ruolo specifico:
+    \item \textbf{Gestione Cartelle:} Creare, eliminare e organizzare cartelle in una struttura gerarchica (cartelle nidificate).
+    \item \textbf{Gestione Documenti:} Creare nuovi documenti di testo all'interno di una determinata cartella o nella radice del proprio spazio di lavoro. Può rinominare ed eliminare i propri documenti.
+    \item \textbf{Visibilità Risorse:} Configurare la visibilità delle proprie risorse (cartelle e documenti) come "privata" (accessibile solo al proprietario ed a specifici invitati) o "pubblica" (accessibile a chiunque tramite link, compresi gli ospiti).
+    \item \textbf{Condivisione:} Condividere documenti privati con altri utenti registrati inserendo la loro email e assegnando un ruolo specifico:
     \begin{itemize}
         \item \textit{Viewer:} Permette l'accesso al documento in sola lettura.
         \item \textit{Editor:} Permette la modifica collaborativa.
     \end{itemize}
     Il proprietario può inoltre revocare la condivisione per qualsiasi utente in qualsiasi momento.
-    \item \textbf{RF-U5 (Collaborazione Real-Time):} Modificare simultaneamente un documento condiviso insieme ad altri editor, con risoluzione automatica e priva di conflitti delle modifiche concorrenti.
-    \item \textbf{RF-U6 (Rielaborazione Testi tramite AI):} Selezionare una porzione di testo all'interno di un documento e richiedere all'assistente AI (LLM Gemini) di riscriverla in base a un'istruzione testuale fornita dall'utente.
-    \item \textbf{RF-U7 (Sistema di Notifiche):} Ricevere notifiche in tempo reale all'interno dell'applicazione quando un documento viene condiviso con lui, quando vengono modificati i suoi permessi o quando un documento condiviso viene rimosso dal proprietario.
+    \item \textbf{Sistema di Notifiche:} Ricevere notifiche in tempo reale all'interno dell'applicazione quando un documento viene condiviso con lui, quando vengono modificati i suoi permessi o quando un documento condiviso viene rimosso dal proprietario.
 \end{itemize}
 
 \subsubsection{Amministratore (Admin)}
 L'utente con privilegi amministrativi può:
 \begin{itemize}
-    \item \textbf{RF-A1 (Elenco Utenti):} Accedere ad un pannello di controllo contenente la lista di tutti gli utenti iscritti alla piattaforma.
-    \item \textbf{RF-A2 (Presenza Real-Time):} Monitorare lo stato di presenza degli utenti in tempo reale (online o offline) e visualizzare la data dell'ultimo accesso (\textit{lastSeen}) per gli utenti non connessi.
-    \item \textbf{RF-A3 (Dettagli e Metriche Utente):} Esaminare il profilo specifico di un utente per visualizzare metriche quali il numero di documenti creati, condivisi e ricevuti.
-    \item \textbf{RF-A4 (Ispezione File System):} Sfogliare l'albero delle cartelle e dei documenti di un qualsiasi utente registrato per scopi di moderazione e supporto.
-    \item \textbf{RF-A5 (Gestione Ruoli):} Modificare il ruolo di un utente promuovendolo ad amministratore o revocandone i privilegi. Il sistema notifica immediatamente l'utente interessato in caso di variazione del ruolo.
+    \item \textbf{Elenco Utenti:} Accedere ad un pannello di controllo contenente la lista di tutti gli utenti iscritti alla piattaforma.
+    \item \textbf{Presenza Real-Time:} Monitorare lo stato di presenza degli utenti in tempo reale (online o offline) e visualizzare la data dell'ultimo accesso (\textit{lastSeen}) per gli utenti non connessi.
+    \item \textbf{Dettagli e Metriche Utente:} Esaminare il profilo specifico di un utente per visualizzare metriche quali il numero di documenti creati, condivisi e ricevuti.
+    \item \textbf{Ispezione File System:} Sfogliare l'albero delle cartelle e dei documenti di un qualsiasi utente registrato per scopi di moderazione e supporto.
+    \item \textbf{Gestione Ruoli:} Modificare il ruolo di un utente promuovendolo ad amministratore o revocandone i privilegi. Il sistema notifica immediatamente l'utente interessato in caso di variazione del ruolo.
 \end{itemize}
 
 \subsection{Requisiti Non Funzionali}
 I requisiti non funzionali descrivono gli attributi di qualità, le prestazioni ed i vincoli a cui il sistema deve sottostare.
 
 \begin{itemize}
-    \item \textbf{RNF-1 (Usabilità e Responsive Design):} L'interfaccia utente deve essere chiara, minimale e allineata ai principi KISS (\textit{Keep It Simple, Stupid}). Deve adottare una filosofia \textit{Mobile-First} per garantire una navigazione fluida ed ergonomica sia su desktop che su smartphone e tablet.
-    \item \textbf{RNF-2 (Sincronizzazione Real-Time ed Event-Based):} Lo scambio di dati in tempo reale (notifiche, aggiornamenti della dashboard e sincronizzazione dell'editing collaborativo) deve avvenire tramite un protocollo bidirezionale a bassa latenza (WebSocket), riducendo al minimo il sovraccarico di rete rispetto a tecniche di polling classico.
-    \item \textbf{RNF-3 (Risoluzione Concorrenza):} Per la stesura a più mani dei documenti si deve garantire un comportamento deterministico senza conflitti di unione (\textit{merge conflicts}), implementando strutture dati di tipo CRDT (\textit{Conflict-free Replicated Data Types}). A livello di database, la coerenza dei metadati di file e cartelle deve essere controllata tramite concurrency ottimistica.
-    \item \textbf{RNF-4 (Autenticazione e Sicurezza):} L'autenticazione deve essere gestita in modo sicuro e stateless mediante l'uso di JSON Web Token (JWT) inclusi negli header HTTP delle richieste API e trasmessi all'handshake delle WebSocket. Le password memorizzate nel database devono essere cifrate in modo irreversibile mediante algoritmo di hashing (bcrypt).
-    \item \textbf{RNF-5 (Affidabilità e Tolleranza ai Guasti):} La rilevazione della presenza degli utenti online deve gestire in modo trasparente brevi disconnessioni di rete (\textit{network flaps}) o ricaricamenti di pagina, applicando un periodo di tolleranza (\textit{grace period}) prima di dichiarare un utente disconnesso.
+    \item \textbf{Collaborazione Real-Time:} Modificare simultaneamente un documento condiviso insieme ad altri editor, con risoluzione automatica e priva di conflitti delle modifiche concorrenti.
+    
+    \item \textbf{Rielaborazione Testi tramite AI:} Selezionare una porzione di testo all'interno di un documento e richiedere all'assistente AI (LLM Gemini) di riscriverla in base a un'istruzione testuale fornita dall'utente.
+
+    \item \textbf{Usabilità e Responsive Design:} L'interfaccia utente deve essere chiara, minimale e allineata ai principi KISS (\textit{Keep It Simple, Stupid}). Deve adottare una filosofia \textit{Mobile-First} per garantire una navigazione fluida ed ergonomica sia su desktop che su smartphone e tablet.
+    \item \textbf{Sincronizzazione Real-Time ed Event-Based:} Lo scambio di dati in tempo reale (notifiche, aggiornamenti della dashboard e sincronizzazione dell'editing collaborativo) deve avvenire tramite un protocollo bidirezionale a bassa latenza (WebSocket), riducendo al minimo il sovraccarico di rete rispetto a tecniche di polling classico.
+    \item \textbf{Risoluzione Concorrenza:} Per la stesura a più mani dei documenti si deve garantire un comportamento deterministico senza conflitti di unione (\textit{merge conflicts}), implementando strutture dati di tipo CRDT (\textit{Conflict-free Replicated Data Types}). A livello di database, la coerenza dei metadati di file e cartelle deve essere controllata tramite concurrency ottimistica.
+    \item \textbf{Autenticazione e Sicurezza:} L'autenticazione deve essere gestita in modo sicuro e stateless mediante l'uso di JSON Web Token (JWT) inclusi negli header HTTP delle richieste API e trasmessi all'handshake delle WebSocket. Le password memorizzate nel database devono essere cifrate in modo irreversibile mediante algoritmo di hashing (bcrypt).
+    \item \textbf{Affidabilità e Tolleranza ai Guasti:} La rilevazione della presenza degli utenti online deve gestire in modo trasparente brevi disconnessioni di rete (\textit{network flaps}) o ricaricamenti di pagina, applicando un periodo di tolleranza (\textit{grace period}) prima di dichiarare un utente disconnesso.
 \end{itemize}
 
 \section{Design}
