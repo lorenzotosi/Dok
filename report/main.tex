@@ -16,7 +16,13 @@
 
 \maketitle
 \section{Introduzione}
-Introduzione \citep{adams1995hitchhiker}
+
+Il progetto proposto consiste nella realizzazione di un’applicazione web che permetta
+agli utenti di creare, modificare visualizzare e condividere documenti di testo.
+Il servizio permette anche di organizzare i documenti in cartelle e collaborare in tempo reale
+con altri utenti sugli stessi documenti. I documenti possono essere pubblici o privati: quelli pubblici
+sono visibili a tutti gli utenti della piattaforma, anche non loggati, mentre quelli privati sono visibili solo al proprietario
+ed a coloro che hanno ricevuto la condivisione.
 
 \section{Requisiti}
 Prima di procedere con lo sviluppo di \textbf{Dok}, è stata effettuata un'accurata fase di analisi e definizione dei requisiti, ponendo l'utente al centro del processo di progettazione (\textit{User-Centered Design}). Dok è concepito come un sistema web-based per la gestione, la condivisione e la redazione collaborativa in tempo reale di documenti di testo, integrando funzionalità avanzate di intelligenza artificiale per l'editing di testi.
@@ -37,26 +43,21 @@ L'utente anonimo che visita la piattaforma può:
 \subsubsection{Utente Autenticato}
 L'utente che ha effettuato l'accesso può:
 \begin{itemize}
-    \item \textbf{Gestione Cartelle:} Creare, eliminare e organizzare cartelle in una struttura gerarchica (cartelle nidificate).
-    \item \textbf{Gestione Documenti:} Creare nuovi documenti di testo all'interno di una determinata cartella o nella radice del proprio spazio di lavoro. Può rinominare ed eliminare i propri documenti.
-    \item \textbf{Visibilità Risorse:} Configurare la visibilità delle proprie risorse (cartelle e documenti) come "privata" (accessibile solo al proprietario ed a specifici invitati) o "pubblica" (accessibile a chiunque tramite link, compresi gli ospiti).
-    \item \textbf{Condivisione:} Condividere documenti privati con altri utenti registrati inserendo la loro email e assegnando un ruolo specifico:
-    \begin{itemize}
-        \item \textit{Viewer:} Permette l'accesso al documento in sola lettura.
-        \item \textit{Editor:} Permette la modifica collaborativa.
-    \end{itemize}
-    Il proprietario può inoltre revocare la condivisione per qualsiasi utente in qualsiasi momento.
-    \item \textbf{Sistema di Notifiche:} Ricevere notifiche in tempo reale all'interno dell'applicazione quando un documento viene condiviso con lui, quando vengono modificati i suoi permessi o quando un documento condiviso viene rimosso dal proprietario.
+    \item \textbf{Gestione Cartelle:} Organizzare i propri file attraverso una struttura gerarchica di cartelle nidificate. Un albero di directory che l'utente può manipolare a piacimento creando o rimuovendo nodi.
+    \item \textbf{Gestione Documenti:} Gestire i documenti di testo, creandoli all'interno delle cartelle o direttamente nella radice. È prevista anche la possibilità di rinominarli ed eliminarli in modo semplice.
+    \item \textbf{Visibilità Risorse:} Configurare la visibilità delle proprie risorse. Ciascuna cartella o documento nasce come privato, ma l'utente può impostarlo come pubblico in qualunque momento, rendendolo accessibile tramite un semplice URL.
+    \item \textbf{Condivisione:} Collaborare condividendo i documenti con altri iscritti tramite email. Il proprietario decide se assegnare il ruolo di \textit{Viewer} (sola lettura) o \textit{Editor} (scrittura collaborativa). È fondamentale poter revocare questi permessi in qualsiasi momento.
+    \item \textbf{Sistema di Notifiche:} Ricevere notifiche in tempo reale all'interno dell'interfaccia. Ad esempio quando un collega condivide un documento, o se i permessi di scrittura vengono modificati o revocati.
 \end{itemize}
 
 \subsubsection{Amministratore (Admin)}
 L'utente con privilegi amministrativi può:
 \begin{itemize}
-    \item \textbf{Elenco Utenti:} Accedere ad un pannello di controllo contenente la lista di tutti gli utenti iscritti alla piattaforma.
-    \item \textbf{Presenza Real-Time:} Monitorare lo stato di presenza degli utenti in tempo reale (online o offline) e visualizzare la data dell'ultimo accesso (\textit{lastSeen}) per gli utenti non connessi.
-    \item \textbf{Dettagli e Metriche Utente:} Esaminare il profilo specifico di un utente per visualizzare metriche quali il numero di documenti creati, condivisi e ricevuti.
-    \item \textbf{Ispezione File System:} Sfogliare l'albero delle cartelle e dei documenti di un qualsiasi utente registrato per scopi di moderazione e supporto.
-    \item \textbf{Gestione Ruoli:} Modificare il ruolo di un utente promuovendolo ad amministratore o revocandone i privilegi. Il sistema notifica immediatamente l'utente interessato in caso di variazione del ruolo.
+    \item \textbf{Elenco Utenti:} Accedere a una dashboard centralizzata per visualizzare l'elenco completo degli utenti registrati.
+    \item \textbf{Presenza Real-Time:} Monitorare in tempo reale lo stato di presenza degli utenti (se siano online o offline) e vedere l'ora dell'ultimo accesso (\textit{lastSeen}) per chi è disconnesso.
+    \item \textbf{Dettagli e Metriche Utente:} Consultare le metriche di un profilo specifico, contandone i documenti creati, quelli condivisi e quelli ricevuti. Questo ci è sembrato utile per capire il livello di utilizzo delle risorse del server.
+    \item \textbf{Ispezione File System:} Esaminare il file system di qualunque utente. L'amministratore può navigare tra le cartelle e i file altrui per motivi di supporto tecnico o moderazione di contenuti inappropriati.
+    \item \textbf{Gestione Ruoli:} Promuovere altri utenti al ruolo di amministratore o revocare i privilegi esistenti. Il sistema avvisa in modo tempestivo l'interessato del cambio di ruolo.
 \end{itemize}
 
 \subsection{Requisiti Non Funzionali}
