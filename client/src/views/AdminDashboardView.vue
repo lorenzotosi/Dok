@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import {ref, onMounted, onUnmounted} from 'vue';
-import AdminUserRow from '../components/admin/AdminUserRow.vue';
-import { AdminService, type AdminDashboardUser } from '../services/admin.service';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import {socketService} from "../services/socket.service.ts";
+import { AdminService, type AdminDashboardUser } from '../services/admin.service';
+import { socketService } from "../services/socket.service.ts";
+import AdminUsersTable from '../components/admin/AdminUsersTable.vue';
 
 const router = useRouter();
 
@@ -11,9 +11,11 @@ const users = ref<AdminDashboardUser[]>([]);
 const isLoading = ref(true);
 const errorMessage = ref<string | null>(null);
 
-const navigateBack = () => {
-  router.push('/');
-};
+const searchQuery = ref('');
+const sortKey = ref<'status' | 'name' | 'email' | 'lastSeen' | null>(null);
+const sortOrder = ref<'asc' | 'desc'>('asc');
+
+const navigateBack = () => router.push('/');
 
 const fetchUsers = async () => {
   try {
@@ -27,36 +29,31 @@ const fetchUsers = async () => {
   }
 };
 
+const bootstrapDashboard = (socket: any) => {
+  fetchUsers().then(() => {
+    socket.emit('join_admin_dashboard');
+    socket.on('presence_update', ({ userId, isOnline }: { userId: string, isOnline: boolean }) => {
+      const user = users.value.find(u => u.id === userId);
+      if (user) {
+        user.isOnline = isOnline;
+        if (!isOnline) {
+          user.lastSeen = new Date().toISOString();
+        }
+      }
+    });
+  });
+};
+
 onMounted(() => {
   const socket = socketService.getSocket();
-
   if (socket && socket.connected) {
     bootstrapDashboard(socket);
   } else if (socket) {
-    socket.on('connect', () => {
-      bootstrapDashboard(socket);
-    });
+    socket.on('connect', () => bootstrapDashboard(socket));
   } else {
     fetchUsers();
   }
 });
-
-const bootstrapDashboard = (socket: any) => {
-  socket.emit('join_admin_dashboard', () => {
-    fetchUsers();
-  });
-
-  socket.on('presence_update', (data: { userId: string, isOnline: boolean, lastSeen?: string }) => {
-    const index = users.value.findIndex(u => u.id === data.userId);
-    if (index !== -1) {
-      users.value[index] = {
-        ...users.value[index],
-        isOnline: data.isOnline,
-        ...(data.lastSeen && { lastSeen: data.lastSeen })
-      };
-    }
-  });
-};
 
 onUnmounted(() => {
   const socket = socketService.getSocket();
@@ -65,74 +62,117 @@ onUnmounted(() => {
     socket.off('presence_update');
   }
 });
+
+const handleSort = (key: 'status' | 'name' | 'email' | 'lastSeen') => {
+  if (sortKey.value === key) {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortKey.value = key;
+    sortOrder.value = 'asc';
+  }
+};
+
+const filteredAndSortedUsers = computed(() => {
+  let result = users.value;
+
+  if (searchQuery.value) {
+    const q = searchQuery.value.toLowerCase();
+    result = result.filter(u =>
+        u.firstName.toLowerCase().includes(q) ||
+        u.lastName.toLowerCase().includes(q) ||
+        u.email.toLowerCase().includes(q)
+    );
+  }
+
+  if (sortKey.value) {
+    result = [...result].sort((a, b) => {
+      let valA: any, valB: any;
+      switch (sortKey.value) {
+        case 'status':
+          valA = a.isOnline ? 1 : 0;
+          valB = b.isOnline ? 1 : 0;
+          break;
+        case 'name':
+          valA = `${a.firstName} ${a.lastName}`.toLowerCase();
+          valB = `${b.firstName} ${b.lastName}`.toLowerCase();
+          break;
+        case 'email':
+          valA = a.email.toLowerCase();
+          valB = b.email.toLowerCase();
+          break;
+        case 'lastSeen':
+          valA = a.isOnline ? Infinity : (a.lastSeen ? new Date(a.lastSeen).getTime() : 0);
+          valB = b.isOnline ? Infinity : (b.lastSeen ? new Date(b.lastSeen).getTime() : 0);
+          break;
+      }
+      if (valA < valB) return sortOrder.value === 'asc' ? -1 : 1;
+      if (valA > valB) return sortOrder.value === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }
+
+  return result;
+});
 </script>
 
 <template>
-  <div class="admin-container">
-    <header class="admin-header">
-      <button @click="navigateBack" class="back-button" aria-label="Torna alla Dashboard">
-        <span class="icon">←</span> Torna al Drive
-      </button>
+  <div class="admin-dashboard-container">
+    <button @click="navigateBack" class="back-button">
+      <span class="icon">&#8592;</span> Torna alla Home
+    </button>
 
-      <div class="header-titles">
-        <h1>Gestione Utenti</h1>
-        <p class="subtitle">Monitoraggio accessi e permessi di sistema</p>
+    <div class="header-titles">
+      <h1>Gestione Utenti</h1>
+      <p class="subtitle">Monitoraggio accessi e permessi di sistema</p>
+    </div>
+
+    <div class="search-row">
+      <div class="search-container">
+        <label for="userSearch" class="sr-only">Cerca utente per nome o email</label>
+        <input
+            id="userSearch"
+            type="text"
+            v-model="searchQuery"
+            placeholder="Cerca nome o email..."
+            class="search-input"
+        />
       </div>
-    </header>
+    </div>
 
     <div v-if="isLoading" class="loading-state">
-      Caricamento dati di sistema in corso...
+      Caricamento utenti in corso...
     </div>
 
     <div v-else-if="errorMessage" class="error-state">
       {{ errorMessage }}
+      <button @click="fetchUsers" class="retry-btn">Riprova</button>
     </div>
 
-    <div class="table-container shadow-xl">
-      <table class="admin-table">
-        <thead>
-        <tr>
-          <th class="status-col"></th>
-          <th>Avatar</th>
-          <th>Nome Completo</th>
-          <th>Email</th>
-          <th>Ultimo Accesso</th>
-          <th class="action-col">Info</th>
-        </tr>
-        </thead>
-        <tbody>
-        <AdminUserRow
-            v-for="user in users"
-            :key="user.id"
-            :user="user"
-        />
-        </tbody>
-      </table>
-    </div>
+    <AdminUsersTable
+        v-else
+        :users="filteredAndSortedUsers"
+        :current-sort-key="sortKey"
+        :current-sort-order="sortOrder"
+        @sort="handleSort"
+    />
   </div>
 </template>
 
 <style scoped>
-.admin-container {
+.admin-dashboard-container {
+  width: 100%;
   min-height: 100vh;
   background-color: #1e1f22;
-  padding: 40px 20px;
-  color: #f23f42;
-}
-
-.admin-header {
-  margin-bottom: 40px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  width: 100%;
+  box-sizing: border-box;
 }
 
 .back-button {
   align-self: flex-start;
-
   border: 1px solid #3f3f3f;
-  background: #2b2d31 none;
+  background: #2b2d31;
   color: #dbdee1;
   padding: 8px 16px;
   border-radius: 6px;
@@ -153,6 +193,7 @@ onUnmounted(() => {
 
 .header-titles {
   text-align: center;
+  margin-bottom: 20px;
 }
 
 .header-titles h1 {
@@ -169,48 +210,64 @@ onUnmounted(() => {
   margin-top: 8px;
 }
 
+.search-row {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.search-container {
+  width: 100%;
+  max-width: 300px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px 15px;
+  border-radius: 6px;
+  border: 1px solid #3f3f3f;
+  background-color: #1e1f22;
+  color: #dbdee1;
+  font-size: 0.95rem;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #5865F2;
+}
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;
+}
+
 .loading-state, .error-state {
-  padding: 40px;
   text-align: center;
+  padding: 50px;
   background-color: #2b2d31;
   border-radius: 8px;
-  color: #b5bac1;
+  color: #dbdee1;
+  font-size: 1.1rem;
 }
 
 .error-state {
   color: #f23f42;
-  border: 1px solid #f23f42;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
 }
 
-.table-container {
-  background-color: #2b2d31;
-  border-radius: 8px;
-  overflow-x: auto;
-}
-
-.admin-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: left;
-}
-
-thead {
-  background-color: #232428;
-  text-transform: uppercase;
-  font-size: 0.75rem;
-  letter-spacing: 0.5px;
-  color: #949ba4;
-}
-
-th {
-  padding: 16px;
-  font-weight: 600;
-}
-
-.status-col { width: 40px; }
-.action-col { width: 60px; text-align: center; }
-
-@media (max-width: 768px) {
-  .email-cell, th:nth-child(4) { display: none; }
+.retry-btn {
+  background-color: #5865F2;
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
 }
 </style>
