@@ -153,6 +153,7 @@ onUnmounted(() => {
 }
 
 .main-column {
+  width: 100%;
   flex: 1;
   min-width: 0;
   display: flex;
