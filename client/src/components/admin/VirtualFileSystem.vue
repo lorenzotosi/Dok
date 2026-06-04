@@ -81,7 +81,7 @@ const handleItemClick = (node: FSNode) => {
 
     <div v-else class="vfs-content">
       <div v-show="activeTab === 'private'">
-        <p class="tab-desc">File privati dell'utente. I nomi sono offuscati per policy GDPR.</p>
+        <p class="tab-desc">File privati dell'utente. I nomi sono offuscati per privacy.</p>
         <div v-if="vfsData.privateTree.length === 0" class="empty-state">Nessun file privato.</div>
         <FileSystemNode v-for="node in vfsData.privateTree" :key="node.id" :node="node" :expanded-folders="expandedFolders" @node-click="handleItemClick" />
       </div>

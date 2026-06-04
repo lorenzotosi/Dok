@@ -13,7 +13,7 @@ const authStore = useAuthStore();
 
 <template>
   <div class="user-info-card shadow-md">
-    <button @click="router.back()" class="back-btn">
+    <button @click="router.push({name: 'AdminDashboard'})" class="back-btn">
       ← Torna alla Dashboard
     </button>
 

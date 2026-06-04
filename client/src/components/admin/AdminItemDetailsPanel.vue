@@ -2,13 +2,14 @@
 import { computed } from 'vue';
 import type {FSNode, SharedUserItem} from "../../types/admin.types.ts";
 import UserAvatar from "../common/UserAvatar.vue";
-import {useRoute} from "vue-router";
+import { useRoute, useRouter } from 'vue-router';
 
 const props = defineProps<{
   item: FSNode | null
 }>();
 const emit = defineEmits(['close']);
 const route = useRoute();
+const router = useRouter();
 
 const inspectedUserId = route.params.id as string;
 
@@ -43,6 +44,13 @@ const visibleCollaborators = computed<SharedUserItem[]>(() => {
   }
   return props.item.sharedWith;
 });
+
+const navigateToUser = (targetUserId: string) => {
+  router.push({
+    name: 'AdminUserDetail',
+    params: { id: targetUserId }
+  });
+};
 </script>
 
 <template>
@@ -102,7 +110,15 @@ const visibleCollaborators = computed<SharedUserItem[]>(() => {
             </span>
 
           <div v-if="visibleCollaborators.length > 0" class="collaborators-list">
-            <div v-for="share in visibleCollaborators" :key="share.userId.id" class="collaborator-item">
+            <div
+                v-for="share in visibleCollaborators"
+                :key="share.userId.id"
+                class="collaborator-item"
+                role="button"
+                tabindex="0"
+                @click="navigateToUser(share.userId._id)"
+                @keydown.enter="navigateToUser(share.userId._id)"
+            >
               <UserAvatar :user="share.userId" size="sm" />
               <div class="collab-info">
                 <span class="collab-name">{{ share.userId.firstName }} {{ share.userId.lastName }}</span>
@@ -233,6 +249,22 @@ const visibleCollaborators = computed<SharedUserItem[]>(() => {
   background-color: #232428;
   padding: 8px;
   border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+@media (hover: hover) {
+  .collaborator-item:hover {
+    background-color: #3f4147;
+  }
+}
+
+.collaborator-item:active {
+  transform: scale(0.98);
+}
+
+.collaborator-item:focus-visible {
+  outline: 2px solid #5865F2;
+  outline-offset: 2px;
 }
 
 .collab-info {

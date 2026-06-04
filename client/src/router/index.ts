@@ -10,8 +10,8 @@ const router = createRouter({
   routes: [
     { path: '/', component: DashboardView },
     { path: '/document/:id', component: DocumentView },
-    { path: '/admin', component: AdminDashboardView, meta: {requiresAdmin: true, requiresAuth: true} },
-    { path: '/admin/user/:id', component: AdminUserDetailView, meta: {requiresAdmin: true, requiresAuth: true} },
+    { path: '/admin', name: 'AdminDashboard', component: AdminDashboardView, meta: {requiresAdmin: true, requiresAuth: true} },
+    { path: '/admin/user/:id', name: 'AdminUserDetail', component: AdminUserDetailView, meta: {requiresAdmin: true, requiresAuth: true}},
   ]
 });
 
