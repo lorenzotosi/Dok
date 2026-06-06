@@ -2,9 +2,34 @@ import { Server, Socket } from 'socket.io';
 import * as Y from 'yjs';
 import { TiptapTransformer } from '@hocuspocus/transformer';
 import Document from '../../models/Document.js';
-import { activeDocuments } from '../sync.types.js';
+import AuditLog from '../../models/AuditLog.js';
+import { activeDocuments, type ActiveDocState } from '../sync.types.js';
 
-const handleClientLeave = async (documentId: string) => {
+const flushAuditLogs = async (documentId: string, state: ActiveDocState, io: Server) => {
+    if (!state.pendingUserChars) return;
+
+    for (const [userId, chars] of state.pendingUserChars.entries()) {
+        if (chars > 0) {
+            try {
+                const modLog = await AuditLog.create({
+                    documentId,
+                    userId,
+                    type: 'modification',
+                    charactersInserted: chars
+                });
+
+                const populatedModLog = await modLog.populate('userId', 'firstName lastName email _id');
+                const safeLog = JSON.parse(JSON.stringify(populatedModLog.toObject({ virtuals: true })));
+                io.to(`admin_logs:${documentId}`).emit('new_audit_log', safeLog);
+            } catch (err) {
+                console.error("[Log Flush] Errore salvataggio log aggregati:", err);
+            }
+        }
+    }
+    state.pendingUserChars.clear();
+};
+
+const handleClientLeave = async (documentId: string, io: Server) => {
     const state = activeDocuments.get(documentId);
     if (!state) return;
 
@@ -21,7 +46,9 @@ const handleClientLeave = async (documentId: string) => {
                 yjsState: Buffer.from(finalBinaryState),
                 tiptapJson: tiptapJson
             });
-            console.log(`[DB] Stato finale di ${documentId} salvato.`);
+
+            await flushAuditLogs(documentId, state, io);
+            console.log(`[DB] Stato finale e log di ${documentId} salvati.`);
         } catch (error) {
             console.error(`[DB Errore] Salvataggio fallito per ${documentId}:`, error);
         }
@@ -35,6 +62,30 @@ export const registerDocumentHandlers = (io: Server, socket: Socket) => {
     socket.on('join-document', async (documentId: string) => {
         if (socket.rooms.has(documentId)) return;
         socket.join(documentId);
+
+        const userId = socket.data?.user?.id;
+
+        if (userId) {
+            try {
+                const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000);
+                const recentLog = await AuditLog.findOne({
+                    documentId,
+                    userId,
+                    type: 'access',
+                    createdAt: { $gte: fiveMinsAgo }
+                });
+
+                if (!recentLog) {
+                    const log = await AuditLog.create({ documentId, userId, type: 'access' });
+                    const populatedLog = await log.populate('userId', 'firstName lastName email _id');
+
+                    const safeLog = JSON.parse(JSON.stringify(populatedLog.toObject({ virtuals: true })));
+                    io.to(`admin_logs:${documentId}`).emit('new_audit_log', safeLog);
+                }
+            } catch (err) {
+                console.error("[Join] Errore salvataggio log di accesso:", err);
+            }
+        }
 
         if (!activeDocuments.has(documentId)) {
             const docFromDb = await Document.findById(documentId);
@@ -50,40 +101,106 @@ export const registerDocumentHandlers = (io: Server, socket: Socket) => {
             activeDocuments.set(documentId, {
                 ydoc,
                 clientsCount: 1,
-                saveTimeout: null
+                saveTimeout: null,
+                hasLogObserver: false,
+                pendingUserChars: new Map<string, number>()
             });
-
-            console.log(`📄 Documento ${documentId} caricato in RAM.`);
         } else {
             const state = activeDocuments.get(documentId)!;
             state.clientsCount += 1;
         }
 
         const state = activeDocuments.get(documentId)!;
+
+        if (!state.hasLogObserver) {
+            state.hasLogObserver = true;
+            if (!state.pendingUserChars) state.pendingUserChars = new Map<string, number>();
+
+            const xmlFragment = state.ydoc.getXmlFragment('default');
+
+            const countAdded = (insertOp: any): number => {
+                if (typeof insertOp === 'string') return insertOp.length;
+                if (Array.isArray(insertOp)) {
+                    let count = 0;
+                    insertOp.forEach((node: any) => {
+                        if (node instanceof Y.XmlText || node instanceof Y.Text) {
+                            count += node.length;
+                        } else if (node instanceof Y.XmlElement) {
+                            count += 1;
+                            if (typeof node.toArray === 'function') {
+                                count += countAdded(node.toArray());
+                            }
+                        } else {
+                            count += 1;
+                        }
+                    });
+                    return count;
+                }
+                if (typeof insertOp === 'object' && insertOp !== null) return 1; // Embed/Immagini
+                return 0;
+            };
+
+            xmlFragment.observeDeep((events, transaction) => {
+                try {
+                    const originUserId = transaction.origin;
+
+                    if (typeof originUserId === 'string') {
+                        let addedChars = 0;
+
+                        events.forEach(event => {
+                            event.delta.forEach(op => {
+                                if (op.insert) {
+                                    addedChars += countAdded(op.insert);
+                                }
+                            });
+                        });
+
+                        if (addedChars > 0) {
+                            const current = state.pendingUserChars!.get(originUserId) || 0;
+                            state.pendingUserChars!.set(originUserId, current + addedChars);
+                        }
+                    }
+                } catch (obsError) {
+                    console.error("[Observer Warning] Errore innocuo ignorato nel conteggio log:", obsError);
+                }
+            });
+        }
+
         socket.emit('sync-document', Y.encodeStateAsUpdate(state.ydoc));
     });
 
     socket.on('crdt-update', ({ documentId, update }: { documentId: string, update: Uint8Array }) => {
         const state = activeDocuments.get(documentId);
-        if (!state) return;
+        const userId = socket.data?.user?.id;
 
-        Y.applyUpdate(state.ydoc, new Uint8Array(update));
-        socket.to(documentId).emit('crdt-update', update);
-
-        if (state.saveTimeout) clearTimeout(state.saveTimeout);
-        state.saveTimeout = setTimeout(async () => {
+        if (state) {
             try {
-                const binaryState = Y.encodeStateAsUpdate(state.ydoc);
-                const tiptapJson = TiptapTransformer.fromYdoc(state.ydoc, 'default');
-                await Document.findByIdAndUpdate(documentId, {
-                    yjsState: Buffer.from(binaryState),
-                    tiptapJson: tiptapJson
-                });
-                console.log(`💾 Documento ${documentId} persistito su DB dopo inattività.`);
-            } catch (error) {
-                console.error("Errore salvataggio debounced:", error);
+                Y.applyUpdate(state.ydoc, new Uint8Array(update), userId || 'unknown');
+            } catch (err) {
+                console.error(`[CRDT Fatal] Impossibile applicare l'update per ${documentId}:`, err);
+                return;
             }
-        }, 3000);
+
+            socket.to(documentId).emit('crdt-update', update);
+
+            if (state.saveTimeout) clearTimeout(state.saveTimeout);
+            state.saveTimeout = setTimeout(async () => {
+                try {
+                    const binaryState = Y.encodeStateAsUpdate(state.ydoc);
+                    const tiptapJson = TiptapTransformer.fromYdoc(state.ydoc, 'default');
+
+                    await Document.findByIdAndUpdate(documentId, {
+                        yjsState: Buffer.from(binaryState),
+                        tiptapJson: tiptapJson
+                    });
+
+                    await flushAuditLogs(documentId, state, io);
+                    console.log(`💾 Documento ${documentId} persistito su DB dopo inattività.`);
+                } catch (error) {
+                    console.error("[Salvataggio DB] Errore nel salvataggio debounced:", error);
+                }
+            }, 3000);
+        }
     });
 
     socket.on('awareness-update', ({ documentId, update }: { documentId: string, update: any }) => {
@@ -93,23 +210,21 @@ export const registerDocumentHandlers = (io: Server, socket: Socket) => {
     socket.on('leave-document', async (documentId: string) => {
         if (!socket.rooms.has(documentId)) return;
         socket.leave(documentId);
-        await handleClientLeave(documentId);
+        await handleClientLeave(documentId, io);
     });
 
     socket.on('disconnecting', async () => {
         const rooms = Array.from(socket.rooms).filter(r => r !== socket.id);
         for (const documentId of rooms) {
-            await handleClientLeave(documentId);
+            await handleClientLeave(documentId, io);
         }
     });
 
     socket.on('join-public-dashboard', () => {
         socket.join('global-dashboard');
-        console.log(`[Real-time] Utente ${socket.id} monitora la dashboard pubblica`);
     });
 
     socket.on('join-shared-dashboard', () => {
         socket.join('shared-dashboard');
-        console.log(`[Real-time] Utente ${socket.id} monitora la dashboard condivisa`);
     });
 };

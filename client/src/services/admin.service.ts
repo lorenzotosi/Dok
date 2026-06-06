@@ -1,6 +1,6 @@
 import { api } from './api';
 import type { User } from '../types/user.types';
-import type {AdminUserDetail, VFSResponse} from "../types/admin.types.ts";
+import type {AdminUserDetail, AuditLogItem, VFSResponse} from "../types/admin.types.ts";
 
 export interface AdminDashboardUser extends User {
     isOnline: boolean;
@@ -26,6 +26,16 @@ export const AdminService = {
 
     async changeUserRole(userId: string, newRole: 'USER' | 'ADMIN'): Promise<void> {
         await api.patch(`/admin/users/${userId}/role`, { role: newRole });
+    },
+
+    async getDocumentBasicInfo(documentId: string) {
+        const response = await api.get(`/admin/documents/${documentId}`);
+        return response.data;
+    },
+
+    async getDocumentLogs(documentId: string): Promise<AuditLogItem[]> {
+        const response = await api.get(`/admin/documents/${documentId}/logs`);
+        return response.data;
     },
 
 };

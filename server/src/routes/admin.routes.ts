@@ -1,5 +1,11 @@
 import { Router } from 'express';
-import {changeUserRole, getAllUsers, getUserDetails, getUserFileSystem} from '../controllers/admin.controller.js';
+import {
+    changeUserRole, getAdminDocumentInfo,
+    getAdminDocumentLogs,
+    getAllUsers,
+    getUserDetails,
+    getUserFileSystem
+} from '../controllers/admin.controller.js';
 import { requireAuth, requireAdmin } from '../middlewares/auth.middleware.js';
 
 const router = Router();
@@ -119,5 +125,57 @@ router.get('/users/:id/filesystem', requireAuth, requireAdmin, getUserFileSystem
  *         description: Utente non trovato
  */
 router.patch('/users/:id/role', requireAuth, requireAdmin, changeUserRole);
+
+/**
+ * @openapi
+ * /api/admin/documents/{id}/logs:
+ * get:
+ * summary: Ottieni lo storico completo dei log di un documento (Solo Admin)
+ * tags:
+ * - Admin
+ * security:
+ * - BearerAuth: []
+ * parameters:
+ * - in: path
+ * name: id
+ * required: true
+ * schema:
+ * type: string
+ * description: ID del documento
+ * responses:
+ * 200:
+ * description: Array di audit logs
+ * 401:
+ * description: Non autorizzato
+ * 403:
+ * description: Privilegi di amministratore richiesti
+ */
+router.get('/documents/:id/logs', requireAuth, requireAdmin, getAdminDocumentLogs);
+
+/**
+ * @openapi
+ * /api/admin/documents/{id}:
+ * get:
+ * summary: Ottieni le informazioni base di un documento (Solo Admin)
+ * tags:
+ * - Admin
+ * security:
+ * - BearerAuth: []
+ * parameters:
+ * - in: path
+ * name: id
+ * required: true
+ * schema:
+ * type: string
+ * description: ID del documento
+ * responses:
+ * 200:
+ * description: Informazioni recuperate
+ * 401:
+ * description: Non autorizzato
+ * 403:
+ * description: Privilegi di amministratore richiesti
+ */
+router.get('/documents/:id', requireAuth, requireAdmin, getAdminDocumentInfo);
 
 export default router;

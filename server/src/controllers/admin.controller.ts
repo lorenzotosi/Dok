@@ -117,3 +117,39 @@ export const changeUserRole = async (req: AuthRequest, res: Response): Promise<v
         }
     }
 };
+
+export const getAdminDocumentInfo = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { id } = req.params;
+        if (!id || typeof id !== 'string') {
+            res.status(400).json({ error: 'ID documento mancante o non valido' });
+            return;
+        }
+        const documentInfo = await AdminService.getDocumentInfoForAdmin(id);
+
+        res.status(200).json(documentInfo);
+    } catch (error: any) {
+        console.error('[AdminController] Errore getAdminDocumentInfo:', error.message);
+        if (error.message === 'Documento non trovato') {
+            res.status(404).json({ error: error.message });
+            return;
+        }
+        res.status(500).json({ error: 'Errore interno del server' });
+    }
+};
+
+export const getAdminDocumentLogs = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { id } = req.params;
+        if (!id || typeof id !== 'string') {
+            res.status(400).json({ error: 'ID documento mancante o non valido' });
+            return;
+        }
+        const logs = await AdminService.getDocumentLogs(id);
+
+        res.status(200).json(logs);
+    } catch (error: any) {
+        console.error('[AdminController] Errore getAdminDocumentLogs:', error);
+        res.status(500).json({ error: 'Impossibile recuperare i log di sistema' });
+    }
+};

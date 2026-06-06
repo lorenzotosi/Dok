@@ -8,6 +8,15 @@ export interface AdminUserDetail extends User {
     docsSharedWithMe: number;
 }
 
+export interface AuditLogItem {
+    _id: string;
+    documentId: string;
+    userId: User;
+    type: 'access' | 'modification';
+    charactersInserted?: number;
+    createdAt: string;
+}
+
 export interface SharedUserItem {
     userId: User
     role: 'editor' | 'viewer';

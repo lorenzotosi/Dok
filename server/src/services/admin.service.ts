@@ -1,6 +1,7 @@
-import { UserModel } from '../models/User.js';
+import {UserModel} from '../models/User.js';
 import DocumentModel from '../models/Document.js';
 import FolderModel from '../models/Folder.js';
+import AuditLog from "../models/AuditLog.js";
 
 export class AdminService {
     /**
@@ -20,7 +21,6 @@ export class AdminService {
 
     /**
      * Recupera le metriche di un singolo utente con query parallele.
-     * Pattern: Fan-out / Parallel Data Fetching
      */
     static async getUserMetrics(userId: string) {
         const [user, docsCreated, docsSharedByMe, docsSharedWithMe] = await Promise.all([
@@ -47,6 +47,36 @@ export class AdminService {
                 docsSharedWithMe
             }
         };
+    }
+
+    /**
+     * Recupera le info del documento mascherando i dati sensibili per l'Admin.
+     */
+    static async getDocumentInfoForAdmin(documentId: string) {
+        const doc = await DocumentModel.findById(documentId)
+            .select('-tiptapJson -yjsState')
+            .populate('ownerId', 'firstName lastName email')
+            .lean();
+
+        if (!doc) {
+            throw new Error('Documento non trovato');
+        }
+
+        return {
+            ...doc,
+            title: 'Documento Riservato',
+            originalId: doc._id
+        };
+    }
+
+    /**
+     * Recupera l'Audit Log completo di un documento, popolando gli utenti.
+     */
+    static async getDocumentLogs(documentId: string) {
+        return AuditLog.find({ documentId: documentId })
+            .populate('userId', 'firstName lastName email _id')
+            .sort({ createdAt: -1 })
+            .lean();
     }
 
     static async changeUserRole(userId: string, newRole: 'USER' | 'ADMIN') {

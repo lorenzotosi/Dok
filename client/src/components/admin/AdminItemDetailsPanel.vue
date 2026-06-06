@@ -51,6 +51,12 @@ const navigateToUser = (targetUserId: string) => {
     params: { id: targetUserId }
   });
 };
+
+const navigateToLogs = () => {
+  if (props.item && props.item.id) {
+    router.push({ name: 'AdminDocumentLogs', params: { id: props.item.id } });
+  }
+};
 </script>
 
 <template>
@@ -128,6 +134,11 @@ const navigateToUser = (targetUserId: string) => {
           </div>
           <p v-else class="no-collabs">Nessun utente specifico.</p>
         </div>
+      </div>
+      <div v-if="isDocument" class="actions-section">
+        <button @click="navigateToLogs" class="view-logs-btn">
+          Visualizza Dok Logs
+        </button>
       </div>
     </div>
   </div>
@@ -300,4 +311,43 @@ const navigateToUser = (targetUserId: string) => {
 .stat-box .value.highlight { color: #5865F2; font-weight: bold; }
 .capitalize { text-transform: capitalize; }
 .value.public { color: #23a559; }
+
+.actions-section {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #3f3f3f;
+  display: flex;
+  flex-direction: column;
+}
+
+.view-logs-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  background-color: #5865F2;
+  color: #ffffff;
+  border: none;
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.view-logs-btn:hover {
+  background-color: #4752C4;
+}
+
+.view-logs-btn:active {
+  transform: scale(0.98);
+}
+
+.view-logs-btn:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
 </style>
