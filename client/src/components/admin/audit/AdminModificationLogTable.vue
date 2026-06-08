@@ -65,8 +65,27 @@ const formatDateTime = (dateStr: string) => {
 
 .responsive-table-wrapper {
   width: 100%;
+  max-height: 400px;
+  overflow-y: auto;
   overflow-x: auto;
 }
+
+.responsive-table-wrapper::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.responsive-table-wrapper::-webkit-scrollbar-track {
+  background: #2b2d31;
+  border-radius: 4px;
+}
+.responsive-table-wrapper::-webkit-scrollbar-thumb {
+  background: #1a1b1e;
+  border-radius: 4px;
+}
+.responsive-table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #111214;
+}
+
 
 .audit-table {
   width: 100%;
@@ -82,6 +101,10 @@ const formatDateTime = (dateStr: string) => {
   text-transform: uppercase;
   border-bottom: 2px solid #1e1f22;
   white-space: nowrap;
+
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .audit-table td {
