@@ -14,7 +14,7 @@ const formatDateTime = (dateStr: string) => {
 
 <template>
   <section class="table-card">
-    <h2>Attività Modifiche (Privacy-Preserved)</h2>
+    <h2>Attività Modifiche</h2>
     <div class="responsive-table-wrapper">
       <table class="audit-table">
         <thead>

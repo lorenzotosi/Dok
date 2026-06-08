@@ -18,7 +18,6 @@ const documentTitle = ref('Caricamento...');
 
 const fetchData = async () => {
   try {
-    // Chiamate delegate al Service Layer (Risposta 5)
     const docInfo = await AdminService.getDocumentBasicInfo(documentId);
     documentTitle.value = docInfo.title;
     logs.value = await AdminService.getDocumentLogs(documentId);
@@ -71,8 +70,8 @@ const modificationLogs = computed(() => filteredLogs.value.filter(l => l.type ==
         &#8592; Torna Indietro
       </button>
       <div class="title-section">
-        <h1>Log di Controllo Audit</h1>
-        <p class="subtitle">Documento: <span>{{ documentTitle }}</span></p>
+        <h1>Log del Dok</h1>
+        <p class="subtitle"><span>{{ documentTitle }}</span></p>
       </div>
     </header>
 

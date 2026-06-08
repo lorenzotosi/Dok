@@ -64,7 +64,7 @@ export class AdminService {
 
         return {
             ...doc,
-            title: 'Documento Riservato',
+            title: doc.visibility === 'public' ? doc.title : 'Documento Riservato',
             originalId: doc._id
         };
     }
