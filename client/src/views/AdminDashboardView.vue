@@ -117,9 +117,14 @@ const filteredAndSortedUsers = computed(() => {
 
 <template>
   <div class="admin-dashboard-container">
-    <button @click="navigateBack" class="back-button">
-      <span class="icon">&#8592;</span> Torna alla Home
-    </button>
+    <div class="top-actions-row">
+      <button @click="navigateBack" class="back-button">
+        <span class="icon">&#8592;</span> Torna alla Home
+      </button>
+      <button @click="router.push({name:'AdminStats'})" class="stats-button">
+        Statistiche Sistema <span class="icon">&#8594;</span>
+      </button>
+    </div>
 
     <div class="header-titles">
       <h1>Gestione Utenti</h1>
@@ -169,6 +174,15 @@ const filteredAndSortedUsers = computed(() => {
   box-sizing: border-box;
 }
 
+.top-actions-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+
 .back-button {
   align-self: flex-start;
   border: 1px solid #3f3f3f;
@@ -182,13 +196,32 @@ const filteredAndSortedUsers = computed(() => {
   align-items: center;
   gap: 8px;
   transition: all 0.2s ease;
-  margin-bottom: 20px;
+  margin-bottom: 0;
 }
 
 .back-button:hover {
   background-color: #3f4147;
   color: #ffffff;
   border-color: #5865F2;
+}
+
+.stats-button {
+  background-color: #23a55a;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.stats-button:hover {
+  background-color: #1a7c43;
 }
 
 .header-titles {

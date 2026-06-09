@@ -1,7 +1,6 @@
 import type { Request, Response } from 'express';
 import { AuthService } from '../services/auth.service.js';
 import type {AuthRequest} from "../middlewares/auth.middleware.js";
-import {UserModel} from "../models/User.js";
 
 const authService = new AuthService();
 
@@ -28,7 +27,10 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             return;
         }
 
-        const data = await authService.login(email, password);
+        const rawIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+        const clientIp = Array.isArray(rawIp) ? rawIp[0] : rawIp;
+
+        const data = await authService.login(email, password, clientIp);
         res.status(200).json(data);
     } catch (error: any) {
         res.status(401).json({ error: error.message });
@@ -38,7 +40,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 export const logout = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user!.id;
-        await UserModel.findByIdAndUpdate(userId, { lastSeen: new Date() });
+        await authService.logout(userId);
 
         res.status(200).json({ message: 'Logout registrato con successo. Dati sincronizzati.' });
     } catch (error) {

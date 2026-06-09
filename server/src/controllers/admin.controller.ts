@@ -153,3 +153,14 @@ export const getAdminDocumentLogs = async (req: Request, res: Response): Promise
         res.status(500).json({ error: 'Impossibile recuperare i log di sistema' });
     }
 };
+
+export const getGlobalStats = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const range = (req.query.range as string) || '7d';
+        const stats = await AdminService.getGlobalStats(range);
+        res.status(200).json(stats);
+    } catch (error) {
+        console.error('[AdminController] Errore getGlobalStats:', error);
+        res.status(500).json({ error: 'Impossibile recuperare le statistiche globali' });
+    }
+};

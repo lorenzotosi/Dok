@@ -38,4 +38,9 @@ export const AdminService = {
         return response.data;
     },
 
+    async getGlobalStats(range: string = '7d'): Promise<any> {
+        const response = await api.get(`/admin/stats?range=${range}`);
+        return response.data;
+    }
+
 };

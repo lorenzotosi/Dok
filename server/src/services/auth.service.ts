@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { UserModel, type IUser, UserRole } from '../models/User.js';
+import SiteAccessLog from "../models/SiteAccessLog.js";
 
 // Idealmente queste interfacce vanno in un file types dedicato
 export interface AuthResponse {
@@ -55,7 +56,7 @@ export class AuthService {
         };
     }
 
-    async login(email: string, password: string): Promise<AuthResponse> {
+    async login(email: string, password: string, ipAddress: string = 'unknown'): Promise<AuthResponse> {
         const user = await UserModel.findOne({ email }).select('+passwordHash');
 
         if (!user) {
@@ -70,6 +71,15 @@ export class AuthService {
         await UserModel.findByIdAndUpdate(user._id, { lastSeen: new Date() });
         const token = this.generateToken(user);
 
+        try {
+            await SiteAccessLog.create({
+                userId: user._id,
+                ipAddress: ipAddress
+            });
+        } catch (logError) {
+            console.error("[AuthService] Errore salvataggio SiteAccessLog:", logError);
+        }
+
         return {
             user: {
                 id: user._id.toString(),
@@ -80,5 +90,19 @@ export class AuthService {
             },
             token
         };
+    }
+
+    async logout(userId: string): Promise<void> {
+        await UserModel.findByIdAndUpdate(userId, { lastSeen: new Date() });
+
+        try {
+            await SiteAccessLog.findOneAndUpdate(
+                { userId: userId, logoutAt: null },
+                { logoutAt: new Date() },
+                { sort: { loginAt: -1 } }
+            );
+        } catch (logError) {
+            console.error("[AuthService] Errore chiusura SiteAccessLog:", logError);
+        }
     }
 }

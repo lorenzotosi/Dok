@@ -2,6 +2,7 @@ import {UserModel} from '../models/User.js';
 import DocumentModel from '../models/Document.js';
 import FolderModel from '../models/Folder.js';
 import AuditLog from "../models/AuditLog.js";
+import SiteAccessLog from "../models/SiteAccessLog.js";
 
 export class AdminService {
     /**
@@ -77,6 +78,90 @@ export class AdminService {
             .populate('userId', 'firstName lastName email _id')
             .sort({ createdAt: -1 })
             .lean();
+    }
+
+
+    /**
+     * Helpers per getGlobalStats
+     */
+    private static async getStatsUsers() {
+        const [total, admins] = await Promise.all([
+            UserModel.countDocuments(),
+            UserModel.countDocuments({ role: 'ADMIN' })
+        ]);
+        return { total, admins, normals: total - admins };
+    }
+
+    private static async getStatsDocuments() {
+        const [total, publicDocs] = await Promise.all([
+            DocumentModel.countDocuments(),
+            DocumentModel.countDocuments({ visibility: 'public' })
+        ]);
+        return { total, public: publicDocs, private: total - publicDocs };
+    }
+
+    private static async getStatsFolders() {
+        const [total, publicFolders] = await Promise.all([
+            FolderModel.countDocuments(),
+            FolderModel.countDocuments({ visibility: 'public' })
+        ]);
+        return { total, public: publicFolders, private: total - publicFolders };
+    }
+
+    private static async getStatsShares() {
+        const [total, readOnly, edit] = await Promise.all([
+            DocumentModel.countDocuments({ "sharedWith.0": { $exists: true } }),
+            DocumentModel.countDocuments({ "sharedWith.role": "viewer" }),
+            DocumentModel.countDocuments({ "sharedWith.role": "editor" })
+        ]);
+        return { total, readOnly, edit };
+    }
+
+    private static async getStatsAccessChart(range: string) {
+        let startDate;
+        let groupFormat = "%Y-%m-%d";
+
+        if (range === '24h') {
+            startDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
+            groupFormat = "%Y-%m-%dT%H:00:00.000Z";
+        } else if (range === '30d') {
+            startDate = new Date(Date.now() - 29 * 24 * 60 * 60 * 1000);
+            startDate.setHours(0, 0, 0, 0);
+        } else {
+            startDate = new Date(Date.now() - 6 * 24 * 60 * 60 * 1000);
+            startDate.setHours(0, 0, 0, 0);
+        }
+
+        const data = await SiteAccessLog.aggregate([
+            { $match: { loginAt: { $gte: startDate } } },
+            { $group: { _id: { $dateToString: { format: groupFormat, date: "$loginAt" } }, count: { $sum: 1 } } },
+            { $sort: { "_id": 1 } }
+        ]);
+
+        return {
+            categories: data.map(log => log._id),
+            series: data.map(log => log.count)
+        };
+    }
+    /**
+     * Recupera le statistiche globali della piattaforma con i dettagli per le sottocategorie.
+     */
+    static async getGlobalStats(range: string = '7d') {
+        const [users, documents, folders, shares, accessChart] = await Promise.all([
+            this.getStatsUsers(),
+            this.getStatsDocuments(),
+            this.getStatsFolders(),
+            this.getStatsShares(),
+            this.getStatsAccessChart(range)
+        ]);
+
+        return {
+            users,
+            documents,
+            folders,
+            shares,
+            accessChart
+        };
     }
 
     static async changeUserRole(userId: string, newRole: 'USER' | 'ADMIN') {

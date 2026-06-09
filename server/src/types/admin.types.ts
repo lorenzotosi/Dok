@@ -5,7 +5,6 @@ export interface UserDetailDTO {
     email: string;
     role: string;
     metrics: UserStats
-    // Il Virtual File System conterrà solo metadati anonimizzati
     virtualFileSystem: {
         folders: any[];
         documents: any[];
