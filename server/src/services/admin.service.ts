@@ -118,11 +118,62 @@ export class AdminService {
     }
 
     private static async getStatsAccessChart(range: string) {
+        // aggregati
+        if (range.startsWith('trend-')) {
+            let groupId: any = {};
+
+            if (range === 'trend-hour') {
+                groupId = { $hour: "$loginAt" };
+            } else if (range === 'trend-weekday') {
+                groupId = { $isoDayOfWeek: "$loginAt" };
+            } else if (range === 'trend-monthday') {
+                groupId = { $dayOfMonth: "$loginAt" };
+            }
+
+            const data = await SiteAccessLog.aggregate([
+                { $group: { _id: groupId, count: { $sum: 1 } } },
+                { $sort: { "_id": 1 } }
+            ]);
+
+            const map = new Map(data.map(d => [d._id, d.count]));
+            const categories: string[] = [];
+            const series: number[] = [];
+
+            if (range === 'trend-hour') {
+                for (let i = 0; i < 24; i++) {
+                    categories.push(`${i.toString().padStart(2, '0')}:00`);
+                    series.push(map.get(i) || 0);
+                }
+            } else if (range === 'trend-weekday') {
+                const days = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica'];
+                days.forEach((day, index) => {
+                    categories.push(day);
+                   series.push(map.get(index + 1) || 0);
+                });
+            } else if (range === 'trend-monthday') {
+                for (let i = 1; i <= 31; i++) {
+                    categories.push(i.toString());
+                    series.push(map.get(i) || 0);
+                }
+            }
+
+            return { categories, series };
+        }
+
+        // storico
         let startDate;
+        let endDate = new Date();
         let groupFormat = "%Y-%m-%d";
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
 
         if (range === '24h') {
             startDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
+            groupFormat = "%Y-%m-%dT%H:00:00.000Z";
+        } else if (dateRegex.test(range)) {
+            startDate = new Date(range);
+            startDate.setHours(0, 0, 0, 0);
+            endDate = new Date(range);
+            endDate.setHours(23, 59, 59, 999);
             groupFormat = "%Y-%m-%dT%H:00:00.000Z";
         } else if (range === '30d') {
             startDate = new Date(Date.now() - 29 * 24 * 60 * 60 * 1000);
@@ -132,8 +183,13 @@ export class AdminService {
             startDate.setHours(0, 0, 0, 0);
         }
 
+        const matchFilter: any = { loginAt: { $gte: startDate } };
+        if (dateRegex.test(range)) {
+            matchFilter.loginAt.$lte = endDate;
+        }
+
         const data = await SiteAccessLog.aggregate([
-            { $match: { loginAt: { $gte: startDate } } },
+            { $match: matchFilter },
             { $group: { _id: { $dateToString: { format: groupFormat, date: "$loginAt" } }, count: { $sum: 1 } } },
             { $sort: { "_id": 1 } }
         ]);

@@ -93,7 +93,6 @@ onMounted(() => {
       </div>
 
       <AdminAccessChart
-          v-if="stats.accessChart?.series?.length > 0"
           :categories="stats.accessChart.categories"
           :seriesData="stats.accessChart.series"
           :currentRange="chartRange"

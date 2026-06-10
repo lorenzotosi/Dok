@@ -137,11 +137,11 @@ router.patch('/users/:id/role', requireAuth, requireAdmin, changeUserRole);
  *         - BearerAuth: []
  *     parameters:
  *         - in: path
- *         name: id
- *         required: true
- *         schema:
+ *           name: id
+ *           required: true
+ *           schema:
  *             type: string
- *         description: ID del documento
+ *           description: ID del documento
  *     responses:
  *         200:
  *             description: Array di audit logs
@@ -160,14 +160,14 @@ router.get('/documents/:id/logs', requireAuth, requireAdmin, getAdminDocumentLog
  *     tags:
  *         - Admin
  *     security:
-*          - BearerAuth: []
+ *         - BearerAuth: []
  *     parameters:
  *         - in: path
- *         name: id
- *         required: true
- *         schema:
- *             type: string
- *             description: ID del documento
+ *           name: id
+ *           required: true
+ *           schema:
+ *              type: string
+ *           description: ID del documento
  *     responses:
  *         200:
  *             description: Informazioni recuperate
