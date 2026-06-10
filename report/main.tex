@@ -1,123 +1,424 @@
-\documentclass{report}
+\documentclass[11pt,a4paper]{report}
 \usepackage[utf8]{inputenc}
-
-\title{
-    Titolo Progetto \\
-    \large Applicazioni e Servizi Web
-}
-
-\author{Nome Autore - 000725342 \{nome.cognome@unibo.it\}}
-\date{01 Gennaio 2020}
-
-\usepackage{natbib}
+\usepackage[italian]{babel}
 \usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{float}
+\geometry{a4paper, top=3cm, bottom=3cm, left=3cm, right=3cm}
+
+\title{\textbf{Dok} \\ \large Applicazioni e Servizi Web}
+\author{Lorenzo Tosi, Alessandro Stefani}
 
 \begin{document}
 
 \maketitle
-\section{Introduzione}
 
-Il progetto proposto consiste nella realizzazione di un’applicazione web che permetta
-agli utenti di creare, modificare visualizzare e condividere documenti di testo.
-Il servizio permette anche di organizzare i documenti in cartelle e collaborare in tempo reale
-con altri utenti sugli stessi documenti. I documenti possono essere pubblici o privati: quelli pubblici
-sono visibili a tutti gli utenti della piattaforma, anche non loggati, mentre quelli privati sono visibili solo al proprietario
-ed a coloro che hanno ricevuto la condivisione.
+\tableofcontents
+\newpage
 
-\section{Requisiti}
-Prima di procedere con lo sviluppo di \textbf{Dok}, è stata effettuata un'accurata fase di analisi e definizione dei requisiti, ponendo l'utente al centro del processo di progettazione (\textit{User-Centered Design}). Dok è concepito come un sistema web-based per la gestione, la condivisione e la redazione collaborativa in tempo reale di documenti di testo, integrando funzionalità avanzate di intelligenza artificiale per l'editing di testi.
+\chapter{Introduzione}
+Dok mette a disposizione un ambiente di lavoro collaborativo e unisce in una singola piattaforma le funzionalità di archiviazione in cloud e l'editing simultaneo di documenti testuali.
 
-Di seguito viene riportato l'elenco dettagliato dei requisiti funzionali e non funzionali del sistema.
+L'applicazione si articola attorno a due macro-ambienti di interazione. Il primo è lo spazio privato: ogni utente registrato gode di una propria area di lavoro esclusiva e privata in cui può generare documenti, organizzarli in un sistema di cartelle e gestirne i permessi. Il sistema permette al proprietario del file di invitare altri utenti assegnando loro specifici ruoli: visualizzazione o modifica.
 
-\subsection{Requisiti Funzionali}
-I requisiti funzionali definiscono le azioni e le caratteristiche operative del sistema. Vengono suddivisi in base alle categorie di attori che interagiscono con la piattaforma.
+Dall'altro lato, la piattaforma integra un'area definita "globale". Quest'ultima si comporta come una bacheca pubblica dove i documenti e le cartelle in essa contenuti sono visibili liberamente a tutti, inclusi gli utenti che navigano il sito in modalità ospite senza aver effettuato l'accesso. Pur essendo le risorse pubbliche accessibili in lettura a chiunque, la piattaforma garantisce la sicurezza dei contenuti permettendo l'effettiva modifica del testo esclusivamente agli utenti autorizzati.
 
-\subsubsection{Utente Non Autenticato (Guest)}
-L'utente anonimo che visita la piattaforma può:
-\begin{itemize}
-    \item \textbf{Registrazione:} Creare un nuovo account specificando nome, cognome, indirizzo email e password.
-    \item \textbf{Autenticazione:} Effettuare l'accesso (login) al sistema per ottenere i privileges di utente registrato.
-    \item \textbf{Accesso a contenuti pubblici:} Navigare nelle cartelle pubbliche e visualizzare in modalità di sola lettura i documenti contrassegnati con visibilità pubblica.
-\end{itemize}
+\chapter{Analisi dei Requisiti}
 
-\subsubsection{Utente Autenticato}
-L'utente che ha effettuato l'accesso può:
-\begin{itemize}
-    \item \textbf{Gestione Cartelle:} Organizzare i propri file attraverso una struttura gerarchica di cartelle nidificate. Un albero di directory che l'utente può manipolare a piacimento creando o rimuovendo nodi.
-    \item \textbf{Gestione Documenti:} Gestire i documenti di testo, creandoli all'interno delle cartelle o direttamente nella radice. È prevista anche la possibilità di rinominarli ed eliminarli in modo semplice.
-    \item \textbf{Visibilità Risorse:} Configurare la visibilità delle proprie risorse. Ciascuna cartella o documento nasce come privato, ma l'utente può impostarlo come pubblico in qualunque momento, rendendolo accessibile tramite un semplice URL.
-    \item \textbf{Condivisione:} Collaborare condividendo i documenti con altri iscritti tramite email. Il proprietario decide se assegnare il ruolo di \textit{Viewer} (sola lettura) o \textit{Editor} (scrittura collaborativa). È fondamentale poter revocare questi permessi in qualsiasi momento.
-    \item \textbf{Sistema di Notifiche:} Ricevere notifiche in tempo reale all'interno dell'interfaccia. Ad esempio quando un collega condivide un documento, o se i permessi di scrittura vengono modificati o revocati.
-\end{itemize}
+La fase iniziale dello sviluppo della piattaforma Dok è stata interamente dedicata alla definizione accurata dei requisiti di sistema. L'obiettivo primario consisteva nel delineare con chiarezza le necessità del target di riferimento, ponendo l'utente finale al centro di ogni scelta progettuale. Per evitare la strutturazione di funzionalità astratte, la progettazione si è basata sulle metodologie dello \textit{User-Centered Design} (UCD), avvalendosi in particolar modo della tecnica delle \textit{Personas} e degli scenari d'uso. Questo approccio ha permesso di simulare contesti reali di interazione, traducendoli successivamente in requisiti tecnici concreti.
 
-\subsubsection{Amministratore (Admin)}
-L'utente con privilegi amministrativi può:
-\begin{itemize}
-    \item \textbf{Elenco Utenti:} Accedere a una dashboard centralizzata per visualizzare l'elenco completo degli utenti registrati.
-    \item \textbf{Presenza Real-Time:} Monitorare in tempo reale lo stato di presenza degli utenti (se siano online o offline) e vedere l'ora dell'ultimo accesso (\textit{lastSeen}) per chi è disconnesso.
-    \item \textbf{Dettagli e Metriche Utente:} Consultare le metriche di un profilo specifico, contandone i documenti creati, quelli condivisi e quelli ricevuti. Questo ci è sembrato utile per capire il livello di utilizzo delle risorse del server.
-    \item \textbf{Ispezione File System:} Esaminare il file system di qualunque utente. L'amministratore può navigare tra le cartelle e i file altrui per motivi di supporto tecnico o moderazione di contenuti inappropriati.
-    \item \textbf{Gestione Ruoli:} Promuovere altri utenti al ruolo di amministratore o revocare i privilegi esistenti. Il sistema avvisa in modo tempestivo l'interessato del cambio di ruolo.
-\end{itemize}
-
-\subsection{Requisiti Non Funzionali}
-I requisiti non funzionali descrivono gli attributi di qualità, le prestazioni ed i vincoli a cui il sistema deve sottostare.
+\section{Requisiti Funzionali}
+I requisiti funzionali descrivono in modo dettagliato le azioni che il sistema deve consentire di compiere, definendo il comportamento dell'applicazione in risposta agli input degli utenti.
 
 \begin{itemize}
-    \item \textbf{Collaborazione Real-Time:} Modificare simultaneamente un documento condiviso insieme ad altri editor, con risoluzione automatica e priva di conflitti delle modifiche concorrenti.
+    \item \textbf{RF1 - Gestione dell'Autenticazione e Profilazione:}
+    \begin{itemize}
+        \item Il sistema deve permettere la registrazione di un nuovo utente tramite inserimento di username, email e password.
+        \item L'applicazione deve consentire il login sicuro tramite emissione di un token JWT (JSON Web Token).
+        \item Devono essere supportati tre ruoli distinti con privilegi crescenti: Ospite (non autenticato), Utente (autenticato) e Amministratore.
+    \end{itemize}
     
-    \item \textbf{Rielaborazione Testi tramite AI:} Selezionare una porzione di testo all'interno di un documento e richiedere all'assistente AI (LLM Gemini) di riscriverla in base a un'istruzione testuale fornita dall'utente.
-
-    \item \textbf{Usabilità e Responsive Design:} L'interfaccia utente deve essere chiara, minimale e allineata ai principi KISS (\textit{Keep It Simple, Stupid}). Deve adottare una filosofia \textit{Mobile-First} per garantire una navigazione fluida ed ergonomica sia su desktop che su smartphone e tablet.
-    \item \textbf{Sincronizzazione Real-Time ed Event-Based:} Lo scambio di dati in tempo reale (notifiche, aggiornamenti della dashboard e sincronizzazione dell'editing collaborativo) deve avvenire tramite un protocollo bidirezionale a bassa latenza (WebSocket), riducendo al minimo il sovraccarico di rete rispetto a tecniche di polling classico.
-    \item \textbf{Risoluzione Concorrenza:} Per la stesura a più mani dei documenti si deve garantire un comportamento deterministico senza conflitti di unione (\textit{merge conflicts}), implementando strutture dati di tipo CRDT (\textit{Conflict-free Replicated Data Types}). A livello di database, la coerenza dei metadati di file e cartelle deve essere controllata tramite concurrency ottimistica.
-    \item \textbf{Autenticazione e Sicurezza:} L'autenticazione deve essere gestita in modo sicuro e stateless mediante l'uso di JSON Web Token (JWT) inclusi negli header HTTP delle richieste API e trasmessi all'handshake delle WebSocket. Le password memorizzate nel database devono essere cifrate in modo irreversibile mediante algoritmo di hashing (bcrypt).
-    \item \textbf{Affidabilità e Tolleranza ai Guasti:} La rilevazione della presenza degli utenti online deve gestire in modo trasparente brevi disconnessioni di rete (\textit{network flaps}) o ricaricamenti di pagina, applicando un periodo di tolleranza (\textit{grace period}) prima di dichiarare un utente disconnesso.
+    \item \textbf{RF2 - Gestione dello Spazio Privato (File System Virtuale):}
+    \begin{itemize}
+        \item Ogni utente autenticato deve disporre di una radice privata esclusiva.
+        \item Il sistema deve abilitare le operazioni CRUD (creazione, lettura, rinomina, eliminazione) su cartelle e documenti organizzati ad albero.
+    \end{itemize}
+    
+    \item \textbf{RF3 - Condivisione Granulare delle Risorse:}
+    \begin{itemize}
+        \item Il proprietario di un documento privato deve poterlo condividere con altri utenti registrati specificando l'indirizzo email del destinatario.
+        \item Il sistema deve supportare due livelli di permessi per le condivisioni: \textit{Viewer} (sola lettura) ed \textit{Editor} (modifica).
+    \end{itemize}
+    
+    \item \textbf{RF4 - Editor Collaborativo Real-Time:}
+    \begin{itemize}
+        \item Gli utenti con permessi di scrittura sullo stesso file devono poter digitare testo simultaneamente.
+        \item Il sistema deve propagare istantaneamente le modifiche e mostrare i cursori attivi con i nomi degli utenti connessi.
+    \end{itemize}
+    
+    \item \textbf{RF5 - Spazio Globale Pubblico:}
+    \begin{itemize}
+        \item La piattaforma deve esporre una sezione "Globale" visibile anche agli utenti non autenticati.
+        \item Qualsiasi utente autenticato può creare elementi nell'area globale, ma la modifica collaborativa del testo rimane vincolata ai permessi specifici di scrittura.
+    \end{itemize}
+    
+    \item \textbf{RF6 - Integrazione dell'Assistente IA:}
+    \begin{itemize}
+        \item L'editor deve includere un menu contestuale attivabile sulla selezione del testo che consenta di richiedere la riscrittura, la sintesi o il perfezionamento del frammento selezionato tramite un motore LLM integrato nel backend.
+    \end{itemize}
+    
+    \item \textbf{RF7 - Monitoraggio e Amministrazione:}
+    \begin{itemize}
+        \item L'utente con ruolo di Amministratore deve poter accedere a una dashboard riservata per visualizzare l'elenco degli utenti, ispezionare l'intero file system globale e monitorare i log di sistema.
+    \end{itemize}
+    \item \textbf{RF8 - Notifiche}
+    \begin{itemize}
+        \item La piattaforma deve avere un sistema di notifica che aggiorna l'utente quando gli viene condiviso un nuovo documento, quando gli vengono aggiornati i permessi e quando gli vengono rimossi.
+    \end{itemize}
 \end{itemize}
 
-\section{Design}
-La progettazione dell'intero sistema si focalizza sul modello iterativo basato sullo \textit{User-Centered Design}. Di seguito viene riportata l'analisi dei target user tramite la definizione di \textit{Personas} e \textit{Scenarios}, seguita dalla descrizione dell'architettura del sistema e delle interfacce utente.
-
-\subsection{Analisi dei Target User: Personas e Scenari}
-Per comprendere al meglio le esigenze dell'utenza e guidare le scelte di design e architettura, sono stati definiti tre profili utente tipo con i relativi scenari d'uso.
+\section{Requisiti Non Funzionali}
+I requisiti non funzionali specificano le caratteristiche qualitative, i vincoli tecnici e le metriche di efficienza che il software deve rispettare durante il suo funzionamento.
 
 \begin{itemize}
-    \item \textbf{Chiara (Studentessa Universitaria, 22 anni)} \\
-    \textbf{Profilo:} Chiara frequenta la facoltà di Informatica e lavora spesso a progetti di gruppo. Ha bisogno di un ambiente condiviso e organizzato in cui collaborare simultaneamente con i colleghi senza rischiare conflitti di versione. \\
-    \textbf{Scenario:} Chiara crea una cartella denominata "Progetto ASW" sulla piattaforma e inserisce i membri del suo gruppo. All'interno crea un documento condiviso. Durante una chiamata online, lei e i suoi colleghi aprono il documento contemporaneamente e ne redigono le varie sezioni in tempo reale, vedendo istante per istante le modifiche di ciascuno.
-    
-    \item \textbf{Giulia (Copywriter Freelance, 29 anni)} \\
-    \textbf{Profilo:} Giulia lavora per diversi clienti scrivendo articoli e post di blog. Utilizza molto tablet e smartphone durante gli spostamenti e ha spesso bisogno di ottimizzare i tempi di scrittura, correggere bozze o ricevere spunti per rielaborare frasi complesse. \\
-    \textbf{Scenario:} Giulia apre Dok dal suo tablet durante un viaggio in treno. Seleziona una porzione di testo di un articolo a cui sta lavorando e apre lo strumento di riscrittura AI integrato. Specifica un'istruzione come "Rendi il tono più formale e conciso" e invia la richiesta. Il sistema restituisce la frase riscritta, che lei inserisce direttamente nel documento.
-    
-    \item \textbf{Matteo (System Administrator, 35 anni)} \\
-    \textbf{Profilo:} Matteo si occupa della gestione della piattaforma aziendale di documentazione basata su Dok. Ha il compito di supervisionare l'attività dei server, garantire che le risorse non vengano abusate e supportare gli utenti in caso di problemi tecnici. \\
-    \textbf{Scenario:} Matteo accede alla sezione amministrativa di Dok per verificare l'affluenza sulla piattaforma. Dalla dashboard visualizza l'elenco degli utenti registrati, vedendo chi è attualmente online e chi offline. Clicca sul profilo di un utente che ha segnalato un errore e ne esamina le metriche di utilizzo e l'albero delle cartelle per identificare eventuali anomalie organizzative o problemi di permessi.
+    \item \textbf{RNF1 - Usabilità e Approccio Mobile First:} L'interfaccia grafica deve essere flessibile. Il layout deve adattarsi automaticamente alle dimensioni dello schermo del dispositivo utilizzato, garantendo un'esperienza fluida sia su desktop che su smartphone e tablet.
+    \item \textbf{RNF2 - Reattività e Sincronizzazione a Bassa Latenza:} Il flusso dei dati collaborativi deve essere immediato. La propagazione degli aggiornamenti testuali tra i client connessi allo stesso documento deve avvenire in tempo reale, mantenendo la latenza impercettibile per l'occhio umano.
+    \item \textbf{RNF3 - Consistenza dei Dati e Risoluzione dei Conflitti:} Il sistema non deve generare incongruenze. In caso di modifiche simultanee sullo stesso paragrafo, l'applicazione deve integrare i testi in modo matematicamente consistente senza causare sovrascritture distruttive o disallineamenti tra i client.
+    \item \textbf{RNF4 - Sicurezza e Architettura Stateless:} La protezione delle risorse è un vincolo stringente. Tutte le rotte API riservate e le connessioni WebSocket devono essere protette da meccanismi di autorizzazione basati su token crittografici, evitando di memorizzare lo stato della sessione sulla memoria del server backend.
 \end{itemize}
 
-\begin{figure}[h!]
-\centering
-\includegraphics[scale=0.44]{deathStar2.jpg}
-\caption{Death Star}
-\label{fig:deathstar}
+\chapter{Design e Architettura}
+
+Per tradurre in realtà i requisiti definiti nella fase di analisi, la progettazione del sistema Dok ha richiesto un'attenta pianificazione dell'infrastruttura software. La natura fortemente interattiva e collaborativa dell'applicazione ha imposto l'adozione di pattern architetturali in grado di gestire non solo le tradizionali operazioni CRUD, ma anche un flusso di dati continuo e bidirezionale tra i client e il server.
+
+\section{Architettura di Sistema}
+L'applicativo si fonda sul paradigma Client-Server, strutturato per garantire una netta separazione delle responsabilità (Separation of Concerns). Questa scelta permette di mantenere il frontend leggero e puramente dedicato alla presentazione e alla reattività dell'interfaccia, delegando al backend tutta la complessa logica di validazione, autenticazione e persistenza dei dati.
+
+Per gestire la diversità delle operazioni richieste, il sistema utilizza due modelli di comunicazione:
+\begin{itemize}
+    \item \textbf{Architettura RESTful:} Utilizzata per tutte le operazioni di natura statica e transazionale. Tramite chiamate HTTP standard, il client comunica con le API del server per gestire l'autenticazione, recuperare l'albero delle cartelle, creare nuovi documenti o aggiornare il profilo utente.
+    \item \textbf{Comunicazione Event-Driven (WebSocket):} Fondamentale per il cuore collaborativo dell'app. Attraverso una connessione persistente bidirezionale, il server effettua il \textit{push} delle notifiche, degli aggiornamenti di stato della dashboard e, soprattutto, delle modifiche testuali in tempo reale, senza che il client debba continuamente interrogare il server (polling).
+\end{itemize}
+
+% NOTA PER TE: Qui potresti inserire un diagramma architetturale (Client -> REST/Socket -> Server -> MongoDB/Redis).
+% Se hai un diagramma dell'architettura di rete, scommenta e usa questo blocco:
+\begin{figure}[H]
+    \centering
+    % \includegraphics[width=0.8\textwidth]{path/alla/tua/immagine_architettura.png}
+    \caption{Diagramma dell'architettura Client-Server e dei flussi di comunicazione.}
+    \label{fig:architettura_sistema}
 \end{figure}
 
-\section{Tecnologie}
-Tecnologie adottate e motivazioni.
+\section{Modello dei Dati e Sincronizzazione (CRDT)}
+La sfida architetturale più complessa consisteva nel garantire la consistenza del testo modificato simultaneamente da più utenti. Se due persone scrivono contemporaneamente sullo stesso paragrafo, l'uso di semplici lock o sovrascritture asincrone porterebbe a perdite di dati e a una pessima esperienza utente.
 
-\section{Codice}
-Solo aspetti rilevanti.
+Per risolvere in modo elegante questo problema, l'architettura integra il modello dei \textbf{CRDT} (\textit{Conflict-free Replicated Data Types}). Piuttosto che delegare al server l'onere di unire le versioni del documento (come avviene nei tradizionali sistemi di versioning), la logica di risoluzione dei conflitti è distribuita. 
+Ogni utente mantiene una copia locale della struttura dati del documento. Quando un utente digita una lettera, il framework genera un aggiornamento incrementale che viene inviato al backend tramite WebSocket. Il server agisce da semplice \textit{router}, inoltrando l'aggiornamento agli altri client connessi alla medesima "stanza" (room). I client riceventi applicano deterministicamente l'aggiornamento alla propria copia locale, convergendo sempre verso il medesimo stato finale senza bisogno di bloccare l'editor.
 
-\section{Test}
-Test effettuati sul codice e test con utenti.
+\section{Design del Backend e del Frontend}
+Il server è stato progettato seguendo un pattern modulare basato su \textit{Controller} e \textit{Services}. I Controller fungono da punto di ingresso per le rotte API, occupandosi dell'estrazione dei parametri e dell'invio delle risposte HTTP. La business logic vera e propria risiede invece nei Services, i quali astraggono l'interazione con il database non relazionale (orientato ai documenti), garantendo codice pulito, testabile e riutilizzabile.
 
-\section{Deployment}
-Rilascio, installazione e messa in funzione.
+Lato frontend, si è adottato un approccio \textit{Component-Based}. L'interfaccia è composta da "mattoncini" visivi incapsulati e riutilizzabili. Per evitare il noto problema del \textit{prop-drilling} (il passaggio di dati in cascata attraverso decine di componenti annidati), lo stato globale dell'applicazione è gestito in modo centralizzato tramite specifici \textit{Store}. Questi contenitori reattivi tengono traccia della sessione dell'utente, dei documenti correntemente aperti e delle notifiche in sospeso, aggiornando automaticamente la vista ogni qualvolta i dati sottostanti mutano.
+
+\section{Progettazione UI/UX e Mockup}
+L'interfaccia utente è stata concepita seguendo i principi del \textit{KISS} (Keep It Simple, Stupid) e del \textit{Minimalist Design}. L'intento era quello di ridurre al minimo il carico cognitivo dell'utente, fornendo un'esperienza visiva familiare che richiamasse i software di produttività cloud più diffusi. 
+
+La progettazione è partita con la realizzazione di mockup ad alta fedeltà, assicurandosi che le interfacce fossero pienamente responsive e godibili anche da dispositivi mobili. 
+
+\subsection{Dashboard e File System Virtuale}
+La vista principale dopo l'accesso è la Dashboard. L'interfaccia si divide in una comoda barra laterale per la navigazione rapida (con collegamenti allo Spazio Privato e all'Area Globale) e in un'ampia griglia centrale che mostra le cartelle e i documenti sotto forma di schede visuali.
+
+% INSERISCI QUI LA FOTO DEL MOCKUP DELLA DASHBOARD
+\begin{figure}[H]
+    \centering
+    % Sostituisci il nome del file con quello del tuo mockup
+    % \includegraphics[width=0.9\textwidth]{immagini/mockup_dashboard.png}
+    \caption{Mockup della Dashboard principale: navigazione e gestione file.}
+    \label{fig:mockup_dashboard}
+\end{figure}
+
+\subsection{L'Editor Collaborativo}
+L'editor si presenta essenziale e privo di distrazioni. Nella parte superiore, una barra degli strumenti racchiude le opzioni di formattazione. È presente un indicatore delle presenze: avatar colorati mostrano in tempo reale chi è connesso al documento. Questa scelta di design non è puramente estetica, ma funge da \textit{awareness protocol}, rassicurando l'utente sul fatto che la sessione collaborativa è attiva.
+
+% INSERISCI QUI LA FOTO DEL MOCKUP DELL'EDITOR
+\begin{figure}[H]
+    \centering
+    % Sostituisci il nome del file con quello del tuo mockup
+    % \includegraphics[width=0.9\textwidth]{immagini/mockup_editor.png}
+    \caption{Mockup dell'Editor Documentale: indicatori di presenza e barra degli strumenti.}
+    \label{fig:mockup_editor}
+\end{figure}
+
+\subsection{Pannello di Condivisione e Assistente IA}
+Particolare attenzione è stata data ai menu contestuali. La finestra modale per la condivisione risulta chiara, permettendo di inserire un'email e selezionare rapidamente il ruolo (Viewer o Editor) da un menu a tendina. Similmente, evidenziando una porzione di testo all'interno dell'editor, un \textit{bubble menu} flottante compare vicino al cursore, suggerendo le opzioni di interazione con l'Intelligenza Artificiale per la riscrittura o l'espansione dei paragrafi.
+
+% INSERISCI QUI LA FOTO DEL MOCKUP CONDIVISIONE / IA
+\begin{figure}[H]
+    \centering
+    % Sostituisci il nome del file con quello del tuo mockup
+    % \includegraphics[width=0.9\textwidth]{immagini/mockup_modal.png}
+    \caption{Mockup della finestra di condivisione e interazione con l'Assistente IA.}
+    \label{fig:mockup_modal}
+\end{figure}
+
+\section{Target User Analysis}
+Per mappare le differenti modalità di interazione con la piattaforma, sono stati individuati tre profili di utenti tipo. Ciascun profilo rappresenta una specifica fetta di pubblico, caratterizzata da esigenze, competenze digitali e obiettivi differenziati.
+
+\subsection{Personas e Scenari d'Uso}
+
+\subsubsection{Persona 1: Marco (Lo studente universitario)}
+Marco ha 22 anni ed è uno studente iscritto alla facoltà di Informatica. Si trova spesso a dover gestire progetti di gruppo complessi, che richiedono la stesura a più mani di relazioni tecniche, report di laboratorio e appunti delle lezioni. Ha una forte familiarità con gli strumenti digitali, ma soffre per la frammentazione dei file scambiati continuamente tramite chat.
+
+\paragraph{Scenario d'uso:} Marco accede a Dok per avviare la stesura della relazione finale di un esame. Nella sua area privata, crea una cartella dedicata al corso e al suo interno crea un nuovo documento di testo. Successivamente, utilizza la funzionalità di condivisione inserendo le email dei suoi due compagni di gruppo ed assegnando loro i permessi di \textit{Editor}. I tre studenti si collegano contemporaneamente la sera stessa: ognuno scrive una sezione diversa del documento, visualizzando in tempo reale la posizione dei cursori altrui e le modifiche apportate, completando il lavoro in poche ore senza alcun conflitto di versione.
+
+\subsubsection{Persona 2: Giulia (La divulgatrice digitale)}
+Giulia ha 28 anni, lavora come content creator indipendente e cura un blog incentrato sulla tecnologia e sul self-improvement. Ha la necessità di pubblicare articoli, guide e raccoglitori di risorse testuali che siano immediatamente accessibili alla sua community, senza che i lettori debbano necessariamente registrarsi o effettuare il login per consultare i materiali.
+
+\paragraph{Scenario d'uso:} Giulia utilizza lo \textit{Spazio Globale} di Dok. Questa sezione pubblica le consente di organizzare il proprio piano editoriale creando cartelle tematiche visibili a chiunque navighi sulla piattaforma. Quando redige una nuova guida, lavora nel suo spazio privato condividendo il file in sola lettura con i suoi collaboratori più stretti per ricevere un feedback visivo. Una volta rifinito il testo, sposta il documento definitivo nell'area globale, rendendolo istantaneamente accessibile in modalità consultazione a migliaia di visitatori anonimi.
+
+\subsubsection{Persona 3: Alessandro (Il visitatore occasionale)}
+Alessandro ha 34 anni ed è un utente che naviga sul web alla ricerca di documentazione tecnica e template pronti all'uso. Non ha intenzione di creare account su ogni sito che visita e apprezza l'immediatezza nell'accesso alle informazioni.
+
+\paragraph{Scenario d'uso:} Alessandro trova sui social un link che rimanda a una cartella condivisa nello Spazio Globale di Dok. Cliccando sul collegamento, accede alla piattaforma direttamente in modalità ospite. L'interfaccia gli mostra l'albero delle cartelle pubbliche e gli permette di aprire i documenti testuali e leggerne il contenuto. Non potendo modificare il testo, Alessandro apprezza la pulizia dell'editor in sola lettura e la rapidità con cui ha ottenuto le informazioni cercate senza dover compilare alcun modulo di registrazione.
 
 
-\section{Conclusioni}
-Conclusioni
+\chapter{Tecnologie Utilizzate}
 
-\bibliographystyle{plain}
-\bibliography{references}
+La realizzazione di un sistema collaborativo in tempo reale richiede fondamenta tecnologiche solide e performanti. L'esigenza di gestire flussi di dati continui, unita alla necessità di mantenere interfacce reattive e architetture scalabili, ha guidato l'intero processo di selezione degli strumenti di sviluppo. La piattaforma Dok è stata costruita adottando lo stack \textbf{MEVN} (MongoDB, Express.js, Vue.js, Node.js), arricchito da un ecosistema di librerie specializzate per risolvere problemi complessi come la convergenza dei testi e la gestione dello stato distribuito.
+
+\section{Lo Stack MEVN come base architetturale}
+La scelta dello stack MEVN si basa sul paradigma \textit{JavaScript everywhere}. Utilizzare un unico linguaggio di programmazione sia per il client che per il server riduce drasticamente l'attrito nello sviluppo, agevolando la condivisione di interfacce (tipizzate grazie a TypeScript) e formati di dati (JSON) tra i vari layer dell'applicazione. Questa uniformità ha permesso di accelerare lo sviluppo e minimizzare gli errori di traduzione dei dati tra frontend e database.
+
+\section{Sviluppo Frontend: Vue 3 e State Management}
+L'interfaccia utente è stata interamente sviluppata utilizzando \textbf{Vue.js} (nella sua versione 3), sfruttando le potenzialità della \textit{Composition API} e della sintassi \texttt{<script setup>}. Questo approccio ha permesso di scrivere componenti più compatti e logiche facilmente riutilizzabili sotto forma di \textit{composables} (come nel caso dei moduli personalizzati per la navigazione delle cartelle o la gestione dei WebSocket).
+Il building e l'ottimizzazione degli asset sono stati affidati a \textbf{Vite}, un bundler moderno che garantisce tempi di ricarica istantanei in fase di sviluppo (Hot Module Replacement), migliorando nettamente la Developer Experience rispetto ai classici configuratori basati su Webpack.
+
+\subsection{Gestione dello Stato con Pinia}
+Data la mole di informazioni dinamiche da visualizzare (albero dei file, permessi correnti, token di autenticazione e notifiche in tempo reale), gestire lo stato tramite il semplice passaggio di \textit{props} sarebbe risultato inefficiente e prono a bug. Per ovviare a questo problema, l'applicazione si affida a \textbf{Pinia}, lo standard moderno per lo \textit{state management} nell'ecosistema Vue. 
+Sono stati creati \textit{store} modulari indipendenti (ad esempio per l'autenticazione, la gestione delle cartelle e dei documenti). Pinia garantisce che, ogni volta che un dato viene aggiornato in background (magari a seguito di una notifica WebSocket), tutti i componenti dell'interfaccia che dipendono da quel frammento di stato reagiscano e si renderizzino nuovamente in modo automatico.
+
+\section{Il Cuore Collaborativo: Tiptap e Yjs}
+La vera sfida del progetto consisteva nell'implementazione dell'editor condiviso. Una classica casella di testo o un normale editor WYSIWYG (What You See Is What You Get) non possiede nativamente gli strumenti matematici per fondere le modifiche provenienti da utenti multipli, generando inevitabili sovrascritture.
+
+Per costruire questa funzionalità si è optato per una potente sinergia tra due tecnologie:
+\begin{itemize}
+    \item \textbf{Tiptap:} È un framework per editor di testo "headless", ovvero privo di un'interfaccia grafica predefinita. A differenza di editor monolitici (come CKEditor o TinyMCE), Tiptap fornisce solo le API e le logiche di rendering del testo, lasciando al programmatore il controllo totale sul design. Questo ha permesso di integrare menù flottanti personalizzati (come il \textit{Bubble Menu} per l'assistente IA) e di mantenere uno stile estetico perfettamente coerente con il resto dell'applicazione.
+    \item \textbf{Yjs (Implementazione CRDT):} Yjs è il vero "cervello" matematico dell'editor. Si tratta di una libreria ad alte prestazioni basata sui \textit{Conflict-free Replicated Data Types} (CRDT). Invece di far transitare interi blocchi di testo sulla rete, Yjs scompone il documento in una struttura dati vettoriale. Quando un utente digita, la libreria calcola un \textit{delta} infinitesimale e lo propaga. Yjs garantisce matematicamente che, indipendentemente dall'ordine in cui i pacchetti di rete arrivano ai vari client, tutti convergeranno sempre verso lo stesso identico stato finale, azzerando i conflitti.
+\end{itemize}
+
+\section{Sviluppo Backend: Node.js ed Express.js}
+Il server dell'applicazione è alimentato da \textbf{Node.js}, un runtime asincrono orientato agli eventi, ideale per gestire un elevato numero di connessioni I/O simultanee (come quelle richieste dalle sessioni collaborative). 
+L'infrastruttura di routing e la creazione delle API RESTful poggiano su \textbf{Express.js}. Il codice del backend è stato ingegnerizzato facendo largo uso di \textit{middleware}. Un esempio lampante è la pipeline di sicurezza: prima di processare qualsiasi richiesta sensibile, il sistema intercetta la chiamata, estrae il token JWT dalle intestazioni HTTP e ne verifica la firma crittografica. Solo se l'esito è positivo, la richiesta viene inoltrata ai \textit{Controller} e, successivamente, ai \textit{Services} che incapsulano la logica di business.
+
+\subsection{Integrazione con Modelli LLM}
+Per arricchire l'esperienza utente, il server ospita anche un motore per l'interazione con l'Intelligenza Artificiale (LLM Engine). Questo modulo agisce come un ponte: riceve la porzione di testo selezionata dall'utente nel frontend e la instrada verso un Large Language Model, applicando specifici \textit{prompt} per richiedere la riscrittura, l'espansione o il riassunto del paragrafo. La risposta viene poi ripulita e restituita al client, pronta per essere iniettata nel documento tramite Tiptap.
+
+\section{Comunicazione Real-Time: Socket.io}
+Per eludere i limiti del protocollo HTTP (che è nativamente unidirezionale e stateless), l'architettura sfrutta il protocollo WebSocket tramite la celebre libreria \textbf{Socket.io}. 
+Socket.io non si limita a tenere aperto un canale bidirezionale, ma fornisce astrazioni cruciali per la scalabilità del progetto. Nello specifico, si è fatto un largo uso delle \textit{Rooms} (stanze). Quando tre utenti aprono il medesimo documento, il backend li iscrive automaticamente alla stessa Room. In questo modo, gli aggiornamenti di Yjs e la trasmissione della posizione dei cursori (\textit{Awareness Protocol}) vengono inviati in multicast (broadcast selettivo) esclusivamente agli utenti interessati da quello specifico file, ottimizzando il consumo di banda e la reattività del server.
+
+\section{Persistenza dei Dati e Deployment}
+La persistenza delle informazioni strutturate è stata affidata a \textbf{MongoDB}, un database NoSQL orientato ai documenti. La sua flessibilità nativa (schema-less) si sposa alla perfezione con l'eterogeneità dei dati testuali. L'interazione con il database è gestita tramite \textbf{Mongoose}, un Object Data Modeling (ODM) che permette di definire schemi rigorosi e validazioni direttamente nel codice TypeScript prima del salvataggio fisico dei dati.
+
+Ad affiancare MongoDB, è stata integrata un'istanza \textbf{Redis}. Operando interamente in memoria (in-memory data structure store), Redis viene impiegato per alleggerire il carico del database primario e velocizzare le operazioni ad alta frequenza, fungendo da sistema di caching e supporto per la scalabilità orizzontale delle sessioni Socket.io.
+
+Infine, per svincolare l'esecuzione del codice dalla macchina host e standardizzare il processo di rilascio, l'intera architettura è stata inserita in container tramite \textbf{Docker}. La configurazione in container isolati garantisce che il database, il server e il frontend girino sempre in un ambiente immutabile, annullando il rischio di malfunzionamenti legati alle dipendenze o alla configurazione del sistema operativo sottostante.
+
+\chapter{Implementazione e Codice}
+
+La realizzazione pratica di Dok ha richiesto la traduzione dei requisiti architetturali in un ecosistema di codice robusto e manutenibile. In questo capitolo verranno analizzati i frammenti di codice più significativi del progetto, evidenziando le scelte implementative adottate per risolvere problematiche specifiche, quali la protezione degli endpoint, la gestione dello stato reattivo sul client e, soprattutto, la sincronizzazione collaborativa in tempo reale.
+
+\section{Gestione dell'Autenticazione e Sicurezza}
+L'applicazione gestisce dati sensibili e documenti privati. Di conseguenza, il sistema di autenticazione non poteva limitarsi a un semplice controllo a livello di interfaccia, ma doveva essere radicato profondamente nel backend. Si è scelto di utilizzare i JSON Web Token (JWT) per instaurare una comunicazione \textit{stateless}. 
+
+Nel server (basato su Express), ogni rotta che espone o manipola risorse protette è filtrata da un middleware custom. Il file \texttt{auth.middleware.ts} si occupa di intercettare la richiesta HTTP, estrarre il token dall'intestazione \texttt{Authorization} e validarne la firma crittografica.
+
+\begin{lstlisting}[language=JavaScript, caption=Implementazione del middleware di autenticazione (auth.middleware.ts)]
+import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
+
+export const requireAuth = (req: Request, res: Response, next: NextFunction) => {
+    // Estrazione del token dall'header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Accesso negato: Token mancante' });
+    }
+
+    const token = authHeader.split(' ')[1];
+
+    try {
+        // Verifica e decodifica del payload
+        const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
+        
+        // Iniezione dei dati utente nell'oggetto Request
+        req.user = decoded; 
+        next(); // Passaggio del controllo al Controller successivo
+    } catch (err) {
+        return res.status(403).json({ error: 'Token non valido o scaduto' });
+    }
+};
+\end{lstlisting}
+
+Se il token è valido, il payload decodificato (contenente l'ID utente e il suo ruolo) viene iniettato direttamente nell'oggetto \texttt{req}, rendendo queste informazioni immediatamente fruibili ai controller successivi senza dover interrogare nuovamente il database.
+
+\subsection{L'approccio lato Client (Axios Interceptors)}
+Per evitare di dover allegare manualmente il token in ogni singola richiesta HTTP dal frontend verso il server, si è sfruttato il meccanismo degli \textit{interceptors} della libreria Axios all'interno di \texttt{api.ts}. Questo strumento permette di alterare silenziosamente le richieste in uscita, aggiungendo l'header necessario. Inoltre, gestisce globalmente le risposte: se il backend restituisce un errore 401 (Unauthorized), l'interceptor ordina automaticamente al router di Vue di reindirizzare l'utente alla pagina di login, pulendo lo \textit{store} di Pinia.
+
+\section{Il Core Collaborativo: Yjs e Vue 3}
+La sincronizzazione del testo tra più client simultanei rappresenta la complessità maggiore del progetto. L'architettura sviluppata si appoggia a Yjs e al suo concetto di \textit{Shared Document} (Y.Doc). La logica di connessione e legame con l'editor Tiptap è stata sapientemente astratta all'interno di un composable di Vue denominato \texttt{useCollaboration.ts}.
+
+Questo pattern sfrutta il ciclo di vita dei componenti di Vue (come \texttt{onMounted} e \texttt{onBeforeUnmount}) per instaurare e distruggere la connessione WebSocket al momento giusto, prevenendo cali di prestazioni o *memory leak*.
+
+\begin{lstlisting}[language=JavaScript, caption=Configurazione dell'Editor Collaborativo (useCollaboration.ts)]
+import * as Y from 'yjs';
+import { useEditor } from '@tiptap/vue-3';
+import Collaboration from '@tiptap/extension-collaboration';
+import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
+
+export function useCollaboration(documentId: string, currentUser: any, socket: any) {
+    // Creazione del documento condiviso Yjs
+    const ydoc = new Y.Doc();
+
+    // Inizializzazione del provider WebSocket per la sincronizzazione
+    const provider = new TiptapCollabProvider({
+        name: documentId,
+        document: ydoc,
+        wsProvider: socket, // Utilizza l'istanza Socket.io passata come parametro
+    });
+
+    // Configurazione dell'istanza Tiptap
+    const editor = useEditor({
+        extensions: [
+            StarterKit,
+            Collaboration.configure({ 
+                document: ydoc 
+            }),
+            // Gestione dei cursori e dell'Awareness
+            CollaborationCursor.configure({
+                provider: provider,
+                user: { 
+                    name: currentUser.username, 
+                    color: currentUser.color 
+                }
+            }),
+        ],
+    });
+
+    return { editor, provider };
+}
+\end{lstlisting}
+
+Il frammento precedente mostra come l'oggetto \texttt{ydoc} diventi la "singola fonte di verità" per il testo. L'estensione \texttt{CollaborationCursor} raccoglie i movimenti del mouse e le posizioni del cursore locale, impacchettandoli e inviandoli al server. Gli altri client, ricevendo tali pacchetti, aggiornano le coordinate e renderizzano il cursore colorato (indicatore di *Awareness*) con il nome dell'utente.
+
+\section{Gestione dei Socket e Spazio Globale}
+L'efficienza del sistema è garantita da una rigida gestione delle \textit{Rooms} all'interno del modulo \texttt{document.handler.ts} sul server. Quando un utente apre un file (sia esso nello Spazio Privato o in quello Globale), il frontend emette un evento \texttt{join-document}. Il server verifica prima di tutto i permessi di lettura sul database. Se l'utente ha diritto di accesso (o se il file si trova nell'area pubblica globale), il server iscrive la sua connessione Socket alla stanza corrispondente all'ID del documento.
+
+Da quel momento in poi, qualsiasi evento di \texttt{sync-update} inviato da un \textit{Editor} autorizzato verrà "riflesso" dal server esclusivamente ai membri di quella specifica stanza, garantendo l'isolamento dei flussi di dati e riducendo al minimo il sovraccarico di rete.
+
+\section{Integrazione del Motore LLM}
+Un ulteriore elemento di spessore tecnico è l'assistente basato su Intelligenza Artificiale. Il flusso si attiva quando l'utente seleziona una porzione di testo ed esegue una richiesta tramite il \textit{BubbleMenu}. Il client invoca una chiamata REST al controller \texttt{llm.controller.ts}, il quale delega la complessa interazione con il modello linguistico alla classe dedicata \texttt{LLMEngine.ts}.
+
+\begin{lstlisting}[language=JavaScript, caption=Elaborazione della richiesta LLM (LLMEngine.ts)]
+export class LLMEngine {
+    private openai;
+
+    constructor() {
+        this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    }
+
+    public async processText(instruction: string, text: string): Promise<string> {
+        try {
+            const response = await this.openai.chat.completions.create({
+                model: "gpt-4",
+                temperature: 0.7,
+                messages: [
+                    { 
+                        role: "system", 
+                        content: "Sei un assistente editoriale integrato in una piattaforma di videoscrittura. Il tuo compito è riscrivere o migliorare il testo fornito rispettando rigorosamente le istruzioni dell'utente." 
+                    },
+                    { 
+                        role: "user", 
+                        content: `Istruzione: ${instruction}\n\nTesto originale:\n${text}` 
+                    }
+                ]
+            });
+
+            return response.choices[0].message?.content || "";
+        } catch (error) {
+            console.error("Errore durante la generazione LLM:", error);
+            throw new Error("Impossibile elaborare la richiesta in questo momento.");
+        }
+    }
+}
+\end{lstlisting}
+
+Si è scelto di racchiudere questa logica in una classe apposita seguendo il principio di \textit{Single Responsibility}. Il Controller si occupa esclusivamente di estrarre l'istruzione (ad esempio "Rendi il testo più formale") e il blocco di testo dalla richiesta HTTP. La classe \texttt{LLMEngine} incapsula invece i dettagli implementativi delle API esterne. Se in futuro si decidesse di migrare da OpenAI verso un modello \textit{open-source} locale, basterà modificare unicamente i metodi di questa classe, senza alterare il resto della logica dell'applicazione.
+
+
+\chapter{Test e Usabilità}
+
+Prima di procedere con il rilascio dell'applicativo, il sistema è stato sottoposto a un'intensa fase di testing al fine di validarne la stabilità, l'affidabilità e l'effettiva fruibilità da parte degli utenti finali. Le procedure di verifica hanno riguardato sia la robustezza del codice backend sia l'esperienza d'uso dell'interfaccia frontend.
+
+\section{Fase di Testing Tecnico}
+Le funzionalità del sistema sono state verificate dal team di sviluppo attraverso diversi dispositivi e sui principali browser web (Google Chrome, Mozilla Firefox, Safari e Microsoft Edge) per garantire la massima portabilità e compatibilità cross-browser. 
+
+Le API RESTful del server sono state collaudate singolarmente utilizzando \textit{Postman}, simulando richieste con token JWT validi, scaduti o contraffatti, per accertarsi che i middleware di sicurezza intervenissero correttamente bloccando le operazioni non autorizzate. 
+Particolare attenzione è stata riservata ai test di concorrenza sull'editor: sono state simulate sessioni con connessioni multiple allo stesso documento (sia da desktop che da mobile) per confermare che l'infrastruttura Yjs e Socket.io gestisse senza incertezze le modifiche simultanee e le disconnessioni improvvise.
+
+\section{Valutazione dell'Usabilità (Euristiche di Nielsen)}
+Per avere un riscontro qualitativo oggettivo sull'interfaccia grafica, il sistema è stato valutato seguendo i celebri principi di usabilità definiti da Jakob Nielsen. Di seguito vengono riportate le considerazioni emerse per le euristiche più rilevanti:
+
+\begin{itemize}
+    \item \textbf{Visibilità dello stato del sistema:} L'utente viene costantemente informato su ciò che sta accadendo. Ad esempio, quando l'editor sta salvando le modifiche o l'Intelligenza Artificiale sta elaborando una riscrittura del testo, compaiono indicatori di caricamento (spinner) o micro-notifiche di sistema.
+    \item \textbf{Corrispondenza tra sistema e mondo reale:} La terminologia e l'iconografia impiegate (cartelle, icone del drive, pulsanti di condivisione) richiamano esplicitamente i concetti fisici e i pattern già assimilati dagli utenti tramite l'uso di altre piattaforme cloud famose.
+    \item \textbf{Controllo e libertà:} La navigazione non è mai vincolante. Se l'utente apre per sbaglio la finestra modale di condivisione o avvia un processo indesiderato, sono sempre presenti pulsanti di annullamento e icone di chiusura chiare, permettendo di tornare allo stato precedente senza frustrazioni.
+    \item \textbf{Consistenza e Standard:} Si è mantenuta una stretta coerenza visiva e cromatica in tutte le pagine. I colori primari indicano le azioni principali (come il "Crea Nuovo Documento"), mentre le palette secondarie guidano l'occhio verso le informazioni di contorno.
+    \item \textbf{Prevenzione degli errori:} Le form di registrazione e di creazione file sono dotate di validazione \textit{client-side}. Inoltre, le azioni potenzialmente distruttive, come l'eliminazione definitiva di una cartella contenente vari documenti, richiedono sempre un'esplicita conferma tramite un dialog popup.
+\end{itemize}
+
+
+\chapter{Deployment}
+
+Per semplificare la distribuzione del sistema e rendere l'applicativo completamente indipendente dalla macchina su cui viene eseguito, si è optato per un processo di deployment basato su \textbf{Docker}. L'architettura a container assicura che il software giri sempre in un ambiente isolato e immutabile, risolvendo alla radice il classico problema delle dipendenze mancanti o delle versioni incompatibili ("it works on my machine").
+
+\section{Struttura dei Container}
+Il progetto è orchestrato tramite \texttt{docker-compose}, che si occupa di avviare e far dialogare le diverse anime dell'applicazione all'interno di una rete virtuale interna isolata. Nello specifico, il file di configurazione definisce i seguenti servizi:
+\begin{itemize}
+    \item \textbf{Database (MongoDB e Redis):} Container dedicati all'archiviazione persistente dei documenti e alla gestione della cache e delle sessioni in memoria.
+    \item \textbf{Backend (Server Node.js):} Il container che ospita la logica di business, le API RESTful e i processi WebSocket. Comunica internamente con i container dei database e accetta connessioni sulla porta dedicata.
+    \item \textbf{Frontend (Client Vue 3):} Il container responsabile di servire gli asset statici dell'interfaccia utente, generalmente esposto sulla porta principale per l'accesso tramite browser.
+\end{itemize}
+
+\section{Messa in funzione}
+Per avviare l'intero ecosistema sul proprio ambiente locale o su un server remoto, i passaggi richiesti sono stati ridotti al minimo. Dopo aver posizionato eventuali chiavi (come il JWT Secret o l'API Key di OpenAI) in un file \texttt{.env} nella root del progetto, è sufficiente aprire il terminale ed eseguire il seguente comando:
+
+\begin{lstlisting}[language=bash]
+# Creazione e avvio di tutti i container in background
+docker-compose up --build -d
+\end{lstlisting}
+
+Una volta terminato il processo di compilazione delle immagini, la piattaforma Dok sarà immediatamente accessibile navigando all'indirizzo \texttt{http://localhost:5173} (o alla porta configurata per il client), mentre le chiamate API verranno direzionate automaticamente al container del server.
+
+
+\chapter{Conclusioni}
+
+Lo sviluppo della piattaforma Dok si è rivelato un'esperienza formativa di altissimo valore, permettendoci di affrontare e risolvere problematiche reali legate al mondo dei sistemi distribuiti e delle architetture web moderne. L'obiettivo iniziale – creare un ambiente cloud in stile Google Drive che unisse l'archiviazione alla stesura collaborativa – è stato ampiamente raggiunto.
+
+\section{Considerazioni e Sfide Affrontate}
+Non sono mancate le difficoltà tecniche durante l'avanzamento dei lavori. La sfida principale ha riguardato sicuramente l'integrazione del motore Yjs per la risoluzione dei conflitti nell'editor testuale. Comprendere a fondo il funzionamento dei CRDT e far dialogare correttamente Tiptap con l'infrastruttura di Socket.io ha richiesto uno studio approfondito, ma il risultato finale ha ampiamente ripagato gli sforzi, garantendo un'esperienza di co-editing priva di sbavature.
+Allo stesso modo, la strutturazione rigorosa del backend con TypeScript e la progettazione di un file system virtuale sicuro e navigabile hanno consolidato la nostra comprensione dei pattern di sviluppo lato server.
+
+\section{Sviluppi Futuri}
+Le solide basi architetturali poste con questo progetto permettono di immaginare diverse estensioni future per arricchire ulteriormente l'offerta del prodotto:
+\begin{itemize}
+    \item \textbf{Sistema di chat integrata:} Aggiungere un pannello di messaggistica laterale all'interno del documento per permettere agli utenti connessi di dialogare senza abbandonare l'editor.
+    \item \textbf{Cronologia delle revisioni:} Implementare un sistema per salvare versioni "congelate" del documento a intervalli regolari, garantendo la possibilità di effettuare un rollback a stadi precedenti del testo.
+    \item \textbf{Esportazione Multiformato:} Arricchire le funzionalità di download offrendo all'utente la possibilità di esportare il documento scritto non solo in testo semplice, ma anche in formato PDF formattato o Microsoft Word (.docx).
+\end{itemize}
+
+In conclusione, la realizzazione di Dok ha dimostrato come la combinazione di tecnologie moderne come Vue 3, Node.js e i protocolli WebSocket possa dar vita ad applicativi performanti e interattivi, capaci di abbattere le distanze e favorire una reale produttività condivisa.
+
+\end{document}
+
 \end{document}
