@@ -32,47 +32,47 @@ La fase iniziale dello sviluppo della piattaforma Dok è stata interamente dedic
 I requisiti funzionali descrivono in modo dettagliato le azioni che il sistema deve consentire di compiere, definendo il comportamento dell'applicazione in risposta agli input degli utenti.
 
 \begin{itemize}
-    \item \textbf{RF1 - Gestione dell'Autenticazione e Profilazione:}
+    \item \textbf{Gestione dell'Autenticazione e Profilazione:}
     \begin{itemize}
         \item Il sistema deve permettere la registrazione di un nuovo utente tramite inserimento di username, email e password.
         \item L'applicazione deve consentire il login sicuro tramite emissione di un token JWT (JSON Web Token).
         \item Devono essere supportati tre ruoli distinti con privilegi crescenti: Ospite (non autenticato), Utente (autenticato) e Amministratore.
     \end{itemize}
     
-    \item \textbf{RF2 - Gestione dello Spazio Privato (File System Virtuale):}
+    \item \textbf{Gestione dello Spazio Privato (File System Virtuale):}
     \begin{itemize}
         \item Ogni utente autenticato deve disporre di una radice privata esclusiva.
         \item Il sistema deve abilitare le operazioni CRUD (creazione, lettura, rinomina, eliminazione) su cartelle e documenti organizzati ad albero.
     \end{itemize}
     
-    \item \textbf{RF3 - Condivisione Granulare delle Risorse:}
+    \item \textbf{Condivisione Granulare delle Risorse:}
     \begin{itemize}
         \item Il proprietario di un documento privato deve poterlo condividere con altri utenti registrati specificando l'indirizzo email del destinatario.
         \item Il sistema deve supportare due livelli di permessi per le condivisioni: \textit{Viewer} (sola lettura) ed \textit{Editor} (modifica).
     \end{itemize}
     
-    \item \textbf{RF4 - Editor Collaborativo Real-Time:}
+    \item \textbf{Editor Collaborativo Real-Time:}
     \begin{itemize}
         \item Gli utenti con permessi di scrittura sullo stesso file devono poter digitare testo simultaneamente.
         \item Il sistema deve propagare istantaneamente le modifiche e mostrare i cursori attivi con i nomi degli utenti connessi.
     \end{itemize}
     
-    \item \textbf{RF5 - Spazio Globale Pubblico:}
+    \item \textbf{Spazio Globale Pubblico:}
     \begin{itemize}
         \item La piattaforma deve esporre una sezione "Globale" visibile anche agli utenti non autenticati.
         \item Qualsiasi utente autenticato può creare elementi nell'area globale, ma la modifica collaborativa del testo rimane vincolata ai permessi specifici di scrittura.
     \end{itemize}
     
-    \item \textbf{RF6 - Integrazione dell'Assistente IA:}
+    \item \textbf{Integrazione dell'Assistente IA:}
     \begin{itemize}
         \item L'editor deve includere un menu contestuale attivabile sulla selezione del testo che consenta di richiedere la riscrittura, la sintesi o il perfezionamento del frammento selezionato tramite un motore LLM integrato nel backend.
     \end{itemize}
     
-    \item \textbf{RF7 - Monitoraggio e Amministrazione:}
+    \item \textbf{Monitoraggio e Amministrazione:}
     \begin{itemize}
         \item L'utente con ruolo di Amministratore deve poter accedere a una dashboard riservata per visualizzare l'elenco degli utenti, ispezionare l'intero file system globale e monitorare i log di sistema.
     \end{itemize}
-    \item \textbf{RF8 - Notifiche}
+    \item \textbf{Notifiche}
     \begin{itemize}
         \item La piattaforma deve avere un sistema di notifica che aggiorna l'utente quando gli viene condiviso un nuovo documento, quando gli vengono aggiornati i permessi e quando gli vengono rimossi.
     \end{itemize}
@@ -82,10 +82,10 @@ I requisiti funzionali descrivono in modo dettagliato le azioni che il sistema d
 I requisiti non funzionali specificano le caratteristiche qualitative, i vincoli tecnici e le metriche di efficienza che il software deve rispettare durante il suo funzionamento.
 
 \begin{itemize}
-    \item \textbf{RNF1 - Usabilità e Approccio Mobile First:} L'interfaccia grafica deve essere flessibile. Il layout deve adattarsi automaticamente alle dimensioni dello schermo del dispositivo utilizzato, garantendo un'esperienza fluida sia su desktop che su smartphone e tablet.
-    \item \textbf{RNF2 - Reattività e Sincronizzazione a Bassa Latenza:} Il flusso dei dati collaborativi deve essere immediato. La propagazione degli aggiornamenti testuali tra i client connessi allo stesso documento deve avvenire in tempo reale, mantenendo la latenza impercettibile per l'occhio umano.
-    \item \textbf{RNF3 - Consistenza dei Dati e Risoluzione dei Conflitti:} Il sistema non deve generare incongruenze. In caso di modifiche simultanee sullo stesso paragrafo, l'applicazione deve integrare i testi in modo matematicamente consistente senza causare sovrascritture distruttive o disallineamenti tra i client.
-    \item \textbf{RNF4 - Sicurezza e Architettura Stateless:} La protezione delle risorse è un vincolo stringente. Tutte le rotte API riservate e le connessioni WebSocket devono essere protette da meccanismi di autorizzazione basati su token crittografici, evitando di memorizzare lo stato della sessione sulla memoria del server backend.
+    \item \textbf{Usabilità e Approccio Mobile First:} L'interfaccia grafica deve essere flessibile. Il layout deve adattarsi automaticamente alle dimensioni dello schermo del dispositivo utilizzato, garantendo un'esperienza fluida sia su desktop che su smartphone e tablet.
+    \item \textbf{Reattività e Sincronizzazione a Bassa Latenza:} Il flusso dei dati collaborativi deve essere immediato. La propagazione degli aggiornamenti testuali tra i client connessi allo stesso documento deve avvenire in tempo reale, mantenendo la latenza impercettibile per l'occhio umano.
+    \item \textbf{Consistenza dei Dati e Risoluzione dei Conflitti:} Il sistema non deve generare incongruenze. In caso di modifiche simultanee sullo stesso paragrafo, l'applicazione deve integrare i testi in modo matematicamente consistente senza causare sovrascritture distruttive o disallineamenti tra i client.
+    \item \textbf{Sicurezza e Architettura Stateless:} La protezione delle risorse è un vincolo stringente. Tutte le rotte API riservate e le connessioni WebSocket devono essere protette da meccanismi di autorizzazione basati su token crittografici, evitando di memorizzare lo stato della sessione sulla memoria del server backend.
 \end{itemize}
 
 \chapter{Design e Architettura}
