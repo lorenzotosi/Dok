@@ -44,7 +44,7 @@ const isOwner = (item: any) => {
             <span v-if="isPublic && isOwner(folder)" class="owner-tag">owner</span>
           </div>
           <button 
-            v-if="authStore.isAuthenticated() && isOwner(folder)" 
+            v-if="authStore.isAuthenticated() && (isOwner(folder) || authStore.isAdmin())"
             class="action-btn" 
             @click.stop="emit('delete-folder', folder._id)" 
             title="Elimina cartella"
@@ -82,7 +82,7 @@ const isOwner = (item: any) => {
               </span>
             </div>
             <button 
-              v-if="authStore.isAuthenticated() && isOwner(document)" 
+              v-if="authStore.isAuthenticated() && (isOwner(document) || authStore.isAdmin())"
               class="action-btn" 
               @click.stop="emit('delete-document', document._id)" 
               title="Elimina documento"

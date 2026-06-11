@@ -71,7 +71,7 @@ const isOwner = (item: any) => {
         <div class="col col-date">{{ formatDate(folder.updatedAt) }}</div>
         <div class="col col-actions">
           <button 
-            v-if="authStore.isAuthenticated() && isOwner(folder)" 
+            v-if="authStore.isAuthenticated() && (isOwner(folder) || authStore.isAdmin())"
             class="action-btn delete-btn" 
             @click.stop="emit('delete-folder', folder._id)" 
             title="Elimina cartella"
@@ -101,7 +101,7 @@ const isOwner = (item: any) => {
         <div class="col col-date">{{ formatDate(document.updatedAt) }}</div>
         <div class="col col-actions">
           <button 
-            v-if="authStore.isAuthenticated() && isOwner(document)" 
+            v-if="authStore.isAuthenticated() && (isOwner(document) || authStore.isAdmin())"
             class="action-btn delete-btn" 
             @click.stop="emit('delete-document', document._id)" 
             title="Elimina documento"
