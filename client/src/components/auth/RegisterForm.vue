@@ -2,7 +2,10 @@
 import { ref } from 'vue';
 import type { RegisterPayload } from '../../types/auth.types';
 
-defineProps<{ isLoading: boolean }>();
+defineProps<{
+  isLoading: boolean;
+  serverError?: string;
+}>();
 const emit = defineEmits<{
   (e: 'submit', payload: RegisterPayload): void;
   (e: 'switch-view'): void;
@@ -62,8 +65,8 @@ const onSubmit = () => {
     </div>
 
     <Transition name="fade">
-      <div v-if="errorMessage" class="error-alert" role="alert">
-        {{ errorMessage }}
+      <div v-if="errorMessage || serverError" class="error-alert" role="alert">
+        {{ errorMessage || serverError}}
       </div>
     </Transition>
 

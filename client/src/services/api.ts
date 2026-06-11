@@ -19,7 +19,7 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response && error.response.status === 401) {
+        if (error.response && error.response.status === 401 && !error.config.url?.includes('/auth/login')) {
             console.warn("Token scaduto o non valido. Disconnessione forzata.");
             const authStore = useAuthStore();
             authStore.logout();

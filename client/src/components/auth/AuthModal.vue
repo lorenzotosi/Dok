@@ -85,6 +85,7 @@ const handleAuthAction = async (payload: LoginPayload | RegisterPayload) => {
       <RegisterForm
           v-else
           :is-loading="isLoading"
+          :server-error="serverError"
           @submit="handleAuthAction"
           @switch-view="toggleView"
       />
