@@ -154,6 +154,31 @@ export const getAdminDocumentLogs = async (req: Request, res: Response): Promise
     }
 };
 
+export const getGlobalAccessLogs = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const logs = await AdminService.getGlobalAccessLogs();
+        res.status(200).json(logs);
+    } catch (error) {
+        console.error('[AdminController] Errore getGlobalAccessLogs:', error);
+        res.status(500).json({ error: 'Impossibile recuperare i log globali di accesso.' });
+    }
+};
+
+export const getUserAccessLogs = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { id } = req.params;
+        if (!id || typeof id !== 'string') {
+            res.status(400).json({ error: 'ID utente mancante o non valido' });
+            return;
+        }
+        const logs = await AdminService.getUserAccessLogs(id);
+        res.status(200).json(logs);
+    } catch (error) {
+        console.error('[AdminController] Errore getUserAccessLogs:', error);
+        res.status(500).json({ error: 'Impossibile recuperare i log dell\'utente.' });
+    }
+};
+
 export const getGlobalStats = async (req: Request, res: Response): Promise<void> => {
     try {
         const range = (req.query.range as string) || '7d';

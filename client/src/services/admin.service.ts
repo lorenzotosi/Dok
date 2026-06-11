@@ -1,5 +1,5 @@
-import { api } from './api';
-import type { User } from '../types/user.types';
+import {api} from './api';
+import type {User} from '../types/user.types';
 import type {AdminUserDetail, AuditLogItem, VFSResponse} from "../types/admin.types.ts";
 
 export interface AdminDashboardUser extends User {
@@ -25,7 +25,7 @@ export const AdminService = {
     },
 
     async changeUserRole(userId: string, newRole: 'USER' | 'ADMIN'): Promise<void> {
-        await api.patch(`/admin/users/${userId}/role`, { role: newRole });
+        await api.patch(`/admin/users/${userId}/role`, {role: newRole});
     },
 
     async getDocumentBasicInfo(documentId: string) {
@@ -41,6 +41,16 @@ export const AdminService = {
     async getGlobalStats(range: string = '7d'): Promise<any> {
         const response = await api.get(`/admin/stats?range=${range}`);
         return response.data;
-    }
+    },
+
+    async getGlobalAccessLogs(): Promise<any[]> {
+        const response = await api.get('/admin/access-logs');
+        return response.data;
+    },
+
+    async getUserAccessLogs(userId: string): Promise<any[]> {
+        const response = await api.get(`/admin/users/${userId}/access-logs`);
+        return response.data;
+    },
 
 };

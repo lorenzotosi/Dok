@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue';
-import { useRouter } from 'vue-router';
-import { AdminService, type AdminDashboardUser } from '../services/admin.service';
-import { socketService } from "../services/socket.service.ts";
+import {ref, onMounted, onUnmounted, computed} from 'vue';
+import {useRouter} from 'vue-router';
+import {AdminService, type AdminDashboardUser} from '../services/admin.service';
+import {socketService} from "../services/socket.service.ts";
 import AdminUsersTable from '../components/admin/AdminUsersTable.vue';
 
 const router = useRouter();
@@ -32,7 +32,7 @@ const fetchUsers = async () => {
 const bootstrapDashboard = (socket: any) => {
   fetchUsers().then(() => {
     socket.emit('join_admin_dashboard');
-    socket.on('presence_update', ({ userId, isOnline }: { userId: string, isOnline: boolean }) => {
+    socket.on('presence_update', ({userId, isOnline}: { userId: string, isOnline: boolean }) => {
       const user = users.value.find(u => u.id === userId);
       if (user) {
         user.isOnline = isOnline;
@@ -132,6 +132,11 @@ const filteredAndSortedUsers = computed(() => {
     </div>
 
     <div class="search-row">
+
+      <button @click="router.push('/admin/access-logs')" class="logs-button">
+        <span class="icon">📋</span> Log Accessi
+      </button>
+
       <div class="search-container">
         <label for="userSearch" class="sr-only">Cerca utente per nome o email</label>
         <input
@@ -199,6 +204,26 @@ const filteredAndSortedUsers = computed(() => {
   margin-bottom: 0;
 }
 
+.logs-button {
+  background-color: #4e5058;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  margin: 0;
+}
+
+.logs-button:hover {
+  background-color: #6d6f78;
+}
+
 .back-button:hover {
   background-color: #3f4147;
   color: #ffffff;
@@ -245,7 +270,8 @@ const filteredAndSortedUsers = computed(() => {
 
 .search-row {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   width: 100%;
   margin-bottom: 20px;
 }
@@ -273,8 +299,15 @@ const filteredAndSortedUsers = computed(() => {
 }
 
 .sr-only {
-  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
-  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }
 
 .loading-state, .error-state {

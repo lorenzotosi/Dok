@@ -6,6 +6,7 @@ import AdminDashboardView from "../views/AdminDashboardView.vue";
 import AdminUserDetailView from "../views/AdminUserDetailView.vue";
 import AdminDocumentLogsView from "../views/AdminDocumentLogsView.vue";
 import AdminStatisticsView from "../views/AdminStatisticsView.vue";
+import AdminGlobalAccessLogsView from "../views/AdminGlobalAccessLogsView.vue";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -16,6 +17,7 @@ const router = createRouter({
     { path: '/admin/user/:id', name: 'AdminUserDetail', component: AdminUserDetailView, meta: {requiresAdmin: true, requiresAuth: true}},
     { path: '/admin/document/:id/logs', name: 'AdminDocumentLogs', component: AdminDocumentLogsView, meta: { requiresAdmin: true, requiresAuth: true }},
     { path: '/admin/stats', name: 'AdminStats', component: AdminStatisticsView, meta: {requiresAdmin: true, requiresAuth: true}},
+    { path: '/admin/access-logs', name: 'AdminGlobalAccessLogs', component: AdminGlobalAccessLogsView, meta: {requiresAdmin: true, requiresAuth: true}},
   ]
 });
 

@@ -2,7 +2,7 @@ import { Router } from 'express';
 import {
     changeUserRole, getAdminDocumentInfo,
     getAdminDocumentLogs,
-    getAllUsers, getGlobalStats,
+    getAllUsers, getGlobalAccessLogs, getGlobalStats, getUserAccessLogs,
     getUserDetails,
     getUserFileSystem
 } from '../controllers/admin.controller.js';
@@ -198,5 +198,35 @@ router.get('/documents/:id', requireAuth, requireAdmin, getAdminDocumentInfo);
  *             description: Impossibile recuperare le statistiche globali per un errore interno
  */
 router.get('/stats', requireAuth, requireAdmin, getGlobalStats);
+
+/**
+ * @openapi
+ * /api/admin/access-logs:
+ *  get:
+ *      summary: Ottieni i log di accesso al sito di tutti gli utenti (Solo Admin)
+ *      tags:
+ *          - Admin
+ *      security:
+ *          - BearerAuth: []
+ */
+router.get('/access-logs', requireAuth, requireAdmin, getGlobalAccessLogs);
+
+/**
+ * @openapi
+ * /api/admin/users/{id}/access-logs:
+ *  get:
+ *      summary: Ottieni i log di accesso al sito per un utente specifico (Solo Admin)
+ *      tags:
+ *          - Admin
+ *      security:
+ *          - BearerAuth: []
+ *      parameters:
+ *          - in: path
+ *            name: id
+ *            required: true
+ *            schema:
+ *              type: string
+ */
+router.get('/users/:id/access-logs', requireAuth, requireAdmin, getUserAccessLogs);
 
 export default router;

@@ -101,7 +101,7 @@ onUnmounted(() => {
     <div v-else class="split-layout">
 
       <div class="main-column">
-        <AdminUserInfoCard :user="userDetail" @toggle-role="handleToggleRole" />
+        <AdminUserInfoCard :user="userDetail" @toggle-role="handleToggleRole"/>
 
         <div class="actions-bar">
           <button @click="isLeftDrawerOpen = true" class="action-btn">
@@ -113,9 +113,9 @@ onUnmounted(() => {
           <h3>Virtual File System (Admin View)</h3>
 
           <VirtualFileSystem
-          :user-id="userId"
-          :selected-item-id="selectedItem?.id"
-          @item-selected="onFileSystemItemSelected"
+              :user-id="userId"
+              :selected-item-id="selectedItem?.id"
+              @item-selected="onFileSystemItemSelected"
           />
         </div>
       </div>
@@ -131,6 +131,7 @@ onUnmounted(() => {
 
     <AdminAccessLogsDrawer
         :is-open="isLeftDrawerOpen"
+        :user-id="userId"
         @close="isLeftDrawerOpen = false"
     />
   </div>
@@ -173,6 +174,7 @@ onUnmounted(() => {
   .split-layout {
     flex-direction: column;
   }
+
   .details-sidebar {
     width: 100%;
     height: auto;
@@ -181,19 +183,31 @@ onUnmounted(() => {
 }
 
 .actions-bar {
-  display: flex; gap: 15px;
+  display: flex;
+  gap: 15px;
 }
 
 .action-btn {
-  background-color: #5865F2; color: white; border: none;
-  padding: 10px 15px; border-radius: 4px; cursor: pointer;
-  display: flex; align-items: center; gap: 8px; font-weight: 500;
+  background-color: #5865F2;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
 }
 
-.action-btn:hover { background-color: #4752c4; }
+.action-btn:hover {
+  background-color: #4752c4;
+}
 
 .tree-container {
-  background-color: #2b2d31; border-radius: 8px; padding: 20px;
+  background-color: #2b2d31;
+  border-radius: 8px;
+  padding: 20px;
   color: #dbdee1;
 }
 
@@ -206,20 +220,34 @@ onUnmounted(() => {
 }
 
 .actions-bar {
-  display: flex; gap: 15px; margin-bottom: 20px;
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
 }
 
 .action-btn {
-  background-color: #5865F2; color: white; border: none;
-  padding: 10px 15px; border-radius: 4px; cursor: pointer;
-  display: flex; align-items: center; gap: 8px; font-weight: 500;
+  background-color: #5865F2;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
 }
 
-.action-btn:hover { background-color: #4752c4; }
+.action-btn:hover {
+  background-color: #4752c4;
+}
 
 .tree-container {
-  background-color: #2b2d31; border-radius: 8px; padding: 20px;
-  color: #dbdee1; min-height: 400px;
+  background-color: #2b2d31;
+  border-radius: 8px;
+  padding: 20px;
+  color: #dbdee1;
+  min-height: 400px;
 }
 
 </style>

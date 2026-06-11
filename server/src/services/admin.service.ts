@@ -80,6 +80,25 @@ export class AdminService {
             .lean();
     }
 
+    /**
+     * Recupera tutti i log di accesso al sito, popolando i dati dell'utente.
+     */
+    static async getGlobalAccessLogs() {
+        return SiteAccessLog.find()
+            .populate('userId', 'firstName lastName email _id')
+            .sort({ loginAt: -1 })
+            .lean();
+    }
+
+    /**
+     * Recupera i log di accesso al sito per un singolo utente.
+     */
+    static async getUserAccessLogs(userId: string) {
+        return SiteAccessLog.find({ userId })
+            .sort({ loginAt: -1 })
+            .lean();
+    }
+
 
     /**
      * Helpers per getGlobalStats
