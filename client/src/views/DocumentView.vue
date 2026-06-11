@@ -6,7 +6,7 @@ import ShareDropdown from '../components/share/ShareDropdown.vue';
 import ActiveViewers from '../components/editor/ActiveViewers.vue';
 import { useAuthStore } from '../stores/auth.store';
 import { useDocumentData } from '../composables/useDocumentData';
-import UserAvatar from "../components/common/UserAvatar.vue";
+import UserMenu from "../components/dashboard/UserMenu.vue";
 
 const authStore = useAuthStore();
 const route = useRoute();
@@ -54,7 +54,7 @@ onMounted(async () => {
           @refresh="fetchDocumentData"
         />
 
-        <UserAvatar :user="authStore.user" size="md" />
+        <UserMenu />
       </div>
     </header>
 
