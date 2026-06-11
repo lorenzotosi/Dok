@@ -38,6 +38,8 @@ const loadStats = async (isSoftLoad = false) => {
 
 const handleUpdateRange = (range: string) => {
   chartRange.value = range;
+  stats.value.accessChart.categories = [];
+  stats.value.accessChart.series = [];
   loadStats(true);
 };
 
