@@ -19,7 +19,7 @@ const toggleMenu = () => {
 };
 
 const handleLogout = async () => {
-  authStore.logout();
+  await authStore.logout();
   await router.push('/');
   isOpen.value = false;
 };
