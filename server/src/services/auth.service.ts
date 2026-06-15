@@ -34,10 +34,13 @@ export class AuthService {
     }
 
     async register(data: any): Promise<AuthResponse> {
+        const anyUserExists = await UserModel.exists({});
+        const assignedRole = !anyUserExists ? UserRole.ADMIN : UserRole.USER;
+
         const user = new UserModel({
             ...data,
             passwordHash: data.password, // Il pre-save hook fa l'hashing
-            role: UserRole.USER
+            role: assignedRole,
         });
 
         await user.save();
