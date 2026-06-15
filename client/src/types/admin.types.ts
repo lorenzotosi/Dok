@@ -19,7 +19,7 @@ export interface AuditLogItem {
 
 export interface SharedUserItem {
     userId: User
-    role: 'editor' | 'viewer';
+    role: 'editor' | 'viewer' | 'commenter';
 }
 
 export interface FSNode {

@@ -95,4 +95,14 @@ export const NotificationManager = {
         if (!ioInstance) return;
         ioInstance.to('admin:dashboard').emit('user_metrics_update', { userId, metrics: {} });
     },
+
+    notifyCommentAdded(docId: string, comment: any) {
+        if (!ioInstance) return;
+        ioInstance.to(docId).emit('comment-added', comment);
+    },
+
+    notifyCommentDeleted(docId: string, commentId: string) {
+        if (!ioInstance) return;
+        ioInstance.to(docId).emit('comment-deleted', commentId);
+    }
 };

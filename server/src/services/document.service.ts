@@ -56,11 +56,14 @@ export class DocumentService {
                 {'sharedWith.userId': userId}
             ]
         }).populate('ownerId', 'firstName lastName email')
-            .populate('sharedWith.userId', 'firstName lastName email');
+            .populate('sharedWith.userId', 'firstName lastName email')
+            .populate('comments.userId', 'firstName lastName email');
     }
 
     static async getPublicDocumentById(id: string) {
-        return Document.findOne({_id: id, visibility: 'public'});
+        return Document.findOne({_id: id, visibility: 'public'})
+            .populate('ownerId', 'firstName lastName email')
+            .populate('comments.userId', 'firstName lastName email');
     }
 
     static async getAllDocuments(userId: string | null, folderId: string | null = null) {
@@ -130,7 +133,7 @@ export class DocumentService {
         });
     }
 
-    static async shareDocument(id: string, requesterId: string, targetUserId: string, role: 'editor' | 'viewer', isAlreadyShared: boolean) {
+    static async shareDocument(id: string, requesterId: string, targetUserId: string, role: 'editor' | 'viewer' | 'commenter', isAlreadyShared: boolean) {
         if (isAlreadyShared) {
             await Document.findOneAndUpdate(
                 { _id: id, 'sharedWith.userId': targetUserId },
@@ -200,5 +203,62 @@ export class DocumentService {
             );
         }
         return docForNotify;
+    }
+
+    static async addComment(id: string, userId: string, content: string) {
+        const doc = await Document.findById(id);
+        if (!doc) throw new Error('Documento non trovato');
+
+        const isOwner = doc.ownerId.toString() === userId;
+        const isSharedWithWriteAccess = doc.sharedWith.some(
+            s => s.userId.toString() === userId && (s.role === 'editor' || s.role === 'commenter')
+        );
+
+        if (!isOwner && !isSharedWithWriteAccess) {
+            throw new Error('Non hai i permessi per aggiungere commenti a questo documento');
+        }
+
+        const comment = {
+            userId,
+            content
+        };
+        doc.comments.push(comment as any);
+        await doc.save();
+
+        const updatedDoc = await Document.findById(id)
+            .populate('comments.userId', 'firstName lastName email');
+        
+        if (!updatedDoc) throw new Error('Errore durante il salvataggio del commento');
+
+        const addedComment = updatedDoc.comments[updatedDoc.comments.length - 1];
+
+        NotificationManager.notifyCommentAdded(id, addedComment);
+
+        return addedComment;
+    }
+
+    static async deleteComment(id: string, commentId: string, userId: string) {
+        const doc = await Document.findById(id);
+        if (!doc) throw new Error('Documento non trovato');
+
+        const commentIndex = doc.comments.findIndex(c => c._id.toString() === commentId);
+        if (commentIndex === -1) throw new Error('Commento non trovato');
+
+        const comment = doc.comments[commentIndex];
+
+        const isCreator = comment.userId.toString() === userId;
+        const isOwner = doc.ownerId.toString() === userId;
+        const isEditor = doc.sharedWith.some(s => s.userId.toString() === userId && s.role === 'editor');
+
+        if (!isCreator && !isOwner && !isEditor) {
+            throw new Error('Non hai i permessi per eliminare questo commento');
+        }
+
+        doc.comments.splice(commentIndex, 1);
+        await doc.save();
+
+        NotificationManager.notifyCommentDeleted(id, commentId);
+
+        return { success: true };
     }
 }

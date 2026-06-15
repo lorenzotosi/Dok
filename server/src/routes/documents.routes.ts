@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createDoc, getDoc, getAllDocuments, deleteDocument, renameDocument, getSharedDocs, shareDoc, unshareDoc } from '../controllers/document.controller.js';
+import { createDoc, getDoc, getAllDocuments, deleteDocument, renameDocument, getSharedDocs, shareDoc, unshareDoc, addComment, deleteComment } from '../controllers/document.controller.js';
 import { requireAuth, optionalAuth } from '../middlewares/auth.middleware.js';
 import { requireBodyField, validateMongoIdParam } from '../middlewares/validation.middleware.js';
 
@@ -187,7 +187,7 @@ router.put('/rename', requireAuth, requireBodyField('id'), requireBodyField('new
  *                 example: destinatario@esempio.com
  *               role:
  *                 type: string
- *                 enum: [viewer, editor]
+ *                 enum: [viewer, editor, commenter]
  *                 example: viewer
  *     responses:
  *       200:
@@ -225,6 +225,76 @@ router.put('/share', requireAuth, requireBodyField('id'), requireBodyField('emai
  *         description: Condivisione rimossa correttamente
  */
 router.put('/unshare', requireAuth, requireBodyField('id'), requireBodyField('userId'), unshareDoc);
+
+/**
+ * @openapi
+ * /api/documents/{id}/comments:
+ *   post:
+ *     summary: Aggiungi un commento a un documento
+ *     tags:
+ *       - Documents
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del documento
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - content
+ *             properties:
+ *               content:
+ *                 type: string
+ *                 example: Questo è un commento
+ *     responses:
+ *       201:
+ *         description: Commento aggiunto
+ *       403:
+ *         description: Non autorizzato
+ *       404:
+ *         description: Documento non trovato
+ */
+router.post('/:id/comments', requireAuth, validateMongoIdParam('id'), requireBodyField('content'), addComment);
+
+/**
+ * @openapi
+ * /api/documents/{id}/comments/{commentId}:
+ *   delete:
+ *     summary: Elimina un commento da un documento
+ *     tags:
+ *       - Documents
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del documento
+ *       - in: path
+ *         name: commentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del commento
+ *     responses:
+ *       200:
+ *         description: Commento eliminato
+ *       403:
+ *         description: Non autorizzato
+ *       404:
+ *         description: Documento o commento non trovato
+ */
+router.delete('/:id/comments/:commentId', requireAuth, validateMongoIdParam('id'), validateMongoIdParam('commentId'), deleteComment);
 
 
 export default router

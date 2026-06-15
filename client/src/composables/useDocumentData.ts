@@ -59,6 +59,23 @@ export function useDocumentData(documentId: string) {
     }
   };
 
+  const handleCommentAdded = (comment: any) => {
+    if (documentData.value) {
+      if (!documentData.value.comments) {
+        documentData.value.comments = [];
+      }
+      if (!documentData.value.comments.some((c: any) => c._id === comment._id)) {
+        documentData.value.comments.push(comment);
+      }
+    }
+  };
+
+  const handleCommentDeleted = (commentId: string) => {
+    if (documentData.value && documentData.value.comments) {
+      documentData.value.comments = documentData.value.comments.filter((c: any) => c._id !== commentId);
+    }
+  };
+
   onMounted(() => {
     const socket = socketService.getSocket();
     if (socket) {
@@ -66,6 +83,8 @@ export function useDocumentData(documentId: string) {
       socket.on('document-shared', handleDocumentUpdate);
       socket.on('document-renamed', handleDocumentUpdate);
       socket.on('document-unshared', handleDocumentUnshared);
+      socket.on('comment-added', handleCommentAdded);
+      socket.on('comment-deleted', handleCommentDeleted);
     }
   });
 
@@ -76,6 +95,8 @@ export function useDocumentData(documentId: string) {
       socket.off('document-shared', handleDocumentUpdate);
       socket.off('document-renamed', handleDocumentUpdate);
       socket.off('document-unshared', handleDocumentUnshared);
+      socket.off('comment-added', handleCommentAdded);
+      socket.off('comment-deleted', handleCommentDeleted);
     }
   });
 

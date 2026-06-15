@@ -66,7 +66,7 @@ const chartOptions = computed(() => {
 
   return {
     chart: {
-      type: 'bar',
+      type: 'bar' as any,
       foreColor: '#949BA4',
       toolbar: { show: false },
       animations: { enabled: false }
@@ -77,7 +77,7 @@ const chartOptions = computed(() => {
     colors: ['#5865F2'],
     xaxis: {
       categories: props.categories,
-      type: isTrend ? 'category' : 'datetime',
+      type: (isTrend ? 'category' : 'datetime') as any,
       min: minRange,
       max: maxRange,
       labels: {
@@ -91,7 +91,7 @@ const chartOptions = computed(() => {
       decimalsInFloat: 0,
       labels: { formatter: (val: number) => Math.floor(val).toString() }
     },
-    tooltip: { theme: 'dark' }
+    tooltip: { theme: 'dark' as any }
   };
 });
 

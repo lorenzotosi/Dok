@@ -15,7 +15,7 @@ const emit = defineEmits(['refresh']);
 
 const documentStore = useDocumentStore();
 const emailInput = ref('');
-const roleSelected = ref<'viewer' | 'editor'>('viewer');
+const roleSelected = ref<'viewer' | 'editor' | 'commenter'>('viewer');
 const isDropdownVisible = ref(false);
 const dropdownRef = ref<HTMLElement | null>(null);
 
@@ -35,7 +35,7 @@ const handleRemoveShare = async (userId: string) => {
   emit('refresh');
 };
 
-const handleUpdateRole = async (email: string, newRole: 'viewer' | 'editor') => {
+const handleUpdateRole = async (email: string, newRole: 'viewer' | 'editor' | 'commenter') => {
   console.log('update role', email, newRole);
   await documentStore.shareDocument(props.documentId, email, newRole);
   emit('refresh');
@@ -69,6 +69,7 @@ useClickOutside(dropdownRef, () => {
             />
             <select v-model="roleSelected">
               <option value="viewer">Visualizzatore</option>
+              <option value="commenter">Commentatore</option>
               <option value="editor">Editor</option>
             </select>
             <button class="add-btn" @click="handleAddShare" :disabled="!emailInput">
@@ -113,6 +114,7 @@ useClickOutside(dropdownRef, () => {
                   class="role-select"
                 >
                   <option value="viewer">Visualizzatore</option>
+                  <option value="commenter">Commentatore</option>
                   <option value="editor">Editor</option>
                 </select>
                 <button class="remove-btn" @click="handleRemoveShare(item.userId._id)" title="Rimuovi accesso">

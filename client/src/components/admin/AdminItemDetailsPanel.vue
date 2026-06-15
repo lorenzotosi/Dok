@@ -300,6 +300,7 @@ const navigateToLogs = () => {
 .owner-text strong { color: #fff; font-size: 0.85rem; }
 
 .collab-role.editor { color: #f23f42; }
+.collab-role.commenter { color: #23a559; }
 .collab-role.viewer { color: #b5bac1; }
 
 .no-collabs { font-size: 0.85rem; color: #949ba4; font-style: italic; }

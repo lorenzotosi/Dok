@@ -8,11 +8,12 @@ export interface IDocument {
     folderId: string | null;
     ownerId: any; 
     visibility: 'private' | 'public';
-    myRole?: 'editor' | 'viewer' | null;
+    myRole?: 'editor' | 'viewer' | 'commenter' | null;
     yjsState: any;
     tiptapJson: Record<string, any>;
     createdAt?: string;
     updatedAt?: string;
+    comments?: any[];
 }
 
 export const useDocumentStore = defineStore('document', () => {
@@ -55,7 +56,7 @@ export const useDocumentStore = defineStore('document', () => {
         }
     };
 
-    const shareDocument = async (documentId: string, email: string, role: 'editor' | 'viewer') => {
+    const shareDocument = async (documentId: string, email: string, role: 'editor' | 'viewer' | 'commenter') => {
         try {
             const response = await api.put('/documents/share', { id: documentId, email, role });
             const updatedDoc = response.data;

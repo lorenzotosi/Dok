@@ -142,3 +142,45 @@ export const unshareDoc = async (req: AuthRequest, res: Response) => {
         res.status(500).json({ error: 'Errore rimozione condivisione' });
     }
 };
+
+export const addComment = async (req: AuthRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { content } = req.body;
+        const userId = req.user!.id;
+
+        if (!content || content.trim() === '') {
+            res.status(400).json({ error: 'Il contenuto del commento non può essere vuoto' });
+            return;
+        }
+
+        const comment = await DocumentService.addComment(id, userId, content);
+        res.status(201).json(comment);
+    } catch (error: any) {
+        if (error.message === 'Documento non trovato') {
+            res.status(404).json({ error: error.message });
+        } else if (error.message.includes('permessi')) {
+            res.status(403).json({ error: error.message });
+        } else {
+            res.status(500).json({ error: 'Errore durante l\'aggiunta del commento' });
+        }
+    }
+};
+
+export const deleteComment = async (req: AuthRequest, res: Response) => {
+    try {
+        const { id, commentId } = req.params;
+        const userId = req.user!.id;
+
+        await DocumentService.deleteComment(id, commentId, userId);
+        res.status(200).json({ success: true });
+    } catch (error: any) {
+        if (error.message === 'Documento non trovato' || error.message === 'Commento non trovato') {
+            res.status(404).json({ error: error.message });
+        } else if (error.message.includes('permessi')) {
+            res.status(403).json({ error: error.message });
+        } else {
+            res.status(500).json({ error: 'Errore durante l\'eliminazione del commento' });
+        }
+    }
+};

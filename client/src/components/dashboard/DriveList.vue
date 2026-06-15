@@ -235,6 +235,11 @@ const isOwner = (item: any) => {
   color: #0288d1;
 }
 
+.role-tag.commenter {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
 .role-tag.viewer {
   background-color: #f5f5f5;
   color: #616161;

@@ -130,7 +130,7 @@ export class AdminService {
     private static async getStatsShares() {
         const [total, readOnly, edit] = await Promise.all([
             DocumentModel.countDocuments({ "sharedWith.0": { $exists: true } }),
-            DocumentModel.countDocuments({ "sharedWith.role": "viewer" }),
+            DocumentModel.countDocuments({ "sharedWith.role": { $in: ["viewer", "commenter"] } }),
             DocumentModel.countDocuments({ "sharedWith.role": "editor" })
         ]);
         return { total, readOnly, edit };
