@@ -6,6 +6,19 @@
 \usepackage{geometry}
 \usepackage{float}
 \geometry{a4paper, top=3cm, bottom=3cm, left=3cm, right=3cm}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{red},
+    numberstyle=\tiny\color{gray},
+    breaklines=true,
+    frame=single,
+    showstringspaces=false
+}
 
 \title{\textbf{Dok} \\ \large Applicazioni e Servizi Web}
 \author{Lorenzo Tosi, Alessandro Stefani}
@@ -222,7 +235,7 @@ L'applicazione gestisce dati sensibili e documenti privati. Di conseguenza, il s
 
 Nel server (basato su Express), ogni rotta che espone o manipola risorse protette è filtrata da un middleware custom. Il file \texttt{auth.middleware.ts} si occupa di intercettare la richiesta HTTP, estrarre il token dall'intestazione \texttt{Authorization} e validarne la firma crittografica.
 
-\begin{lstlisting}[language=JavaScript, caption=Implementazione del middleware di autenticazione (auth.middleware.ts)]
+\begin{lstlisting}[language=Java, caption=Implementazione del middleware di autenticazione (auth.middleware.ts)]
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
@@ -258,7 +271,7 @@ La sincronizzazione del testo tra più client simultanei rappresenta la compless
 
 Questo pattern sfrutta il ciclo di vita dei componenti di Vue (come \texttt{onMounted} e \texttt{onBeforeUnmount}) per instaurare e distruggere la connessione WebSocket al momento giusto, prevenendo cali di prestazioni o *memory leak*.
 
-\begin{lstlisting}[language=JavaScript, caption=Configurazione dell'Editor Collaborativo (useCollaboration.ts)]
+\begin{lstlisting}[language=Java, caption=Configurazione dell'Editor Collaborativo (useCollaboration.ts)]
 import * as Y from 'yjs';
 import { useEditor } from '@tiptap/vue-3';
 import Collaboration from '@tiptap/extension-collaboration';
@@ -307,7 +320,7 @@ Da quel momento in poi, qualsiasi evento di \texttt{sync-update} inviato da un \
 \section{Integrazione del Motore LLM}
 Un ulteriore elemento di spessore tecnico è l'assistente basato su Intelligenza Artificiale. Il flusso si attiva quando l'utente seleziona una porzione di testo ed esegue una richiesta tramite il \textit{BubbleMenu}. Il client invoca una chiamata REST al controller \texttt{llm.controller.ts}, il quale delega la complessa interazione con il modello linguistico alla classe dedicata \texttt{LLMEngine.ts}.
 
-\begin{lstlisting}[language=JavaScript, caption=Elaborazione della richiesta LLM (LLMEngine.ts)]
+\begin{lstlisting}[language=Java, caption=Elaborazione della richiesta LLM (LLMEngine.ts)]
 export class LLMEngine {
     private openai;
 
@@ -323,7 +336,7 @@ export class LLMEngine {
                 messages: [
                     { 
                         role: "system", 
-                        content: "Sei un assistente editoriale integrato in una piattaforma di videoscrittura. Il tuo compito è riscrivere o migliorare il testo fornito rispettando rigorosamente le istruzioni dell'utente." 
+                        content: "Sei un assistente editoriale integrato in una piattaforma di videoscrittura. Il tuo compito: riscrivere o migliorare il testo fornito rispettando rigorosamente le istruzioni dell'utente."
                     },
                     { 
                         role: "user", 
