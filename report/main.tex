@@ -405,21 +405,19 @@ Una volta terminato il processo di compilazione delle immagini, la piattaforma D
 
 \chapter{Conclusioni}
 
-Lo sviluppo della piattaforma Dok si è rivelato un'esperienza formativa di altissimo valore, permettendoci di affrontare e risolvere problematiche reali legate al mondo dei sistemi distribuiti e delle architetture web moderne. L'obiettivo iniziale – creare un ambiente cloud in stile Google Drive che unisse l'archiviazione alla stesura collaborativa – è stato ampiamente raggiunto.
+Lo sviluppo della piattaforma Dok si è rivelato un'ottima esperienza formativa permettendoci di affrontare e risolvere problematiche reali legate al mondo dei sistemi distribuiti e delle architetture web moderne. L'obiettivo iniziale – creare un ambiente cloud in stile Google Drive che unisse l'archiviazione alla stesura collaborativa – è stato ampiamente raggiunto.
 
 \section{Considerazioni e Sfide Affrontate}
 Non sono mancate le difficoltà tecniche durante l'avanzamento dei lavori. La sfida principale ha riguardato sicuramente l'integrazione del motore Yjs per la risoluzione dei conflitti nell'editor testuale. Comprendere a fondo il funzionamento dei CRDT e far dialogare correttamente Tiptap con l'infrastruttura di Socket.io ha richiesto uno studio approfondito, ma il risultato finale ha ampiamente ripagato gli sforzi, garantendo un'esperienza di co-editing priva di sbavature.
 Allo stesso modo, la strutturazione rigorosa del backend con TypeScript e la progettazione di un file system virtuale sicuro e navigabile hanno consolidato la nostra comprensione dei pattern di sviluppo lato server.
 
 \section{Sviluppi Futuri}
-Le solide basi architetturali poste con questo progetto permettono di immaginare diverse estensioni future per arricchire ulteriormente l'offerta del prodotto:
+Le solide basi architetturali poste con questo progetto permettono di immaginare diverse estensioni future per arricchire ulteriormente le funzionalità dell'applicazione:
 \begin{itemize}
     \item \textbf{Sistema di chat integrata:} Aggiungere un pannello di messaggistica laterale all'interno del documento per permettere agli utenti connessi di dialogare senza abbandonare l'editor.
     \item \textbf{Cronologia delle revisioni:} Implementare un sistema per salvare versioni "congelate" del documento a intervalli regolari, garantendo la possibilità di effettuare un rollback a stadi precedenti del testo.
     \item \textbf{Esportazione Multiformato:} Arricchire le funzionalità di download offrendo all'utente la possibilità di esportare il documento scritto non solo in testo semplice, ma anche in formato PDF formattato o Microsoft Word (.docx).
 \end{itemize}
-
-In conclusione, la realizzazione di Dok ha dimostrato come la combinazione di tecnologie moderne come Vue 3, Node.js e i protocolli WebSocket possa dar vita ad applicativi performanti e interattivi, capaci di abbattere le distanze e favorire una reale produttività condivisa.
 
 \end{document}
 
