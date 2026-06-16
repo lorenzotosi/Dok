@@ -186,14 +186,14 @@ Alessandro ha 34 anni ed è un utente che naviga sul web alla ricerca di documen
 
 \chapter{Tecnologie Utilizzate}
 
-La realizzazione di un sistema collaborativo in tempo reale richiede fondamenta tecnologiche solide e performanti. L'esigenza di gestire flussi di dati continui, unita alla necessità di mantenere interfacce reattive e architetture scalabili, ha guidato l'intero processo di selezione degli strumenti di sviluppo. La piattaforma Dok è stata costruita adottando lo stack \textbf{MEVN} (MongoDB, Express.js, Vue.js, Node.js), arricchito da un ecosistema di librerie specializzate per risolvere problemi complessi come la convergenza dei testi e la gestione dello stato distribuito.
+La piattaforma Dok è stata costruita adottando lo stack \textbf{MEVN} (MongoDB, Express.js, Vue.js, Node.js) assieme ad un isieme di librerie specializzate per risolvere problemi complessi come la convergenza dei testi e la gestione dello stato distribuito.
 
 \section{Lo Stack MEVN come base architetturale}
-La scelta dello stack MEVN si basa sul paradigma \textit{JavaScript everywhere}. Utilizzare un unico linguaggio di programmazione sia per il client che per il server riduce drasticamente l'attrito nello sviluppo, agevolando la condivisione di interfacce (tipizzate grazie a TypeScript) e formati di dati (JSON) tra i vari layer dell'applicazione. Questa uniformità ha permesso di accelerare lo sviluppo e minimizzare gli errori di traduzione dei dati tra frontend e database.
+La scelta dello stack MEVN si basa sul paradigma \textit{JavaScript everywhere}. Utilizzare un unico linguaggio di programmazione sia per il client che per il server riduce la difficoltà nello sviluppo, agevolando la condivisione di interfacce (tipizzate grazie a TypeScript) e formati di dati (JSON) tra i vari layer dell'applicazione. Questa uniformità ha permesso di accelerare lo sviluppo e minimizzare gli errori di traduzione dei dati tra frontend e database.
 
 \section{Sviluppo Frontend: Vue 3 e State Management}
-L'interfaccia utente è stata interamente sviluppata utilizzando \textbf{Vue.js} (nella sua versione 3), sfruttando le potenzialità della \textit{Composition API} e della sintassi \texttt{<script setup>}. Questo approccio ha permesso di scrivere componenti più compatti e logiche facilmente riutilizzabili sotto forma di \textit{composables} (come nel caso dei moduli personalizzati per la navigazione delle cartelle o la gestione dei WebSocket).
-Il building e l'ottimizzazione degli asset sono stati affidati a \textbf{Vite}, un bundler moderno che garantisce tempi di ricarica istantanei in fase di sviluppo (Hot Module Replacement), migliorando nettamente la Developer Experience rispetto ai classici configuratori basati su Webpack.
+L'interfaccia utente è stata interamente sviluppata utilizzando \textbf{Vue.js} (nella sua versione 3), sfruttando le potenzialità della \textit{Composition API} e della sintassi \texttt{<script setup>}. Questo approccio ha permesso di scrivere componenti più compatti e logiche facilmente riutilizzabili sotto forma di \textit{composables}.
+Il building e l'ottimizzazione degli asset sono stati affidati a \textbf{Vite}, un bundler moderno che garantisce tempi di ricarica istantanei in fase di sviluppo (Hot Module Replacement), migliorando la Developer Experience rispetto ai classici configuratori basati su Webpack.
 
 \subsection{Gestione dello Stato con Pinia}
 Data la mole di informazioni dinamiche da visualizzare (albero dei file, permessi correnti, token di autenticazione e notifiche in tempo reale), gestire lo stato tramite il semplice passaggio di \textit{props} sarebbe risultato inefficiente e prono a bug. Per ovviare a questo problema, l'applicazione si affida a \textbf{Pinia}, lo standard moderno per lo \textit{state management} nell'ecosistema Vue. 
@@ -202,21 +202,21 @@ Sono stati creati \textit{store} modulari indipendenti (ad esempio per l'autenti
 \section{Il Cuore Collaborativo: Tiptap e Yjs}
 La vera sfida del progetto consisteva nell'implementazione dell'editor condiviso. Una classica casella di testo o un normale editor WYSIWYG (What You See Is What You Get) non possiede nativamente gli strumenti matematici per fondere le modifiche provenienti da utenti multipli, generando inevitabili sovrascritture.
 
-Per costruire questa funzionalità si è optato per una potente sinergia tra due tecnologie:
+Per costruire questa funzionalità si è optato per:
 \begin{itemize}
-    \item \textbf{Tiptap:} È un framework per editor di testo "headless", ovvero privo di un'interfaccia grafica predefinita. A differenza di editor monolitici (come CKEditor o TinyMCE), Tiptap fornisce solo le API e le logiche di rendering del testo, lasciando al programmatore il controllo totale sul design. Questo ha permesso di integrare menù flottanti personalizzati (come il \textit{Bubble Menu} per l'assistente IA) e di mantenere uno stile estetico perfettamente coerente con il resto dell'applicazione.
+    \item \textbf{Tiptap:} È un framework per editor di testo "headless", ovvero privo di un'interfaccia grafica predefinita. Tiptap fornisce solo le API e le logiche di rendering del testo, lasciando al programmatore il controllo totale sul design. Questo ha permesso di integrare menù flottanti personalizzati (come il \textit{Bubble Menu} per l'assistente IA) e di mantenere uno stile estetico perfettamente coerente con il resto dell'applicazione.
     \item \textbf{Yjs (Implementazione CRDT):} Yjs è il vero "cervello" matematico dell'editor. Si tratta di una libreria ad alte prestazioni basata sui \textit{Conflict-free Replicated Data Types} (CRDT). Invece di far transitare interi blocchi di testo sulla rete, Yjs scompone il documento in una struttura dati vettoriale. Quando un utente digita, la libreria calcola un \textit{delta} infinitesimale e lo propaga. Yjs garantisce matematicamente che, indipendentemente dall'ordine in cui i pacchetti di rete arrivano ai vari client, tutti convergeranno sempre verso lo stesso identico stato finale, azzerando i conflitti.
 \end{itemize}
 
 \section{Sviluppo Backend: Node.js ed Express.js}
-Il server dell'applicazione è alimentato da \textbf{Node.js}, un runtime asincrono orientato agli eventi, ideale per gestire un elevato numero di connessioni I/O simultanee (come quelle richieste dalle sessioni collaborative). 
-L'infrastruttura di routing e la creazione delle API RESTful poggiano su \textbf{Express.js}. Il codice del backend è stato ingegnerizzato facendo largo uso di \textit{middleware}. Un esempio lampante è la pipeline di sicurezza: prima di processare qualsiasi richiesta sensibile, il sistema intercetta la chiamata, estrae il token JWT dalle intestazioni HTTP e ne verifica la firma crittografica. Solo se l'esito è positivo, la richiesta viene inoltrata ai \textit{Controller} e, successivamente, ai \textit{Services} che incapsulano la logica di business.
+Il server dell'applicazione è alimentato da \textbf{Node.js}, ideale per gestire un elevato numero di connessioni I/O simultanee (come quelle richieste dalle sessioni collaborative). 
+L'infrastruttura di routing e la creazione delle API RESTful poggiano su \textbf{Express.js}. Il codice del backend è stato ingegnerizzato facendo largo uso di \textit{middleware}. Un esempio è la pipeline di sicurezza: prima di processare qualsiasi richiesta sensibile, il sistema intercetta la chiamata, estrae il token JWT dalle intestazioni HTTP e ne verifica la firma crittografica. Solo se l'esito è positivo, la richiesta viene inoltrata ai \textit{Controller} e, successivamente, ai \textit{Services} che incapsulano la logica di business.
 
 \subsection{Integrazione con Modelli LLM}
 Per arricchire l'esperienza utente, il server ospita anche un motore per l'interazione con l'Intelligenza Artificiale (LLM Engine). Questo modulo agisce come un ponte: riceve la porzione di testo selezionata dall'utente nel frontend e la instrada verso un Large Language Model, applicando specifici \textit{prompt} per richiedere la riscrittura, l'espansione o il riassunto del paragrafo. La risposta viene poi ripulita e restituita al client, pronta per essere iniettata nel documento tramite Tiptap.
 
 \section{Comunicazione Real-Time: Socket.io}
-Per eludere i limiti del protocollo HTTP (che è nativamente unidirezionale e stateless), l'architettura sfrutta il protocollo WebSocket tramite la celebre libreria \textbf{Socket.io}. 
+Per eludere i limiti del protocollo HTTP (che è nativamente unidirezionale e stateless), l'architettura sfrutta il protocollo WebSocket tramite la libreria \textbf{Socket.io}. 
 Socket.io non si limita a tenere aperto un canale bidirezionale, ma fornisce astrazioni cruciali per la scalabilità del progetto. Nello specifico, si è fatto un largo uso delle \textit{Rooms} (stanze). Quando tre utenti aprono il medesimo documento, il backend li iscrive automaticamente alla stessa Room. In questo modo, gli aggiornamenti di Yjs e la trasmissione della posizione dei cursori (\textit{Awareness Protocol}) vengono inviati in multicast (broadcast selettivo) esclusivamente agli utenti interessati da quello specifico file, ottimizzando il consumo di banda e la reattività del server.
 
 \section{Persistenza dei Dati e Deployment}
@@ -224,11 +224,11 @@ La persistenza delle informazioni strutturate è stata affidata a \textbf{MongoD
 
 Ad affiancare MongoDB, è stata integrata un'istanza \textbf{Redis}. Operando interamente in memoria (in-memory data structure store), Redis viene impiegato per alleggerire il carico del database primario e velocizzare le operazioni ad alta frequenza, fungendo da sistema di caching e supporto per la scalabilità orizzontale delle sessioni Socket.io.
 
-Infine, per svincolare l'esecuzione del codice dalla macchina host e standardizzare il processo di rilascio, l'intera architettura è stata inserita in container tramite \textbf{Docker}. La configurazione in container isolati garantisce che il database, il server e il frontend girino sempre in un ambiente immutabile, annullando il rischio di malfunzionamenti legati alle dipendenze o alla configurazione del sistema operativo sottostante.
+Infine, l'intera architettura è stata inserita in container tramite \textbf{Docker}. La configurazione in container isolati garantisce che il database, il server e il frontend girino sempre in un ambiente immutabile, annullando il rischio di malfunzionamenti legati alle dipendenze o alla configurazione del sistema operativo sottostante.
 
 \chapter{Implementazione e Codice}
 
-La realizzazione pratica di Dok ha richiesto la traduzione dei requisiti architetturali in un ecosistema di codice robusto e manutenibile. In questo capitolo verranno analizzati i frammenti di codice più significativi del progetto, evidenziando le scelte implementative adottate per risolvere problematiche specifiche, quali la protezione degli endpoint, la gestione dello stato reattivo sul client e, soprattutto, la sincronizzazione collaborativa in tempo reale.
+In questo capitolo verranno analizzati i frammenti di codice più significativi del progetto, evidenziando le scelte implementative adottate per risolvere problematiche specifiche, quali la protezione degli endpoint, la gestione dello stato reattivo sul client e, soprattutto, la sincronizzazione collaborativa in tempo reale.
 
 \section{Gestione dell'Autenticazione e Sicurezza}
 L'applicazione gestisce dati sensibili e documenti privati. Di conseguenza, il sistema di autenticazione non poteva limitarsi a un semplice controllo a livello di interfaccia, ma doveva essere radicato profondamente nel backend. Si è scelto di utilizzare i JSON Web Token (JWT) per instaurare una comunicazione \textit{stateless}. 
@@ -310,7 +310,7 @@ export function useCollaboration(documentId: string, currentUser: any, socket: a
 }
 \end{lstlisting}
 
-Il frammento precedente mostra come l'oggetto \texttt{ydoc} diventi la "singola fonte di verità" per il testo. L'estensione \texttt{CollaborationCursor} raccoglie i movimenti del mouse e le posizioni del cursore locale, impacchettandoli e inviandoli al server. Gli altri client, ricevendo tali pacchetti, aggiornano le coordinate e renderizzano il cursore colorato (indicatore di *Awareness*) con il nome dell'utente.
+Il frammento precedente mostra come l'oggetto \texttt{ydoc} diventi la "singola fonte di verità" per il testo. L'estensione \texttt{CollaborationCursor} raccoglie i movimenti del mouse e le posizioni del cursore locale, impacchettandoli e inviandoli al server. Gli altri client, ricevendo tali pacchetti dal server, aggiornano le coordinate e renderizzano il cursore colorato (indicatore di *Awareness*) con il nome dell'utente.
 
 \section{Gestione dei Socket e Spazio Globale}
 L'efficienza del sistema è garantita da una rigida gestione delle \textit{Rooms} all'interno del modulo \texttt{document.handler.ts} sul server. Quando un utente apre un file (sia esso nello Spazio Privato o in quello Globale), il frontend emette un evento \texttt{join-document}. Il server verifica prima di tutto i permessi di lettura sul database. Se l'utente ha diritto di accesso (o se il file si trova nell'area pubblica globale), il server iscrive la sua connessione Socket alla stanza corrispondente all'ID del documento.
@@ -318,8 +318,9 @@ L'efficienza del sistema è garantita da una rigida gestione delle \textit{Rooms
 Da quel momento in poi, qualsiasi evento di \texttt{sync-update} inviato da un \textit{Editor} autorizzato verrà "riflesso" dal server esclusivamente ai membri di quella specifica stanza, garantendo l'isolamento dei flussi di dati e riducendo al minimo il sovraccarico di rete.
 
 \section{Integrazione del Motore LLM}
-Un ulteriore elemento di spessore tecnico è l'assistente basato su Intelligenza Artificiale. Il flusso si attiva quando l'utente seleziona una porzione di testo ed esegue una richiesta tramite il \textit{BubbleMenu}. Il client invoca una chiamata REST al controller \texttt{llm.controller.ts}, il quale delega la complessa interazione con il modello linguistico alla classe dedicata \texttt{LLMEngine.ts}.
+Un ulteriore elemento tecnico è l'assistente basato su Intelligenza Artificiale. Il flusso si attiva quando l'utente seleziona una porzione di testo ed esegue una richiesta tramite il \textit{BubbleMenu}. Il client invoca una chiamata REST al controller \texttt{llm.controller.ts}, il quale delega la complessa interazione con il modello linguistico alla classe dedicata \texttt{LLMEngine.ts}.
 
+\newpage
 \begin{lstlisting}[language=Java, caption=Elaborazione della richiesta LLM (LLMEngine.ts)]
 export class LLMEngine {
     private openai;
