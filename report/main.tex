@@ -109,16 +109,14 @@ I requisiti non funzionali specificano le caratteristiche qualitative, i vincoli
 Per tradurre in realtà i requisiti definiti nella fase di analisi, la progettazione del sistema ha richiesto una pianificazione dell'infrastruttura software. La natura fortemente interattiva e collaborativa dell'applicazione ha imposto l'adozione di pattern architetturali in grado di gestire non solo le tradizionali operazioni CRUD, ma anche un flusso di dati continuo e bidirezionale tra i client e il server.
 
 \section{Architettura di Sistema}
-L'applicativo si fonda sul paradigma Client-Server, strutturato per garantire una netta separazione delle responsabilità. Questa scelta permette di mantenere il frontend leggero e puramente dedicato alla presentazione e alla reattività dell'interfaccia, delegando al backend tutta la complessa logica di validazione, autenticazione e persistenza dei dati.
+L'applicativo si fonda sul paradigma Client-Server, strutturato per garantire una netta separazione delle responsabilità. Questa scelta permette di mantenere il frontend leggero e puramente dedicato alla presentazione e alla reattività dell'interfaccia, delegando al backend la logica di validazione, autenticazione e persistenza dei dati.
 
 Per gestire la diversità delle operazioni richieste, il sistema utilizza due modelli di comunicazione:
 \begin{itemize}
     \item \textbf{Architettura RESTful:} Utilizzata per tutte le operazioni di natura statica e transazionale. Tramite chiamate HTTP standard, il client comunica con le API del server per gestire l'autenticazione, recuperare l'albero delle cartelle, creare nuovi documenti o aggiornare il profilo utente.
-    \item \textbf{Comunicazione Event-Driven (WebSocket):} Fondamentale per il cuore collaborativo dell'app. Attraverso una connessione persistente bidirezionale, il server effettua il \textit{push} delle notifiche, degli aggiornamenti di stato della dashboard, delle informazioni utente utili per gli admin e, soprattutto, delle modifiche testuali in tempo reale, senza che il client debba continuamente interrogare il server (polling).
+    \item \textbf{Comunicazione Event-Driven (WebSocket):} Fondamentale le funzionalità collaborative e real-time dell'app. Attraverso una connessione persistente bidirezionale, il server effettua il \textit{push} delle notifiche, degli aggiornamenti di stato della dashboard, delle informazioni utente utili per gli admin e, soprattutto, delle modifiche testuali in tempo reale, senza che il client debba effettuare polling.
 \end{itemize}
 
-% NOTA PER TE: Qui potresti inserire un diagramma architetturale (Client -> REST/Socket -> Server -> MongoDB/Redis).
-% Se hai un diagramma dell'architettura di rete, scommenta e usa questo blocco:
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.5\textwidth]{img/client-server-architecture}
@@ -133,10 +131,29 @@ Per risolvere in modo elegante questo problema, l'architettura integra il modell
 Ogni utente mantiene una copia locale della struttura dati del documento. Quando un utente digita una lettera, il framework genera un aggiornamento incrementale che viene inviato al backend tramite WebSocket. Il server agisce da semplice \textit{router}, inoltrando l'aggiornamento agli altri client connessi alla medesima "stanza" (room). I client riceventi applicano deterministicamente l'aggiornamento alla propria copia locale, convergendo sempre verso il medesimo stato finale senza bisogno di bloccare l'editor.
 
 \section{Design del Backend e del Frontend}
-Il server è stato progettato seguendo un pattern modulare basato su \textit{Controller} e \textit{Services}. I Controller fungono da punto di ingresso per le rotte API, occupandosi dell'estrazione dei parametri e dell'invio delle risposte HTTP. La business logic vera e propria risiede invece nei Services, i quali astraggono l'interazione con il database non relazionale (orientato ai documenti), garantendo codice pulito, testabile e riutilizzabile.
+L'architettura interna dell'applicazione è stata concepita per garantire scalabilità, manutenibilità e una chiara separazione delle responsabilità. Questo approccio si riflette in modo simmetrico sia sul server che sul client, adottando design pattern adatti a un'applicazione \textit{real-time}.
 
-Lato frontend, si è adottato un approccio \textit{Component-Based}. L'interfaccia è composta da "mattoncini" visivi incapsulati e riutilizzabili. Per evitare il noto problema del \textit{prop-drilling} (il passaggio di dati in cascata attraverso decine di componenti annidati), lo stato globale dell'applicazione è gestito in modo centralizzato tramite specifici \textit{Store}. Questi contenitori reattivi tengono traccia della sessione dell'utente, dei documenti correntemente aperti e delle notifiche in sospeso, aggiornando automaticamente la vista ogni qualvolta i dati sottostanti mutano.
+\subsection{Architettura Layered del Backend}
+Il server è stato strutturato seguendo una \textit{Layered Architecture} consentendo al flusso dei dati attraversa livelli con responsabilità isolate:
 
+\begin{itemize}
+    \item \textbf{Routes e Middlewares:} Rappresentano il punto di ingresso dell'applicazione. Qui vengono intercettate le richieste HTTP e instradate verso i corretti gestori. I \textit{Middleware} svolgono un ruolo cruciale per la sicurezza, agendo da filtro preventivo per la decodifica dei token JWT e la validazione dei privilegi di accesso (es. \textit{Role-Based Access Control} per le rotte destinate agli amministratori).
+    \item \textbf{Controllers:} Agiscono come intermediari tra la rete e la logica applicativa. Il loro unico compito è analizzare i parametri in ingresso (body, query, params) estratti dalle richieste HTTP, invocare i servizi sottostanti e formattare la risposta corretta (es. status code 200 per il successo o 400/500 per gli errori).
+    \item \textbf{Services:} Costituiscono la \textit{Business Logic} del sistema. I Service incapsulano algoritmi, regole applicative e l'interazione con il database. Questa separazione rende la logica di business riutilizzabile anche da altri punti del sistema (come ad esempio dai gestori dei WebSocket), garantendo un codice organizzato e facilmente testabile e manutenibile.
+    \item \textbf{Models e ODM:} L'interazione con il database non relazionale MongoDB è mediata da un \textit{Object Data Modeling}. I Model definiscono rigidamente lo schema dei documenti, i tipi di dato e le relazioni, offrendo un'astrazione sicura per le operazioni di lettura e scrittura.
+\end{itemize}
+
+\subsection{Architettura Component-Based del Frontend}
+Il client è stato sviluppato adottando l'approccio \textit{Component-Based}. L'interfaccia utente non è concepita come una serie di pagine statiche, ma come un albero di componenti visivi incapsulati e riutilizzabili. Ogni componente gestisce autonomamente il proprio ciclo di vita, il proprio stile e la propria logica di presentazione.
+
+Tuttavia, la natura fortemente interattiva dell'editor collaborativo e la complessa dashboard amministrativa hanno reso necessaria un'attenta progettazione della gestione dello stato. Per evitare l'anti-pattern del \textit{prop-drilling} --- ovvero il passaggio a catena di variabili e funzioni attraverso decine di componenti figli annidati --- lo stato globale dell'applicazione è gestito in modo centralizzato tramite un'architettura a \textit{Store} reattivi.
+
+Questi Store agiscono come una \textit{Single Source of Truth} per l'intera applicazione. Essi si occupano di:
+\begin{itemize}
+    \item Mantenere in memoria in modo persistente i dati sensibili della sessione utente (token di autenticazione, ruolo, dati anagrafici).
+    \item Sincronizzare i dati dell'interfaccia con gli eventi asincroni provenienti dal server tramite WebSocket (es. aggiornamenti in tempo reale degli utenti online o ricezione di notifiche).
+    \item Condividere istantaneamente i dati tra view slegate tra loro (es. dalla barra di navigazione alla tabella della dashboard), forzando un re-rendering automatico e reattivo della grafica ogni qualvolta lo stato sottostante subisce una mutazione.
+\end{itemize}
 \section{Progettazione UI/UX e Mockup}
 L'interfaccia utente è stata concepita seguendo i principi del \textit{KISS} (Keep It Simple, Stupid) e del \textit{Minimalist Design}. L'intento era quello di ridurre al minimo il carico cognitivo dell'utente, fornendo un'esperienza visiva familiare che richiamasse i software di produttività cloud più diffusi. 
 
