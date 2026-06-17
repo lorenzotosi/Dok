@@ -39,7 +39,7 @@ Dall'altro lato, la piattaforma integra un'area definita "globale". Quest'ultima
 
 \chapter{Analisi dei Requisiti}
 
-La fase iniziale dello sviluppo della piattaforma Dok è stata interamente dedicata alla definizione accurata dei requisiti di sistema. L'obiettivo primario consisteva nel delineare con chiarezza le necessità del target di riferimento, ponendo l'utente finale al centro di ogni scelta progettuale. Per evitare la strutturazione di funzionalità astratte, la progettazione si è basata sulle metodologie dello \textit{User-Centered Design} (UCD), avvalendosi in particolar modo della tecnica delle \textit{Personas} e degli scenari d'uso. Questo approccio ha permesso di simulare contesti reali di interazione, traducendoli successivamente in requisiti tecnici concreti.
+La fase iniziale dello sviluppo della piattaforma Dok è stata dedicata alla definizione dei requisiti di sistema. L'obiettivo primario consisteva nel delineare i target di riferimento e le loro necessità, ponendo l'utente al centro delle scelte progettuali. La progettazione si è basata sulle metodologie dello \textit{User-Centered Design} (UCD), avvalendosi in particolar modo della tecnica delle \textit{Personas} e degli scenari d'uso. Questo approccio ha permesso di simulare contesti reali di interazione, traducendoli successivamente in requisiti tecnici concreti.
 
 \section{Requisiti Funzionali}
 I requisiti funzionali descrivono in modo dettagliato le azioni che il sistema deve consentire di compiere, definendo il comportamento dell'applicazione in risposta agli input degli utenti.
@@ -74,6 +74,7 @@ I requisiti funzionali descrivono in modo dettagliato le azioni che il sistema d
     \begin{itemize}
         \item La piattaforma deve esporre una sezione "Globale" visibile anche agli utenti non autenticati.
         \item Qualsiasi utente autenticato può creare elementi nell'area globale, ma la modifica collaborativa del testo rimane vincolata ai permessi specifici di scrittura.
+        \item Gli Admin e gli utenti proprietari sono in grado di cancellare cartelle e documenti dall'area pubblica
     \end{itemize}
     
     \item \textbf{Integrazione dell'Assistente IA:}
@@ -83,7 +84,9 @@ I requisiti funzionali descrivono in modo dettagliato le azioni che il sistema d
     
     \item \textbf{Monitoraggio e Amministrazione:}
     \begin{itemize}
-        \item L'utente con ruolo di Amministratore deve poter accedere a una dashboard riservata per visualizzare l'elenco degli utenti, ispezionare l'intero file system globale e monitorare i log di sistema.
+        \item Gli utenti con ruolo di Amministratore devono poter accedere a una dashboard riservata per visualizzare l'elenco degli utenti e monitorare i log di accesso al sistema.
+        \item Gli Admin devono essere in grado di ispezionare la struttura dello spazio privato e le condivisioni di un utente rispettandone la privacy.
+        \item Un Admin deve essere in grado di fornire o rimuovere privilegi da amministratore ad altri utenti.
     \end{itemize}
     \item \textbf{Notifiche}
     \begin{itemize}
@@ -103,22 +106,22 @@ I requisiti non funzionali specificano le caratteristiche qualitative, i vincoli
 
 \chapter{Design e Architettura}
 
-Per tradurre in realtà i requisiti definiti nella fase di analisi, la progettazione del sistema Dok ha richiesto un'attenta pianificazione dell'infrastruttura software. La natura fortemente interattiva e collaborativa dell'applicazione ha imposto l'adozione di pattern architetturali in grado di gestire non solo le tradizionali operazioni CRUD, ma anche un flusso di dati continuo e bidirezionale tra i client e il server.
+Per tradurre in realtà i requisiti definiti nella fase di analisi, la progettazione del sistema ha richiesto una pianificazione dell'infrastruttura software. La natura fortemente interattiva e collaborativa dell'applicazione ha imposto l'adozione di pattern architetturali in grado di gestire non solo le tradizionali operazioni CRUD, ma anche un flusso di dati continuo e bidirezionale tra i client e il server.
 
 \section{Architettura di Sistema}
-L'applicativo si fonda sul paradigma Client-Server, strutturato per garantire una netta separazione delle responsabilità (Separation of Concerns). Questa scelta permette di mantenere il frontend leggero e puramente dedicato alla presentazione e alla reattività dell'interfaccia, delegando al backend tutta la complessa logica di validazione, autenticazione e persistenza dei dati.
+L'applicativo si fonda sul paradigma Client-Server, strutturato per garantire una netta separazione delle responsabilità. Questa scelta permette di mantenere il frontend leggero e puramente dedicato alla presentazione e alla reattività dell'interfaccia, delegando al backend tutta la complessa logica di validazione, autenticazione e persistenza dei dati.
 
 Per gestire la diversità delle operazioni richieste, il sistema utilizza due modelli di comunicazione:
 \begin{itemize}
     \item \textbf{Architettura RESTful:} Utilizzata per tutte le operazioni di natura statica e transazionale. Tramite chiamate HTTP standard, il client comunica con le API del server per gestire l'autenticazione, recuperare l'albero delle cartelle, creare nuovi documenti o aggiornare il profilo utente.
-    \item \textbf{Comunicazione Event-Driven (WebSocket):} Fondamentale per il cuore collaborativo dell'app. Attraverso una connessione persistente bidirezionale, il server effettua il \textit{push} delle notifiche, degli aggiornamenti di stato della dashboard e, soprattutto, delle modifiche testuali in tempo reale, senza che il client debba continuamente interrogare il server (polling).
+    \item \textbf{Comunicazione Event-Driven (WebSocket):} Fondamentale per il cuore collaborativo dell'app. Attraverso una connessione persistente bidirezionale, il server effettua il \textit{push} delle notifiche, degli aggiornamenti di stato della dashboard, delle informazioni utente utili per gli admin e, soprattutto, delle modifiche testuali in tempo reale, senza che il client debba continuamente interrogare il server (polling).
 \end{itemize}
 
 % NOTA PER TE: Qui potresti inserire un diagramma architetturale (Client -> REST/Socket -> Server -> MongoDB/Redis).
 % Se hai un diagramma dell'architettura di rete, scommenta e usa questo blocco:
 \begin{figure}[H]
     \centering
-    % \includegraphics[width=0.8\textwidth]{path/alla/tua/immagine_architettura.png}
+    \includegraphics[width=0.5\textwidth]{img/client-server-architecture}
     \caption{Diagramma dell'architettura Client-Server e dei flussi di comunicazione.}
     \label{fig:architettura_sistema}
 \end{figure}
