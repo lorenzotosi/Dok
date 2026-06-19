@@ -4,6 +4,7 @@
 \usepackage{url}
 \usepackage{natbib}
 \usepackage{graphicx}
+\usepackage{float}
 \usepackage{cleveref} % this must be the last package to be loaded
 
 \newcommand{\emailaddr}[1]{\href{mailto:#1}{\texttt{#1}}}
@@ -347,9 +348,13 @@ upstream websocket_cluster {
 
 The hash key is the \texttt{documentId} query parameter when present, and the client IP otherwise. This implements \textbf{application-aware consistent hashing}: all clients editing the \emph{same} document are routed to the \emph{same} backend, which is where that document's live Yjs replica resides. Consistent hashing (rather than round-robin) is chosen so that adding or removing a backend only re-maps a fraction of the keyspace, minimising disruption. Pure stateless REST calls (no \texttt{documentId}) fall back to client-IP hashing for a rough load balance. Nginx is configured for WebSocket upgrade (\texttt{proxy\_http\_version 1.1} plus the \texttt{Upgrade}/\texttt{Connection} headers), which is required for Socket.IO long-lived connections.
 
-\begin{quote}
-A component diagram of the deployment (Nginx $\rightarrow$ backend1/backend2 $\rightarrow$ shared Mongo+Redis) is welcome here.
-\end{quote}
+\begin{figure}[H]
+\includegraphics[scale=0.3]{diagrammi/arch.png}
+\caption{Component and Deployment Diagram.}
+\centering
+\end{figure}
+
+
 
 \subsection{Modelling}\label{modelling}
 
@@ -377,9 +382,13 @@ A component diagram of the deployment (Nginx $\rightarrow$ backend1/backend2 $\r
   \item \textbf{Socket.IO events}: \texttt{join-document}, \texttt{sync-document}, \texttt{crdt-update}, \texttt{awareness-update}, \texttt{leave-document}, plus notification events (\texttt{new-notification}, \texttt{document-renamed}, \texttt{presence\_update}, \texttt{new\_audit\_log}, \dots). These carry the live, collaborative traffic.
 \end{itemize}
 
-\begin{quote}
-A UML class diagram of the Mongoose models and of the \texttt{ActiveDocState} ephemeral type is welcome here.
-\end{quote}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=12cm, height=6.5cm]{diagrammi/class.png}
+    \caption{Class diagram.}
+\end{figure}
+
 
 \subsection{Interaction}\label{interaction}
 
@@ -400,9 +409,12 @@ The lifecycle of a collaborative editing session is the canonical interaction:
   \item On \texttt{leave-document} or \texttt{disconnecting}, the server decrements the client count; when it reaches zero the final state is flushed to MongoDB and the in-memory CRDT is garbage-collected.
 \end{enumerate}
 
-\begin{quote}
-A sequence diagram of the \texttt{join-document} $\rightarrow$ \texttt{crdt-update} $\rightarrow$ \texttt{sync-document} exchange, including the Redis adapter hop between backend1 and backend2, is welcome here.
-\end{quote}
+\begin{figure}[H]
+\includegraphics[scale=0.13]{diagrammi/edit.png}
+\caption{Example of 2 user joining and editing the same document.}
+\centering
+\end{figure}
+
 
 \paragraph{Real-time file-system event propagation.}
 Beyond the collaborative editing channel, Redis plays a second, equally important role: it is the
@@ -452,6 +464,12 @@ that the client who \emph{initiated} the REST action and the clients who are aff
 if they are connected to \emph{different} backend instances---all observe the updated state within
 milliseconds, without any polling.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.09]{diagrammi/share.png}
+    \caption{Example of real time creation of new document, sharing it and receiving the notification.}
+\end{figure}
+
 \subsection{Behaviour}\label{behaviour}
 
 \textbf{Backend behaviour.} Each backend is event-driven and single-threaded (Node.js). Its components behave as follows:
@@ -484,9 +502,14 @@ milliseconds, without any polling.
 
 \textbf{Who updates the state.} The single source of truth for a document's content is the in-memory CRDT on the owning backend; it is updated by the \texttt{crdt-update} handler and periodically checkpointed to MongoDB by the debounce/flush logic. All other durable state (users, folders, sharing, notifications, logs) is updated synchronously by the service layer in response to REST commands, against the shared MongoDB. Because the CRDT guarantees convergence, no component needs to coordinate with others to ``update the state correctly'' --- replicas simply apply commutative updates.
 
-\begin{quote}
-A state diagram for \texttt{ActiveDocState} (absent $\rightarrow$ loaded $\rightarrow$ active with clients $\rightarrow$ idle/debounced-save $\rightarrow$ flushed/evicted) is welcome here.
-\end{quote}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.22]{diagrammi/states.png}
+    \caption{Document lifecycle inside server.}
+\end{figure}
+
+
 
 \subsection{Data and Consistency Issues}\label{data-and-consistency-issues}
 
