@@ -404,6 +404,54 @@ The lifecycle of a collaborative editing session is the canonical interaction:
 A sequence diagram of the \texttt{join-document} $\rightarrow$ \texttt{crdt-update} $\rightarrow$ \texttt{sync-document} exchange, including the Redis adapter hop between backend1 and backend2, is welcome here.
 \end{quote}
 
+\paragraph{Real-time file-system event propagation.}
+Beyond the collaborative editing channel, Redis plays a second, equally important role: it is the
+backbone for propagating \emph{structural changes} to the file system in real time. When a user
+performs an action that modifies the shared state of the dashboard---creating, renaming, or deleting
+a document, or sharing/unsharing it with a collaborator---the service layer invokes the
+\texttt{NotificationManager}, which emits targeted Socket.IO events to one or more rooms.
+Because the Socket.IO Redis adapter is active, these emissions are transparently forwarded to
+\emph{all} backend instances, so every connected client receives the update regardless of which
+server instance hosts their WebSocket connection.
+
+The rooms involved and the events emitted are:
+\begin{itemize}
+  \item \textbf{\texttt{global-dashboard}} --- receives \texttt{global-document-created},\\
+  \texttt{global-document-renamed}, and \texttt{global-document-deleted} whenever a
+  \emph{public} document changes. All clients watching the public feed join this room \\
+  (via \texttt{join-public-dashboard}) and refresh their view without polling.
+
+  \item \textbf{\texttt{user:\{id\}}} (private per-user room) --- receives
+  \texttt{private-document-created},\\ \texttt{private-document-deleted},
+  \texttt{document-renamed}, \texttt{document-shared},\\ \texttt{document-unshared},
+  \texttt{new-notification}, and \texttt{role-changed}. Every authenticated client joins
+  their own private room immediately on connection \\
+  (\texttt{socket.join(`user:\$\{userId\}`)}), so the owner of a document sees their
+  dashboard updated instantly when one of their private documents is renamed or deleted, and
+  a collaborator's ``Shared with me'' panel updates immediately when a document is shared
+  with them or revoked.
+
+  \item \textbf{\texttt{\{documentId\}}} (document editing room) --- receives
+  \texttt{document-renamed},\\ \texttt{document-shared}, \texttt{document-unshared} while
+  users are actively inside the editor, so the title bar and the collaborator list react in
+  real time without a page reload.
+
+  \item \textbf{\texttt{admin:dashboard}} --- receives \texttt{presence\_update},
+  \texttt{user\_metrics\_update}, and \\ \texttt{new\_audit\_log}. The administrator panel
+  joins this room and displays live counters (documents created, shared) and the online/offline
+  state of every user.
+\end{itemize}
+
+The entire notification chain is synchronous from the service layer's perspective: after each
+mutating REST call completes (e.g., \texttt{PUT /api/documents/share}), the service calls
+\texttt{NotificationManager.notifyDocumentShared(\ldots)}, which calls
+\texttt{io.to(\ldots).emit(\ldots)} on the local Socket.IO server instance. The Redis adapter
+serialises the emission and publishes it to the appropriate Redis channel; every other backend
+instance subscribed to that channel delivers it to its locally connected clients. The result is
+that the client who \emph{initiated} the REST action and the clients who are affected by it---even
+if they are connected to \emph{different} backend instances---all observe the updated state within
+milliseconds, without any polling.
+
 \subsection{Behaviour}\label{behaviour}
 
 \textbf{Backend behaviour.} Each backend is event-driven and single-threaded (Node.js). Its components behave as follows:
@@ -411,7 +459,26 @@ A sequence diagram of the \texttt{join-document} $\rightarrow$ \texttt{crdt-upda
 \begin{itemize}
   \item \textit{Document handler} (stateful, per document). On \texttt{join-document} it lazily loads the CRDT from MongoDB and registers a deep observer on the Yjs XML fragment. The observer inspects each CRDT transaction's \texttt{origin} (which the server sets to the editing user's id when applying a remote update) and accumulates inserted characters per user into \texttt{pendingUserChars}; this provides attribution for the audit log without per-keystroke database writes. On every \texttt{crdt-update} it resets a 3-second debounce timer: when editing pauses for 3~seconds, the full binary state and the Tiptap JSON projection are persisted. This \emph{debounced persistence} is the main mechanism that keeps database write load proportional to \emph{editing sessions} rather than to \emph{keystrokes}, addressing the performance concern of \cref{ds-features}.
   \item \textit{Presence manager} (stateful, per user). On connection it joins a per-user room \texttt{user:<id>}; because the room is shared across backends through Redis, the count of sockets in the room is a cluster-wide online indicator. On disconnect it waits a 3-second \emph{grace period} before declaring the user offline: if a new connection appears within the window (a transient network flap or a device switch) the offline transition is cancelled. Only when the room is genuinely empty does it update \texttt{lastSeen} in the database and emit \texttt{presence\_update} to the admin room.
-  \item \textit{Notification manager} (stateless facade over the socket instance). It translates domain events from the service layer into targeted socket emissions, routing each notification to the right room (a single user, a document, the global dashboard, or the admin dashboard).
+  \item \textit{Notification manager} (stateless facade over the socket instance). It is initialised
+    once at startup with a reference to the Socket.IO \texttt{Server} object and exposes a set of
+    domain-level methods called by the service layer after each mutating operation:
+    \begin{itemize}
+        \item \texttt{notifyDocumentCreated}.
+        \item \texttt{notifyDocumentDeleted}.
+        \item \texttt{notifyDocumentRenamed}.
+        \item \texttt{notifyDocumentShared}.
+        \item \texttt{notifyDocumentUnshared}.
+        \item \texttt{notifyCommentAdded}.
+        \item \texttt{notifyCommentDeleted}.
+        \item \texttt{notifyAdminMetricsUpdate}.
+        \item \texttt{notifyRoleChanged}.
+    \end{itemize}
+    Each method translates a domain event into one or more \texttt{io.to(room).emit(\ldots)} calls,
+    routing the event to the correct set of recipients (a single user room, a document room, the
+    global dashboard, or the admin dashboard). Because the Socket.IO Redis adapter is attached to the
+    same \texttt{io} instance, every emission is automatically replicated across all backend instances:
+    the \texttt{NotificationManager} is therefore completely stateless and instance-agnostic---it
+    emits locally and Redis takes care of cluster-wide delivery.
   \item \textit{Auth middleware} (stateless). Validates the JWT on every protected HTTP route and on the socket handshake; for sockets, an absent token is tolerated (guest), while an invalid token is rejected.
 \end{itemize}
 
