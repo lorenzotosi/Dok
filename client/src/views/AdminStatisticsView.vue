@@ -15,8 +15,8 @@ const isChartLoading = ref(false);
 const stats = ref({
   users: { total: 0, admins: 0, normals: 0 },
   documents: { total: 0, public: 0, private: 0 },
-  folders: { total: 0 },
-  shares: { total: 0, readOnly: 0, edit: 0 },
+  folders: { total: 0, public:0, private: 0 },
+  shares: { total: 0, readOnly: 0, comment: 0, edit: 0 },
   accessChart: { categories: [] as string[], series: [] as number[] }
 });
 
@@ -78,19 +78,19 @@ onMounted(() => {
             title="Dok Creati"
             :value="stats.documents?.total || 0"
             colorClass="text-green"
-            :details="[{ label: 'Globali (Pubblici):', value: stats.documents?.public }, { label: 'Privati:', value: stats.documents?.private }]"
+            :details="[{ label: 'Globali:', value: stats.documents?.public }, { label: 'Privati:', value: stats.documents?.private }]"
         />
         <AdminStatCard
             title="Cartelle Esistenti"
             :value="stats.folders?.total || 0"
             colorClass="text-yellow"
-            :details="[{ label: 'Organizzazione file utente' }]"
+            :details="[{ label: 'Globali:', value: stats.folders?.public }, { label: 'Privati:', value: stats.folders?.private }]"
         />
         <AdminStatCard
             title="Dok Condivisi"
             :value="stats.shares?.total || 0"
             colorClass="text-purple"
-            :details="[{ label: 'In Sola Lettura:', value: stats.shares?.readOnly }, { label: 'In Modifica:', value: stats.shares?.edit }]"
+            :details="[{ label: 'In Sola Lettura:', value: stats.shares?.readOnly }, { label: 'Lettura e Commento:', value: stats.shares?.comment }, { label: 'In Modifica:', value: stats.shares?.edit }]"
         />
       </div>
 

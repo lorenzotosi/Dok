@@ -128,12 +128,13 @@ export class AdminService {
     }
 
     private static async getStatsShares() {
-        const [total, readOnly, edit] = await Promise.all([
+        const [total, readOnly, comment, edit] = await Promise.all([
             DocumentModel.countDocuments({ "sharedWith.0": { $exists: true } }),
-            DocumentModel.countDocuments({ "sharedWith.role": { $in: ["viewer", "commenter"] } }),
+            DocumentModel.countDocuments({ "sharedWith.role": "viewer" }),
+            DocumentModel.countDocuments({ "sharedWith.role": "commenter" }),
             DocumentModel.countDocuments({ "sharedWith.role": "editor" })
         ]);
-        return { total, readOnly, edit };
+        return { total, readOnly, comment, edit };
     }
 
     private static async getStatsAccessChart(range: string) {
@@ -142,11 +143,11 @@ export class AdminService {
             let groupId: any = {};
 
             if (range === 'trend-hour') {
-                groupId = { $hour: "$loginAt" };
+                groupId = { $hour: { date: "$loginAt", timezone: "Europe/Rome" } };
             } else if (range === 'trend-weekday') {
-                groupId = { $isoDayOfWeek: "$loginAt" };
+                groupId = { $isoDayOfWeek: { date: "$loginAt", timezone: "Europe/Rome" } };
             } else if (range === 'trend-monthday') {
-                groupId = { $dayOfMonth: "$loginAt" };
+                groupId = { $dayOfMonth: { date: "$loginAt", timezone: "Europe/Rome" } };
             }
 
             const data = await SiteAccessLog.aggregate([
