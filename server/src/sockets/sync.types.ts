@@ -6,7 +6,7 @@ export interface ActiveDocState {
   saveTimeout?: NodeJS.Timeout | null;
 
   hasLogObserver?: boolean;
-  pendingUserChars?: Map<string, number>;
+  pendingUserChars?: Map<string, { inserted: number, deleted: number }>;
 }
 
 export const activeDocuments = new Map<string, ActiveDocState>();

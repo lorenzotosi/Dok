@@ -14,6 +14,7 @@ export interface AuditLogItem {
     userId: User;
     type: 'access' | 'modification';
     charactersInserted?: number;
+    charactersDeleted?: number;
     createdAt: string;
 }
 

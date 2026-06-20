@@ -21,7 +21,7 @@ const formatDateTime = (dateStr: string) => {
         <tr>
           <th>Utente</th>
           <th>Data e Ora</th>
-          <th>Volume Inserimenti</th>
+          <th class="diff-header">Volume Inserimenti</th>
         </tr>
         </thead>
         <tbody>
@@ -35,7 +35,10 @@ const formatDateTime = (dateStr: string) => {
           </td>
           <td class="date-cell">{{ formatDateTime(log.createdAt) }}</td>
           <td class="diff-cell">
-            <span class="badge-plus">+{{ log.charactersInserted || 0 }} caratteri</span>
+            <div class="badges-container">
+              <span class="badge-plus">+ {{ log.charactersInserted  || 0}}</span>
+              <span class="badge-minus">- {{ log.charactersDeleted || 0 }}</span>
+            </div>
           </td>
         </tr>
         <tr v-if="logs.length === 0">
@@ -86,7 +89,6 @@ const formatDateTime = (dateStr: string) => {
   background: #111214;
 }
 
-
 .audit-table {
   width: 100%;
   border-collapse: collapse;
@@ -101,10 +103,13 @@ const formatDateTime = (dateStr: string) => {
   text-transform: uppercase;
   border-bottom: 2px solid #1e1f22;
   white-space: nowrap;
-
   position: sticky;
   top: 0;
   z-index: 10;
+}
+
+.diff-header {
+  text-align: right;
 }
 
 .audit-table td {
@@ -144,6 +149,13 @@ const formatDateTime = (dateStr: string) => {
   text-align: right;
 }
 
+.badges-container {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
 .badge-plus {
   background-color: #233d2a;
   color: #23a55a;
@@ -152,7 +164,16 @@ const formatDateTime = (dateStr: string) => {
   font-weight: 600;
   font-size: 0.8rem;
   white-space: nowrap;
-  display: inline-block;
+}
+
+.badge-minus {
+  background-color: #4a1c1e;
+  color: #da373c;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  white-space: nowrap;
 }
 
 .empty-cell {

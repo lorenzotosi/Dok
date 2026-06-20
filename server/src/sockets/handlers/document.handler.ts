@@ -9,13 +9,14 @@ const flushAuditLogs = async (documentId: string, state: ActiveDocState, io: Ser
     if (!state.pendingUserChars) return;
 
     for (const [userId, chars] of state.pendingUserChars.entries()) {
-        if (chars > 0) {
+        if (chars.inserted > 0 || chars.deleted > 0) {
             try {
                 const modLog = await AuditLog.create({
                     documentId,
                     userId,
                     type: 'modification',
-                    charactersInserted: chars
+                    charactersInserted: chars.inserted,
+                    charactersDeleted: chars.deleted,
                 });
 
                 const populatedModLog = await modLog.populate('userId', 'firstName lastName email _id');
@@ -103,7 +104,7 @@ export const registerDocumentHandlers = (io: Server, socket: Socket) => {
                 clientsCount: 1,
                 saveTimeout: null,
                 hasLogObserver: false,
-                pendingUserChars: new Map<string, number>()
+                pendingUserChars: new Map<string, { inserted: number, deleted: number }>,
             });
         } else {
             const state = activeDocuments.get(documentId)!;
@@ -114,7 +115,7 @@ export const registerDocumentHandlers = (io: Server, socket: Socket) => {
 
         if (!state.hasLogObserver) {
             state.hasLogObserver = true;
-            if (!state.pendingUserChars) state.pendingUserChars = new Map<string, number>();
+            if (!state.pendingUserChars) state.pendingUserChars = new Map<string, { inserted: number, deleted: number }>;
 
             const xmlFragment = state.ydoc.getXmlFragment('default');
 
@@ -145,19 +146,25 @@ export const registerDocumentHandlers = (io: Server, socket: Socket) => {
                     const originUserId = transaction.origin;
 
                     if (typeof originUserId === 'string') {
-                        let addedChars = 0;
+                        let insertedChars = 0;
+                        let deletedChars = 0;
 
                         events.forEach(event => {
                             event.delta.forEach(op => {
                                 if (op.insert) {
-                                    addedChars += countAdded(op.insert);
+                                    insertedChars += countAdded(op.insert);
+                                } else if (op.delete) {
+                                    deletedChars += op.delete;
                                 }
                             });
                         });
 
-                        if (addedChars > 0) {
-                            const current = state.pendingUserChars!.get(originUserId) || 0;
-                            state.pendingUserChars!.set(originUserId, current + addedChars);
+                        if (insertedChars > 0 || deletedChars > 0) {
+                            const current = state.pendingUserChars!.get(originUserId) || { inserted: 0, deleted: 0 };
+                            state.pendingUserChars!.set(originUserId, {
+                                inserted: current.inserted + insertedChars,
+                                deleted: current.deleted + deletedChars
+                            });
                         }
                     }
                 } catch (obsError) {
