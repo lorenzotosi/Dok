@@ -181,6 +181,56 @@ L'editor si presenta essenziale e privo di distrazioni. Nella parte superiore, u
 \subsection{Pannello di Condivisione e Assistente IA}
 Particolare attenzione è stata data ai menu contestuali. La finestra modale per la condivisione risulta chiara, permettendo di inserire un'email e selezionare rapidamente il ruolo (Viewer o Editor) da un menu a tendina. Similmente, evidenziando una porzione di testo all'interno dell'editor, un \textit{bubble menu} flottante compare vicino al cursore, suggerendo le opzioni di interazione con l'Intelligenza Artificiale per la riscrittura o l'espansione dei paragrafi.
 
+
+\subsection{Pannello di Controllo Amministrativo}
+Al fine di garantire il monitoraggio della piattaforma, è stata progettata una serie di interfacce dedicate agli utenti con ruolo di Amministratore. La vista principale dell'Admin Dashboard offre una panoramica degli utenti registrati, mostrando in tempo reale il loro stato di presenza e le informazioni di base.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/MockAdminDashboard}
+    \caption{Mockup della Dashboard di Amministrazione.}
+    \label{fig:mockup_admin_dashboard}
+\end{figure}
+
+Selezionando un utente specifico, l'amministratore accede a una vista di dettaglio che ne riassume le metriche di utilizzo (documenti creati, condivisi e ricevuti) ed espone l'albero completo del suo File System Virtuale, permettendo un'ispezione ella struttura.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/MockUserDetails}
+    \caption{Mockup della vista di dettaglio di un singolo utente con il suo File System Virtuale.}
+    \label{fig:mockup_user_details}
+\end{figure}
+
+Infine, l'amministratore ha a disposizione una pagina dedicata al tracciamento globale degli accessi, fondamentale per l'auditing di sicurezza, che elenca cronologicamente le fasi di login, logout e i relativi indirizzi IP.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/MockAccessLogs}
+    \caption{Mockup della tabella globale dei Log di Accesso.}
+    \label{fig:mockup_access_logs}
+\end{figure}
+
+\subsection{Ispezione e Storico dei Documenti}
+Per offrire maggiori informazioni sulle risorse create, è stato disegnato un pannello di dettaglio del documento raggiungibile selezionando un documento dalla vista di dettaglio di un utente. Questo componente riassume i metadati essenziali, il livello di visibilità e l'elenco degli utenti con cui il file è stato condiviso, esplicitandone i permessi assegnati.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{img/MockDokDetails}
+    \caption{Mockup del pannello riassuntivo dei dettagli di un documento.}
+    \label{fig:mockup_dok_details}
+\end{figure}
+
+Dal pannello di dettaglio è possibile accedere a una vista di \textit{Audit Trail} per il file specifico. Questa interfaccia divide l'attività in due flussi distinti: la cronologia degli accessi e lo storico delle effettive modifiche al testo, fornendo trasparenza sulle azioni collaborative.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/MockDokLogs}
+    \caption{Mockup dei log specifici di un documento (Accessi e Modifiche).}
+    \label{fig:mockup_dok_logs}
+\end{figure}
+
+
+
 \section{Target User Analysis}
 Per mappare le differenti modalità di interazione con la piattaforma, sono stati individuati tre profili di utenti tipo. Ciascun profilo rappresenta una specifica fetta di pubblico, caratterizzata da esigenze, competenze digitali e obiettivi differenziati.
 
