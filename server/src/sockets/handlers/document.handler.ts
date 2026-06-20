@@ -30,6 +30,29 @@ const flushAuditLogs = async (documentId: string, state: ActiveDocState, io: Ser
     state.pendingUserChars.clear();
 };
 
+const getDocTotalLength = (node: any): number => {
+    let len = 0;
+    if (node instanceof Y.XmlText || node instanceof Y.Text) {
+        return node.length;
+    } else if (node instanceof Y.XmlElement) {
+        len += 1;
+        if (typeof node.toArray === 'function') {
+            node.toArray().forEach((child: any) => {
+                len += getDocTotalLength(child);
+            });
+        }
+    } else if (node instanceof Y.XmlFragment) {
+        if (typeof node.toArray === 'function') {
+            node.toArray().forEach((child: any) => {
+                len += getDocTotalLength(child);
+            });
+        }
+    } else {
+        return 1;
+    }
+    return len;
+};
+
 const handleClientLeave = async (documentId: string, io: Server) => {
     const state = activeDocuments.get(documentId);
     if (!state) return;
@@ -147,23 +170,20 @@ export const registerDocumentHandlers = (io: Server, socket: Socket) => {
 
                     if (typeof originUserId === 'string') {
                         let insertedChars = 0;
-                        let deletedChars = 0;
 
                         events.forEach(event => {
                             event.delta.forEach(op => {
                                 if (op.insert) {
                                     insertedChars += countAdded(op.insert);
-                                } else if (op.delete) {
-                                    deletedChars += op.delete;
                                 }
                             });
                         });
 
-                        if (insertedChars > 0 || deletedChars > 0) {
+                        if (insertedChars > 0) {
                             const current = state.pendingUserChars!.get(originUserId) || { inserted: 0, deleted: 0 };
                             state.pendingUserChars!.set(originUserId, {
                                 inserted: current.inserted + insertedChars,
-                                deleted: current.deleted + deletedChars
+                                deleted: current.deleted,
                             });
                         }
                     }
@@ -181,11 +201,38 @@ export const registerDocumentHandlers = (io: Server, socket: Socket) => {
         const userId = socket.data?.user?.id;
 
         if (state) {
+            let lenBefore = 0;
+            let insertedBefore = 0;
+
+            if (userId) {
+                const fragment = state.ydoc.getXmlFragment('default');
+                lenBefore = getDocTotalLength(fragment);
+                const currentStats = state.pendingUserChars!.get(userId) || { inserted: 0, deleted: 0 };
+                insertedBefore = currentStats.inserted;
+            }
+
             try {
                 Y.applyUpdate(state.ydoc, new Uint8Array(update), userId || 'unknown');
             } catch (err) {
                 console.error(`[CRDT Fatal] Impossibile applicare l'update per ${documentId}:`, err);
                 return;
+            }
+
+            if (userId) {
+                const fragment = state.ydoc.getXmlFragment('default');
+                const lenAfter = getDocTotalLength(fragment);
+                const currentStatsAfter = state.pendingUserChars!.get(userId) || { inserted: 0, deleted: 0 };
+                const insertedAfter = currentStatsAfter.inserted;
+
+                const newlyInserted = insertedAfter - insertedBefore;
+                const newlyDeleted = lenBefore + newlyInserted - lenAfter;
+
+                if (newlyDeleted > 0) {
+                    state.pendingUserChars!.set(userId, {
+                        inserted: currentStatsAfter.inserted,
+                        deleted: currentStatsAfter.deleted + newlyDeleted
+                    });
+                }
             }
 
             socket.to(documentId).emit('crdt-update', update);
