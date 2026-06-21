@@ -467,6 +467,98 @@ const exportToCSV = () => {
 
 Questa soluzione offre un duplice vantaggio: da un lato garantisce un feedback visivo e un download istantaneo per l'utente, eliminando i tempi di latenza della rete; dall'altro aderisce perfettamente al principio di delegare ai dispositivi client i compiti computazionali non critici, preservando le risorse del server per le delicate operazioni di sincronizzazione in tempo reale.
 
+\section{Analisi Statistica e Visualizzazione dei Dati}
+Si è scelto di fornire agli amministratori anche uno strumento di analisi implementando un grafico di analisi degli accessi. Il sistema non si limita a un semplice conteggio lineare, ma offre due modalità di visualizzazione distinte: uno \textit{Storico Lineare} e un'analisi delle \textit{Tendenze Globali}.
+
+La realizzazione di questa funzionalità ha richiesto una netta separazione delle responsabilità tra l'elaborazione dei dati sul database e la loro renderizzazione sul client.
+
+\subsection{Aggregazione Dati e Zero-Filling lato Backend}
+Per evitare di sovraccaricare la memoria del server Node.js con potenzialmente migliaia di record da elaborare, il calcolo delle occorrenze è stato delegato a MongoDB tramite l'utilizzo della \textit{Aggregation Pipeline}. A seconda della modalità richiesta dal client, il server costruisce dinamicamente la query di raggruppamento.
+
+Nel caso delle tendenze, vengono utilizzati operatori nativi come \texttt{\$hour} o \texttt{\$isoDayOfWeek} per raggruppare gli accessi. Un problema tipico di queste aggregazioni è l'assenza di dati per i periodi senza traffico (se nessun utente accede alle 04:00, il database semplicemente omette quel record). Per garantire che il grafico frontend mostri un asse continuo, il Service implementa uno \textit{zero-filling} tramite una \texttt{Map}:
+
+\begin{lstlisting}[language=Java, caption=Pipeline di aggregazione e normalizzazione dei dati in AdminService]
+// Raggruppamento per fascia oraria / giorni della settimana / giorni del mese
+if (range === 'trend-hour') {
+    groupId = { $hour: { date: "$loginAt", timezone: "Europe/Rome" } };
+} else if (range === 'trend-weekday') {
+    groupId = { $isoDayOfWeek: { date: "$loginAt", timezone: "Europe/Rome" } };
+} else if (range === 'trend-monthday') {
+    groupId = { $dayOfMonth: { date: "$loginAt", timezone: "Europe/Rome" } };
+}
+
+const data = await SiteAccessLog.aggregate([
+    { $group: { _id: groupId, count: { $sum: 1 } } },
+    { $sort: { "_id": 1 } }
+]);
+
+const map = new Map(data.map(d => [d._id, d.count]));
+const categories: string[] = [];
+const series: number[] = [];
+
+// Zero-filling per garantire che tutte le 24 ore / giorni della settimana / giorni del mese siano presenti
+if (range === 'trend-hour') {
+    for (let i = 0; i < 24; i++) {
+        categories.push(`${i.toString().padStart(2, '0')}:00`);
+        series.push(map.get(i) || 0);
+    }
+} else if (range === 'trend-weekday') {
+    const days = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica'];
+    days.forEach((day, index) => {
+        categories.push(day);
+       series.push(map.get(index + 1) || 0);
+    });
+} else if (range === 'trend-monthday') {
+    for (let i = 1; i <= 31; i++) {
+        categories.push(i.toString());
+        series.push(map.get(i) || 0);
+    }
+}
+return { categories, series };
+\end{lstlisting}
+
+\subsection{Renderizzazione Reattiva sul Client}
+Lato frontend, la visualizzazione è affidata alla libreria \textbf{ApexCharts}, incapsulata in un componente Vue (\texttt{AdminAccessChart.vue}). Per supportare la duplice natura dei dati (storico vs tendenze) mantenendo un'unica istanza del grafico, si è fatto uso della reattività di Vue3 tramite le proprietà \texttt{computed}.
+
+Quando l'amministratore cambia la modalità di visualizzazione, lo stato reattivo ricalcola istantaneamente le \texttt{chartOptions}. In particolare, l'asse delle ascisse muta dinamicamente il proprio tipo: passa da \texttt{'datetime'} (che gestisce scale temporali 'continue') per lo storico lineare, a \texttt{'category'} (che tratta i dati come etichette discrete) per la visualizzazione delle tendenze orarie, settimanali o mensili.
+
+
+\begin{lstlisting}[language=JavaScript, caption=Configurazione reattiva delle opzioni del grafico in Vue 3]
+const chartOptions = computed(() => {
+  // Verifica se la visualizzazione attuale e' di tipo "tendenza"
+  const isTrend = props.currentRange.startsWith('trend-');
+
+  // [...] Calcolo dinamico di minRange e maxRange
+
+  return {
+    chart: { type: 'bar' },
+    xaxis: {
+      categories: props.categories,
+      // Mutazione dinamica del tipo di asse in base alla modalita'
+      type: (isTrend ? 'category' : 'datetime') as any,
+      min: minRange,
+      max: maxRange,
+    },
+    // [...]
+  };
+});
+\end{lstlisting}
+
+Una volta calcolate, queste opzioni vengono passate direttamente al componente della libreria tramite il sistema di \textit{data-binding} del template. Inoltre, per forzare un corretto re-rendering nel passaggio tra due logiche di asse, si è sfruttato l'attributo \texttt{:key} agganciato alla modalità di visualizzazione.
+
+\begin{lstlisting}[language=HTML, caption=Binding reattivo del grafico nel template]
+<div class="chart-container">
+  <VueApexCharts
+      :key="viewMode"
+      type="bar"
+      height="320"
+      :options="chartOptions"
+      :series="chartSeries"
+  />
+</div>
+\end{lstlisting}
+
+Questo approccio garantisce transizioni fluide e un'esperienza utente interattiva senza la necessità di ricaricare la pagina o istanziare librerie di visualizzazione multiple.
 
 \chapter{Test e Usabilità}
 
