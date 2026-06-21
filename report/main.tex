@@ -423,6 +423,51 @@ export class LLMEngine {
 Si è scelto di racchiudere questa logica in una classe apposita seguendo il principio di \textit{Single Responsibility}. Il Controller si occupa esclusivamente di estrarre l'istruzione (ad esempio "Rendi il testo più formale") e il blocco di testo dalla richiesta HTTP. La classe \texttt{LLMEngine} incapsula invece i dettagli implementativi delle API esterne. Se in futuro si decidesse di migrare da OpenAI verso un modello \textit{open-source} locale, basterà modificare unicamente i metodi di questa classe, senza alterare il resto della logica dell'applicazione.
 
 
+\section{Esportazione Access Logs Globali lato Client}
+All'interno del pannello di amministrazione, è stata implementata una funzionalità per l'esportazione dei log di accesso in formato CSV per eventuali operazioni di \textit{auditing} offline e tracciabilità.
+
+In un'architettura web tradizionale, la generazione di un simile report richiederebbe un'apposita rotta API sul server, comportando una nuova interrogazione al database, l'elaborazione testuale del file nella memoria di Node.js e il successivo trasferimento del file attraverso la rete. Per ottimizzare le prestazioni e ridurre l'\textit{overhead} sul backend, si è scelto di gestire l'intera operazione direttamente sul client.
+
+Dal momento che il frontend ha già scaricato e memorizzato nello stato reattivo locale i dati necessari per popolare la tabella dei log (inclusi gli ordinamenti e i filtri di ricerca applicati dall'admin), è possibile sfruttare le Web API native del browser per la generazione del file. L'array di oggetti JSON viene mappato e convertito in una singola stringa formattata CSV. Successivamente, viene instanziato un \texttt{Blob} (\textit{Binary Large Object}) contenente i dati grezzi, al quale viene assegnato un URL temporaneo tramite il metodo \texttt{URL.createObjectURL()}.
+
+\begin{lstlisting}[language=Java, caption=Logica di esportazione CSV lato client tramite API Blob]
+const exportToCSV = () => {
+    const headers = ['Nome', 'Cognome', 'Email', 'Login', 'Logout', 'IP'];
+
+    // Estrazione e mappatura dei campi nell'ordine corretto
+    const rows = filteredAndSortedLogs.value.map(log => [
+        log.userId?.firstName || '',
+        log.userId?.lastName || '',
+        log.userId?.email || '',
+        formatDateTime(log.loginAt),
+        log.logoutAt ? formatDateTime(log.logoutAt) : 'Sessione non chiusa',
+        log.ipAddress || ''
+    ]);
+
+    // Assemblaggio del contenuto
+    const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.map(field => `"${field}"`).join(','))
+    ].join('\n');
+
+    // Creazione del file virtuale
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+
+    // Iniezione nel DOM di un link invisibile per forzare il download
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `log_accessi_dok_${new Date().toISOString().split('T')[0]}.csv`);
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link); // Pulizia del DOM
+};
+\end{lstlisting}
+
+Questa soluzione offre un duplice vantaggio: da un lato garantisce un feedback visivo e un download istantaneo per l'utente, eliminando i tempi di latenza della rete; dall'altro aderisce perfettamente al principio di delegare ai dispositivi client i compiti computazionali non critici, preservando le risorse del server per le delicate operazioni di sincronizzazione in tempo reale.
+
+
 \chapter{Test e Usabilità}
 
 Prima di procedere con il rilascio dell'applicativo, il sistema è stato sottoposto a un'intensa fase di testing al fine di validarne la stabilità, l'affidabilità e l'effettiva fruibilità da parte degli utenti finali. Le procedure di verifica hanno riguardato sia la robustezza del codice backend sia l'esperienza d'uso dell'interfaccia frontend.
