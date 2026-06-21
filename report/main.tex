@@ -94,7 +94,7 @@ I requisiti funzionali descrivono in modo dettagliato le azioni che il sistema d
     \begin{itemize}
         \item La piattaforma deve esporre una sezione "Globale" visibile anche agli utenti non autenticati.
         \item Qualsiasi utente autenticato può creare elementi nell'area globale, ma la modifica collaborativa del testo rimane vincolata ai permessi specifici di scrittura.
-        \item Gli Admin e gli utenti proprietari sono in grado di cancellare cartelle e documenti dall'area pubblica
+        \item Gli Admin e gli utenti proprietari sono in grado di cancellare cartelle e documenti dall'area pubblica.
     \end{itemize}
     
     \item \textbf{Integrazione dell'Assistente IA:}
@@ -182,7 +182,6 @@ La vista principale dopo l'accesso è la Dashboard. L'interfaccia si divide in u
 
 \begin{figure}[H]
     \centering
-    % Sostituisci il nome del file con quello del tuo mockup
     \includegraphics[width=0.9\textwidth]{img/document.png}
     \caption{Mockup della Dashboard principale.}
     \label{fig:mockup_dashboard}
@@ -212,7 +211,7 @@ Al fine di garantire il monitoraggio della piattaforma, è stata progettata una 
     \label{fig:mockup_admin_dashboard}
 \end{figure}
 
-Selezionando un utente specifico, l'amministratore accede a una vista di dettaglio che ne riassume le metriche di utilizzo (documenti creati, condivisi e ricevuti) ed espone l'albero completo del suo File System Virtuale, permettendo un'ispezione ella struttura.
+Selezionando un utente specifico, l'amministratore accede a una vista di dettaglio che ne riassume le metriche di utilizzo (documenti creati, condivisi e ricevuti) ed espone l'albero completo del suo File System Virtuale, permettendo un'ispezione della struttura.
 
 \begin{figure}[H]
     \centering
@@ -251,7 +250,7 @@ Dal pannello di dettaglio è possibile accedere a una vista di \textit{Audit Tra
 
 \chapter{Tecnologie Utilizzate}
 
-La piattaforma Dok è stata costruita adottando lo stack \textbf{MEVN} (MongoDB, Express.js, Vue.js, Node.js) assieme ad un isieme di librerie specializzate per risolvere problemi complessi come la convergenza dei testi e la gestione dello stato distribuito.
+La piattaforma Dok è stata costruita adottando lo stack \textbf{MEVN} (MongoDB, Express.js, Vue.js, Node.js) assieme ad un insieme di librerie specializzate per risolvere problemi complessi come la convergenza dei testi e la gestione dello stato distribuito.
 
 \section{Lo Stack MEVN come base architetturale}
 La scelta dello stack MEVN si basa sul paradigma \textit{JavaScript everywhere}. Utilizzare un unico linguaggio di programmazione sia per il client che per il server riduce la difficoltà nello sviluppo, agevolando la condivisione di interfacce (tipizzate grazie a TypeScript) e formati di dati (JSON) tra i vari layer dell'applicazione.
@@ -300,7 +299,7 @@ L'applicazione gestisce dati sensibili e documenti privati. Di conseguenza, il s
 
 Nel server (basato su Express), ogni rotta che espone o manipola risorse protette è filtrata da un middleware custom. Il file \texttt{auth.middleware.ts} si occupa di intercettare la richiesta HTTP, estrarre il token dall'intestazione \texttt{Authorization} e validarne la firma crittografica.
 
-\begin{lstlisting}[language=Java, caption=Implementazione del middleware di autenticazione (auth.middleware.ts)]
+\begin{lstlisting}[language=TypeScript, caption=Implementazione del middleware di autenticazione (auth.middleware.ts)]
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
@@ -313,7 +312,7 @@ export interface AuthPayload extends JwtPayload {
     role: UserRole;
 }
 
-export const requireAuth = (req: AtuthRequest, res: Response, next: NextFunction) => {
+export const requireAuth = (req: AuthRequest, res: Response, next: NextFunction) => {
     // Estrazione del token dall'header
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -341,7 +340,7 @@ export const requireAuth = (req: AtuthRequest, res: Response, next: NextFunction
         }
         // Iniezione dei dati utente nell'oggetto Request
         req.user = { id: payload.id, role: payload.role };
-        next();// Passaggio del controllo al Controller successivo
+        next(); // Passaggio del controllo al Controller successivo
     } catch (error) {
         res.status(401).json({ error: 'Token non valido o scaduto.' });
     }
@@ -358,7 +357,7 @@ La sincronizzazione del testo tra più client simultanei rappresenta la compless
 
 Questo pattern sfrutta il ciclo di vita dei componenti di Vue (come \texttt{onMounted} e \texttt{onBeforeUnmount}) per instaurare e distruggere la connessione WebSocket al momento giusto, prevenendo cali di prestazioni o *memory leak*.
 
-\begin{lstlisting}[language=Java, caption=Configurazione dell'Editor Collaborativo (useCollaboration.ts)]
+\begin{lstlisting}[language=TypeScript, caption=Configurazione dell'Editor Collaborativo (useCollaboration.ts)]
 import * as Y from 'yjs';
 import { useEditor } from '@tiptap/vue-3';
 import Collaboration from '@tiptap/extension-collaboration';
@@ -408,7 +407,7 @@ Da quel momento in poi, qualsiasi evento di \texttt{sync-update} inviato da un \
 Un ulteriore elemento tecnico è l'assistente basato su Intelligenza Artificiale. Il flusso si attiva quando l'utente seleziona una porzione di testo ed esegue una richiesta tramite il \textit{BubbleMenu}. Il client invoca una chiamata REST al controller \texttt{llm.controller.ts}, il quale delega la complessa interazione con il modello linguistico alla classe dedicata \texttt{LLMEngine.ts}.
 
 \newpage
-\begin{lstlisting}[language=Java, caption=Elaborazione della richiesta LLM (LLMEngine.ts)]
+\begin{lstlisting}[language=TypeScript, caption=Elaborazione della richiesta LLM (LLMEngine.ts)]
 export class LLMEngine {
     private openai;
 
@@ -452,7 +451,7 @@ In un'architettura web tradizionale, la generazione di un simile report richiede
 
 Dal momento che il frontend ha già scaricato e memorizzato nello stato reattivo locale i dati necessari per popolare la tabella dei log (inclusi gli ordinamenti e i filtri di ricerca applicati dall'admin), è possibile sfruttare le Web API native del browser per la generazione del file. L'array di oggetti JSON viene mappato e convertito in una singola stringa formattata CSV. Successivamente, viene instanziato un \texttt{Blob} (\textit{Binary Large Object}) contenente i dati grezzi, al quale viene assegnato un URL temporaneo tramite il metodo \texttt{URL.createObjectURL()}.
 
-\begin{lstlisting}[language=Java, caption=Logica di esportazione CSV lato client tramite API Blob]
+\begin{lstlisting}[language=TypeScript, caption=Logica di esportazione CSV lato client tramite API Blob]
 const exportToCSV = () => {
     const headers = ['Nome', 'Cognome', 'Email', 'Login', 'Logout', 'IP'];
 
@@ -499,7 +498,7 @@ Per evitare di sovraccaricare la memoria del server Node.js con potenzialmente m
 
 Nel caso delle tendenze, vengono utilizzati operatori nativi come \texttt{\$hour} o \texttt{\$isoDayOfWeek} per raggruppare gli accessi. Un problema tipico di queste aggregazioni è l'assenza di dati per i periodi senza traffico (se nessun utente accede alle 04:00, il database semplicemente omette quel record). Per garantire che il grafico frontend mostri un asse continuo, il Service implementa uno \textit{zero-filling} tramite una \texttt{Map}:
 
-\begin{lstlisting}[language=Java, caption=Pipeline di aggregazione e normalizzazione dei dati in AdminService]
+\begin{lstlisting}[language=TypeScript, caption=Pipeline di aggregazione e normalizzazione dei dati in AdminService]
 // Raggruppamento per fascia oraria / giorni della settimana / giorni del mese
 if (range === 'trend-hour') {
     groupId = { $hour: { date: "$loginAt", timezone: "Europe/Rome" } };
@@ -545,7 +544,7 @@ Lato frontend, la visualizzazione è affidata alla libreria \textbf{ApexCharts},
 Quando l'amministratore cambia la modalità di visualizzazione, lo stato reattivo ricalcola istantaneamente le \texttt{chartOptions}. In particolare, l'asse delle ascisse muta dinamicamente il proprio tipo: passa da \texttt{'datetime'} (che gestisce scale temporali 'continue') per lo storico lineare, a \texttt{'category'} (che tratta i dati come etichette discrete) per la visualizzazione delle tendenze orarie, settimanali o mensili.
 
 
-\begin{lstlisting}[language=JavaScript, caption=Configurazione reattiva delle opzioni del grafico in Vue 3]
+\begin{lstlisting}[language=TypeScript, caption=Configurazione reattiva delle opzioni del grafico in Vue 3]
 const chartOptions = computed(() => {
   // Verifica se la visualizzazione attuale e' di tipo "tendenza"
   const isTrend = props.currentRange.startsWith('trend-');
