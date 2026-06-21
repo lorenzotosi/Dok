@@ -304,24 +304,46 @@ Nel server (basato su Express), ogni rotta che espone o manipola risorse protett
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
-export const requireAuth = (req: Request, res: Response, next: NextFunction) => {
+export interface AuthRequest extends Request {
+    user?: { id: string; role: UserRole };
+}
+
+export interface AuthPayload extends JwtPayload {
+    id: string;
+    role: UserRole;
+}
+
+export const requireAuth = (req: AtuthRequest, res: Response, next: NextFunction) => {
     // Estrazione del token dall'header
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ error: 'Accesso negato: Token mancante' });
+        return res.status(401).json({ error: 'Autenticazione richiesta. Token mancante' });
     }
 
     const token = authHeader.split(' ')[1];
 
+    if (!token) {
+        res.status(401).json({ error: 'Token non fornito.' });
+        return;
+    }
     try {
         // Verifica e decodifica del payload
-        const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
-        
+        const decoded = jwt.verify(token, JWT_SECRET);
+        if (typeof decoded === 'string') {
+            res.status(401).json({ error: 'Formato token non valido (stringa ricevuta).' });
+            return;
+        }
+
+        const payload = decoded as AuthPayload;
+        if (!payload.id || !payload.role) {
+            res.status(401).json({ error: 'Payload del token malformato (dati mancanti).' });
+            return;
+        }
         // Iniezione dei dati utente nell'oggetto Request
-        req.user = decoded; 
-        next(); // Passaggio del controllo al Controller successivo
-    } catch (err) {
-        return res.status(403).json({ error: 'Token non valido o scaduto' });
+        req.user = { id: payload.id, role: payload.role };
+        next();// Passaggio del controllo al Controller successivo
+    } catch (error) {
+        res.status(401).json({ error: 'Token non valido o scaduto.' });
     }
 };
 \end{lstlisting}
