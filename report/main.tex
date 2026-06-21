@@ -41,6 +41,26 @@ Dall'altro lato, la piattaforma integra un'area definita "globale". Quest'ultima
 
 La fase iniziale dello sviluppo della piattaforma Dok è stata dedicata alla definizione dei requisiti di sistema. L'obiettivo primario consisteva nel delineare i target di riferimento e le loro necessità, ponendo l'utente al centro delle scelte progettuali. La progettazione si è basata sulle metodologie dello \textit{User-Centered Design} (UCD), avvalendosi in particolar modo della tecnica delle \textit{Personas} e degli scenari d'uso. Questo approccio ha permesso di simulare contesti reali di interazione, traducendoli successivamente in requisiti tecnici concreti.
 
+\section{Target User Analysis}
+Per mappare le differenti modalità di interazione con la piattaforma, sono stati individuati tre profili di utenti tipo. Ciascun profilo rappresenta una specifica fetta di pubblico, caratterizzata da esigenze, competenze digitali e obiettivi differenziati.
+
+\subsection{Personas e Scenari d'Uso}
+
+\subsubsection{Persona 1: Marco (Lo studente universitario)}
+Marco ha 22 anni ed è uno studente iscritto alla facoltà di Informatica. Si trova spesso a dover gestire progetti di gruppo complessi, che richiedono la stesura a più mani di relazioni tecniche, report di laboratorio e appunti delle lezioni. Ha una forte familiarità con gli strumenti digitali, ma soffre per la frammentazione dei file scambiati continuamente tramite chat.
+
+\paragraph{Scenario d'uso:} Marco accede a Dok per avviare la stesura della relazione finale di un esame. Nella sua area privata, crea una cartella dedicata al corso e al suo interno crea un nuovo documento di testo. Successivamente, utilizza la funzionalità di condivisione inserendo le email dei suoi due compagni di gruppo ed assegnando loro i permessi di \textit{Editor}. I tre studenti si collegano contemporaneamente la sera stessa: ognuno scrive una sezione diversa del documento, visualizzando in tempo reale la posizione dei cursori altrui e le modifiche apportate, completando il lavoro in poche ore senza alcun conflitto di versione.
+
+\subsubsection{Persona 2: Giulia (La divulgatrice digitale)}
+Giulia ha 28 anni, lavora come content creator indipendente e cura un blog incentrato sulla tecnologia e sul self-improvement. Ha la necessità di pubblicare articoli, guide e raccoglitori di risorse testuali che siano immediatamente accessibili alla sua community, senza che i lettori debbano necessariamente registrarsi o effettuare il login per consultare i materiali.
+
+\paragraph{Scenario d'uso:} Giulia utilizza lo \textit{Spazio Globale} di Dok. Questa sezione pubblica le consente di organizzare il proprio piano editoriale creando cartelle tematiche visibili a chiunque navighi sulla piattaforma. Quando redige una nuova guida, lavora nel suo spazio privato condividendo il file in sola lettura con i suoi collaboratori più stretti per ricevere un feedback visivo. Una volta rifinito il testo, crea il documento definitivo nell'area globale, rendendolo accessibile in modalità consultazione a migliaia di visitatori anonimi.
+
+\subsubsection{Persona 3: Alessandro (Il visitatore occasionale)}
+Alessandro ha 34 anni ed è un utente che naviga sul web alla ricerca di documentazione tecnica e template pronti all'uso. Non ha intenzione di creare account su ogni sito che visita e apprezza l'immediatezza nell'accesso alle informazioni.
+
+\paragraph{Scenario d'uso:} Alessandro trova sui social un link che rimanda a una cartella condivisa nello Spazio Globale di Dok. Cliccando sul collegamento, accede alla piattaforma direttamente in modalità ospite. L'interfaccia gli mostra l'albero delle cartelle pubbliche e gli permette di aprire i documenti testuali e leggerne il contenuto. Non potendo modificare il testo, Alessandro apprezza la pulizia dell'editor in sola lettura e la rapidità con cui ha ottenuto le informazioni cercate senza dover compilare alcun modulo di registrazione.
+
 \section{Requisiti Funzionali}
 I requisiti funzionali descrivono in modo dettagliato le azioni che il sistema deve consentire di compiere, definendo il comportamento dell'applicazione in risposta agli input degli utenti.
 
@@ -228,29 +248,6 @@ Dal pannello di dettaglio è possibile accedere a una vista di \textit{Audit Tra
     \caption{Mockup dei log specifici di un documento (Accessi e Modifiche).}
     \label{fig:mockup_dok_logs}
 \end{figure}
-
-
-
-\section{Target User Analysis}
-Per mappare le differenti modalità di interazione con la piattaforma, sono stati individuati tre profili di utenti tipo. Ciascun profilo rappresenta una specifica fetta di pubblico, caratterizzata da esigenze, competenze digitali e obiettivi differenziati.
-
-\subsection{Personas e Scenari d'Uso}
-
-\subsubsection{Persona 1: Marco (Lo studente universitario)}
-Marco ha 22 anni ed è uno studente iscritto alla facoltà di Informatica. Si trova spesso a dover gestire progetti di gruppo complessi, che richiedono la stesura a più mani di relazioni tecniche, report di laboratorio e appunti delle lezioni. Ha una forte familiarità con gli strumenti digitali, ma soffre per la frammentazione dei file scambiati continuamente tramite chat.
-
-\paragraph{Scenario d'uso:} Marco accede a Dok per avviare la stesura della relazione finale di un esame. Nella sua area privata, crea una cartella dedicata al corso e al suo interno crea un nuovo documento di testo. Successivamente, utilizza la funzionalità di condivisione inserendo le email dei suoi due compagni di gruppo ed assegnando loro i permessi di \textit{Editor}. I tre studenti si collegano contemporaneamente la sera stessa: ognuno scrive una sezione diversa del documento, visualizzando in tempo reale la posizione dei cursori altrui e le modifiche apportate, completando il lavoro in poche ore senza alcun conflitto di versione.
-
-\subsubsection{Persona 2: Giulia (La divulgatrice digitale)}
-Giulia ha 28 anni, lavora come content creator indipendente e cura un blog incentrato sulla tecnologia e sul self-improvement. Ha la necessità di pubblicare articoli, guide e raccoglitori di risorse testuali che siano immediatamente accessibili alla sua community, senza che i lettori debbano necessariamente registrarsi o effettuare il login per consultare i materiali.
-
-\paragraph{Scenario d'uso:} Giulia utilizza lo \textit{Spazio Globale} di Dok. Questa sezione pubblica le consente di organizzare il proprio piano editoriale creando cartelle tematiche visibili a chiunque navighi sulla piattaforma. Quando redige una nuova guida, lavora nel suo spazio privato condividendo il file in sola lettura con i suoi collaboratori più stretti per ricevere un feedback visivo. Una volta rifinito il testo, crea il documento definitivo nell'area globale, rendendolo accessibile in modalità consultazione a migliaia di visitatori anonimi.
-
-\subsubsection{Persona 3: Alessandro (Il visitatore occasionale)}
-Alessandro ha 34 anni ed è un utente che naviga sul web alla ricerca di documentazione tecnica e template pronti all'uso. Non ha intenzione di creare account su ogni sito che visita e apprezza l'immediatezza nell'accesso alle informazioni.
-
-\paragraph{Scenario d'uso:} Alessandro trova sui social un link che rimanda a una cartella condivisa nello Spazio Globale di Dok. Cliccando sul collegamento, accede alla piattaforma direttamente in modalità ospite. L'interfaccia gli mostra l'albero delle cartelle pubbliche e gli permette di aprire i documenti testuali e leggerne il contenuto. Non potendo modificare il testo, Alessandro apprezza la pulizia dell'editor in sola lettura e la rapidità con cui ha ottenuto le informazioni cercate senza dover compilare alcun modulo di registrazione.
-
 
 \chapter{Tecnologie Utilizzate}
 
@@ -486,7 +483,5 @@ Le solide basi architetturali poste con questo progetto permettono di immaginare
     \item \textbf{Cronologia delle revisioni:} Implementare un sistema per salvare versioni "congelate" del documento a intervalli regolari, garantendo la possibilità di effettuare un rollback a stadi precedenti del testo.
     \item \textbf{Esportazione Multiformato:} Arricchire le funzionalità di download offrendo all'utente la possibilità di esportare il documento scritto non solo in testo semplice, ma anche in formato PDF formattato o Microsoft Word (.docx).
 \end{itemize}
-
-\end{document}
 
 \end{document}
