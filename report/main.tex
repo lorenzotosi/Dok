@@ -610,8 +610,24 @@ Una volta terminato il processo di compilazione delle immagini, la piattaforma D
 Lo sviluppo della piattaforma Dok si è rivelato un'ottima esperienza formativa permettendoci di affrontare e risolvere problematiche reali legate al mondo dei sistemi distribuiti e delle architetture web moderne. L'obiettivo iniziale – creare un ambiente cloud in stile Google Drive che unisse l'archiviazione alla stesura collaborativa – è stato ampiamente raggiunto.
 
 \section{Considerazioni e Sfide Affrontate}
-Non sono mancate le difficoltà tecniche durante l'avanzamento dei lavori. La sfida principale ha riguardato sicuramente l'integrazione del motore Yjs per la risoluzione dei conflitti nell'editor testuale. Comprendere a fondo il funzionamento dei CRDT e far dialogare correttamente Tiptap con l'infrastruttura di Socket.io ha richiesto uno studio approfondito, ma il risultato finale ha ampiamente ripagato gli sforzi, garantendo un'esperienza di co-editing priva di sbavature.
+Non sono mancate le difficoltà tecniche durante l'avanzamento dei lavori. La sfida principale ha riguardato sicuramente l'integrazione del motore Yjs per la risoluzione dei conflitti nell'editor testuale. Comprendere a fondo il funzionamento dei CRDT e far dialogare correttamente Tiptap con l'infrastruttura di Socket.io ha richiesto uno studio approfondito per garantire un'esperienza di co-editing priva di sbavature.
 Allo stesso modo, la strutturazione rigorosa del backend con TypeScript e la progettazione di un file system virtuale sicuro e navigabile hanno consolidato la nostra comprensione dei pattern di sviluppo lato server.
+
+Un'ulteriore sfida ha riguardato il sistema di \textit{Audit Trail} per il tracciamento delle modifiche ai documenti, in particolar modo il conteggio dei caratteri eliminati durante le sessioni collaborative.
+
+Il framework Yjs, essendo basato su un albero di nodi strutturati, gestisce nativamente e con precisione gli eventi di inserimento testuale. Tuttavia, qualora un utente effettui una cancellazione massiva (ad esempio selezionando molteplici paragrafi ed eliminandoli in un singolo istante), l'evento intercettato dall'Observer del CRDT notifica unicamente la distruzione del nodo padre strutturale (es. il tag HTML del paragrafo), omettendo il conteggio totale dei singoli caratteri testuali in esso contenuti.
+
+Cercare di navigare ricorsivamente i frammenti dell'albero XML interno di Yjs durante la sua distruzione si è rivelato un approccio fragile e computazionalmente oneroso. Per superare questo ostacolo limitando il carico sulla memoria del server, si è optato per una soluzione basata su una semplice deduzione matematica.
+
+Poiché le operazioni di aggiunta testuale vengono sempre quantificate con esattezza, l'architettura è stata istruita per calcolare la lunghezza totale del documento una frazione di millisecondo prima e subito dopo l'applicazione dell'aggiornamento di rete. Le cancellazioni nette vengono quindi ricavate in modo deterministico e a prova di errore tramite la seguente equazione:
+
+\begin{equation}
+    C = L_i + I - L_f
+\end{equation}
+
+Dove $C$ rappresenta le cancellazioni effettuate, $L_i$ la grandezza iniziale del documento, $I$ il numero di caratteri appena inseriti nel \textit{delta} corrente e $L_f$ la lunghezza finale post-aggiornamento.
+
+Questo semplice stratagemma ha permesso di ottenere un tracciamento corretto delle variazioni testuali, garantendo precisione (esposta visivamente agli amministratori tramite badge in stile GitHub sui log dei documenti) e mantenendo al contempo immutate le performance del \textit{thread} principale di Node.js.
 
 \section{Sviluppi Futuri}
 Le solide basi architetturali poste con questo progetto permettono di immaginare diverse estensioni future per arricchire ulteriormente le funzionalità dell'applicazione:
