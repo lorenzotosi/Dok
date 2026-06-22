@@ -2,8 +2,6 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import request from 'supertest';
 import { app } from '../src/app.js';
 import { connectDBForTesting, disconnectDBForTesting, clearDBForTesting } from './setup.js';
-import { UserModel } from '../src/models/User.js';
-import Document from '../src/models/Document.js';
 
 beforeAll(async () => await connectDBForTesting());
 afterAll(async () => await disconnectDBForTesting());
@@ -24,7 +22,6 @@ describe('Document Comments API', () => {
     let documentId = '';
 
     beforeEach(async () => {
-        // Create users
         const ownerRes = await request(app).post('/api/auth/register').send({
             email: 'owner@test.com',
             password: 'Password123!',
@@ -69,7 +66,6 @@ describe('Document Comments API', () => {
         });
         strangerToken = strangerRes.body.token;
 
-        // Create document as owner
         const docRes = await request(app)
             .post('/api/documents')
             .set('Authorization', `Bearer ${ownerToken}`)
@@ -77,7 +73,6 @@ describe('Document Comments API', () => {
         
         documentId = docRes.body._id;
 
-        // Share document with editor, commenter, viewer
         await request(app)
             .put('/api/documents/share')
             .set('Authorization', `Bearer ${ownerToken}`)
@@ -150,7 +145,6 @@ describe('Document Comments API', () => {
         let commentId = '';
 
         beforeEach(async () => {
-            // Commenter adds a comment
             const res = await request(app)
                 .post(`/api/documents/${documentId}/comments`)
                 .set('Authorization', `Bearer ${commenterToken}`)
@@ -184,7 +178,6 @@ describe('Document Comments API', () => {
         });
 
         it('non dovrebbe consentire ad un commentatore non creatore di eliminare il commento', async () => {
-            // Create another commenter
             const commenter2Res = await request(app).post('/api/auth/register').send({
                 email: 'commenter2@test.com',
                 password: 'Password123!',

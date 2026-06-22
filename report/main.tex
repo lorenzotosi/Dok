@@ -595,10 +595,16 @@ Questo approccio garantisce transizioni fluide e un'esperienza utente interattiv
 Prima di procedere con il rilascio dell'applicativo, il sistema è stato sottoposto a un'intensa fase di testing al fine di validarne la stabilità, l'affidabilità e l'effettiva fruibilità da parte degli utenti finali. Le procedure di verifica hanno riguardato sia la robustezza del codice backend sia l'esperienza d'uso dell'interfaccia frontend.
 
 \section{Fase di Testing Tecnico}
-Le funzionalità del sistema sono state verificate dal team di sviluppo attraverso diversi dispositivi e sui principali browser web (Google Chrome, Mozilla Firefox, Safari e Microsoft Edge) per garantire la massima portabilità e compatibilità cross-browser. 
+Per garantire stabilità e affidabilità, lo sviluppo del backend è stato validato tramite suite di test automatizzati di integrazione. I collaudi sono stati scritti in TypeScript avvalendosi di \textbf{Vitest} come test runner e della libreria \textbf{Supertest} per la simulazione e l'ispezione delle richieste HTTP.
 
-Le API RESTful del server sono state collaudate singolarmente utilizzando \textit{Postman}, simulando richieste con token JWT validi, scaduti o contraffatti, per accertarsi che i middleware di sicurezza intervenissero correttamente bloccando le operazioni non autorizzate. 
-Particolare attenzione è stata riservata ai test di concorrenza sull'editor: sono state simulate sessioni con connessioni multiple allo stesso documento (sia da desktop che da mobile) per confermare che l'infrastruttura Yjs e Socket.io gestisse senza incertezze le modifiche simultanee e le disconnessioni improvvise.
+I test sono stati strutturati per simulare flussi operativi complessi e sono stati suddivisi in moduli tematici:
+
+\begin{itemize}
+    \item \textbf{Autenticazione e Sicurezza:} Questa suite verifica i flussi di registrazione e login. Oltre ad accertare la corretta emissione dei token JWT e la persistenza sul database, i verificano che i dati sensibili non vengano mai esposti nelle risposte dell'API. Una parte è dedicata allo stress-test del middleware di protezione, garantendo che le richieste sprovviste di token, o con token malformati, vengano intercettate e respinte.
+    \item \textbf{Gestione dei Permessi Granulari:} Per validare il controllo degli accessi basato sui ruoli, la suite simula la creazione dinamica di utenti con privilegi differenti rispetto a un singolo documento: \textit{Owner}, \textit{Editor}, \textit{Commenter} e \textit{Viewer}. I test dimostrano che il backend rispetta le regole di dominio, permettendo, ad esempio, l'eliminazione di un commento solo al suo autore o al proprietario del documento, e bloccando i tentativi non autorizzati da parte di profili in sola lettura.
+    \item \textbf{Sincronizzazione Distribuita e CRDT:} Rappresenta il collaudo architetturale più avanzato. Per simulare il comportamento del load balancer in fase di testing, lo script istanzia un \texttt{RedisMemoryServer} (operante interamente in memoria) e molteplici nodi server HTTP legati a istanze \textit{Socket.io}. In questo scenario clusterizzato, viene testata la corretta trasmissione degli aggiornamenti CRDT tramite Yjs. Il test simula anche la disconnessione dei client, verificando che i meccanismi di "auto-salvataggio" intervengano correttamente.
+    \item \textbf{Conformità dell'Interfaccia:} Controlli automatizzati finalizzati a verificare che la documentazione interattiva dell'infrastruttura (Swagger UI) venga regolarmente generata ed esposta all'endpoint designato, validando al contempo le regole di routing e di redirect di Express.js.
+\end{itemize}
 
 \section{Valutazione dell'Usabilità (Euristiche di Nielsen)}
 Per avere un riscontro qualitativo oggettivo sull'interfaccia grafica, il sistema è stato valutato seguendo i celebri principi di usabilità definiti da Jakob Nielsen. Di seguito vengono riportate le considerazioni emerse per le euristiche più rilevanti:
@@ -617,23 +623,41 @@ Per avere un riscontro qualitativo oggettivo sull'interfaccia grafica, il sistem
 Per semplificare la distribuzione del sistema e rendere l'applicativo completamente indipendente dalla macchina su cui viene eseguito, si è optato per un processo di deployment basato su \textbf{Docker}. L'architettura a container assicura che il software giri sempre in un ambiente isolato e immutabile, risolvendo alla radice il classico problema delle dipendenze mancanti o delle versioni incompatibili ("it works on my machine").
 
 \section{Struttura dei Container}
-Il progetto è orchestrato tramite \texttt{docker-compose}, che si occupa di avviare e far dialogare le diverse anime dell'applicazione all'interno di una rete virtuale interna isolata. Nello specifico, il file di configurazione definisce i seguenti servizi:
+L'infrastruttura di Dok è orchestrata tramite \texttt{docker-compose} per implementare un'architettura distribuita, ridondata e scalabile. Il file di configurazione definisce i seguenti servizi:
+
 \begin{itemize}
-    \item \textbf{Database (MongoDB e Redis):} Container dedicati all'archiviazione persistente dei documenti e alla gestione della cache e delle sessioni in memoria.
-    \item \textbf{Backend (Server Node.js):} Il container che ospita la logica di business, le API RESTful e i processi WebSocket. Comunica internamente con i container dei database e accetta connessioni sulla porta dedicata.
-    \item \textbf{Frontend (Client Vue 3):} Il container responsabile di servire gli asset statici dell'interfaccia utente, generalmente esposto sulla porta principale per l'accesso tramite browser.
+    \item \textbf{Nginx (Reverse Proxy \& Load Balancer):} Rappresenta il punto di ingresso dell'infrastruttura sulla porta \texttt{3000}. Agisce da bilanciatore di carico distribuendo equamente il traffico HTTP e le connessioni WebSocket in ingresso verso le istanze attive del backend.
+    \item \textbf{Backend Clusterizzato (\texttt{backend1} e \texttt{backend2}):} Due container gemelli e indipendenti che eseguono l'applicazione Node.js. Questa configurazione garantisce disponibilità: in caso di guasto di un'istanza, l'altra è in grado di gestire l'intero traffico senza interruzioni di servizio.
+    \item \textbf{Redis (Session Coordination \& Cache):} In un ambiente clusterizzato, Redis ricopre un ruolo cruciale. Oltre a fungere da caching, opera come \textit{Pub/Sub adapter} per Socket.io. Consente alle due istanze separate del backend di coordinarsi, assicurando che i messaggi di sincronizzazione dei cursori e del testo collaborativo vengano propagati a tutti i client, indipendentemente dal container a cui sono agganciati.
+    \item \textbf{Database (MongoDB):} Il container deputato alla persistenza a lungo termine dello stato del file system virtuale, dei metadati dei documenti, dei log e delle informazioni degli utenti.
 \end{itemize}
+Nota: Il client frontend, durante la fase corrente, viene eseguito autonomamente tramite il server di sviluppo nativo di Vite sulla porta \texttt{5173}, interfacciandosi con il cluster backend attraverso il Reverse Proxy Nginx.
 
 \section{Messa in funzione}
-Per avviare l'intero ecosistema sul proprio ambiente locale o su un server remoto, i passaggi richiesti sono stati ridotti al minimo. Dopo aver posizionato eventuali chiavi (come il JWT Secret o l'API Key di OpenAI) in un file \texttt{.env} nella root del progetto, è sufficiente aprire il terminale ed eseguire il seguente comando:
+L'avvio dell'intera piattaforma Dok richiede una procedura strutturata in due fasi principali: l'orchestrazione dell'infrastruttura di backend e dei database tramite Docker, seguita dall'esecuzione locale del client frontend.
+Prima di procedere con l'inizializzazione, è possibile configurare le variabili d'ambiente popolando un file \texttt{.env} nella radice del progetto con le chiavi crittografiche e le credenziali necessarie (quali il \texttt{JWT\_SECRET} e l'API Key per l'integrazione del motore LLM).
+
+\subsection{Fase 1: Avvio dell'Infrastruttura di Backend}
+Per mettere in funzione i database, i due server applicativi clusterizzati e il bilanciatore di carico Nginx, è sufficiente aprire il terminale dalla root del progetto ed eseguire il comando:
 
 \begin{lstlisting}[language=bash]
-# Creazione e avvio di tutti i container in background
+# Creazione e avvio del cluster backend in background
 docker-compose up --build -d
 \end{lstlisting}
 
-Una volta terminato il processo di compilazione delle immagini, la piattaforma Dok sarà immediatamente accessibile navigando all'indirizzo \texttt{http://localhost:5173} (o alla porta configurata per il client), mentre le chiamate API verranno direzionate automaticamente al container del server.
+Una volta terminata la compilazione e l'avvio dei container, l'intero ecosistema di backend sarà operativo e in ascolto sul Reverse Proxy Nginx.
 
+\subsection{Fase 2: Avvio del Frontend (Client)}
+Poiché il client non è stato incluso nell'orchestrazione Docker corrente al fine di preservare l'ambiente nativo di \textit{Hot Module Replacement} offerto da Vite in fase di sviluppo, il suo avvio deve essere effettuato separatamente. È necessario aprire un secondo terminale, posizionarsi all'interno della directory \texttt{client}, installare le dipendenze locali (se non già presenti) e avviare il server di sviluppo:
+
+\begin{lstlisting}[language=bash]
+# Navigazione nella cartella del client ed esecuzione
+cd client
+npm install
+npm run dev
+\end{lstlisting}
+
+Al completamento di questa seconda fase, la piattaforma sarà pienamente fruibile. Il frontend risulterà accessibile da browser all'indirizzo \texttt{http://localhost:5173}, mentre le richieste API e i flussi transazionali WebSocket verranno inoltrati in modo trasparente verso il Load Balancer sulla porta \texttt{3000}.
 
 \chapter{Conclusioni}
 
@@ -662,7 +686,7 @@ Questo semplice stratagemma ha permesso di ottenere un tracciamento corretto del
 \section{Sviluppi Futuri}
 Le solide basi architetturali poste con questo progetto permettono di immaginare diverse estensioni future per arricchire ulteriormente le funzionalità dell'applicazione:
 \begin{itemize}
-    \item \textbf{Sistema di chat integrata:} Aggiungere un pannello di messaggistica laterale all'interno del documento per permettere agli utenti connessi di dialogare senza abbandonare l'editor.
+    \item \textbf{Ampliare la portata Dok:} Consentire agli utenti di caricare, creare e lavorare su file non necessariamente puramente testuali come if formati .xls.
     \item \textbf{Cronologia delle revisioni:} Implementare un sistema per salvare versioni "congelate" del documento a intervalli regolari, garantendo la possibilità di effettuare un rollback a stadi precedenti del testo.
     \item \textbf{Esportazione Multiformato:} Arricchire le funzionalità di download offrendo all'utente la possibilità di esportare il documento scritto non solo in testo semplice, ma anche in formato PDF formattato o Microsoft Word (.docx).
 \end{itemize}

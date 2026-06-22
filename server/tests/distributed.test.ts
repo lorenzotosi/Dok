@@ -28,7 +28,7 @@ let io2: SocketServer;
 const JWT_SECRET = 'test-secret';
 
 beforeAll(async () => {
-    // 1. Avvio di Redis in-memory
+    // Avvio di Redis in-memory
     redisServer = new RedisMemoryServer();
     await redisServer.start();
     const host = await redisServer.getHost();
@@ -37,10 +37,10 @@ beforeAll(async () => {
     process.env.REDIS_URL = redisUrl;
     process.env.JWT_SECRET = JWT_SECRET;
 
-    // 2. Connessione a MongoDB in-memory
+    // Connessione a MongoDB
     await connectDBForTesting();
 
-    // 3. Caricamento dinamico dei moduli per assicurare l'uso delle env corrette
+    // Caricamento dinamico dei moduli per assicurare l'uso delle env corrette
     const redisModule = await import('../src/config/redis.js');
     redisClient = redisModule.redisClient;
     connectRedis = redisModule.connectRedis;
@@ -61,7 +61,7 @@ beforeAll(async () => {
     const userModelModule = await import('../src/models/User.js');
     UserModel = userModelModule.UserModel;
 
-    // 4. Inizializzazione Server 1 su porta 3001
+    // Inizializzazione Server 1 su porta 3001
     httpServer1 = createServer(app);
     io1 = new SocketServer(httpServer1, {
         cors: { origin: '*' }
@@ -69,7 +69,7 @@ beforeAll(async () => {
     await setupSockets(io1);
     await new Promise<void>((resolve) => httpServer1.listen(3001, () => resolve()));
 
-    // 5. Inizializzazione Server 2 su porta 3002
+    // Inizializzazione Server 2 su porta 3002
     httpServer2 = createServer(app);
     io2 = new SocketServer(httpServer2, {
         cors: { origin: '*' }
@@ -147,7 +147,7 @@ describe('Integration Tests: Distributed System (Redis & Editor)', () => {
             clientA.on('connect_error', (err) => reject(err));
         });
 
-        // Attendiamo brevemente la sincronizzazione dei socket tra le istanze tramite Redis
+        // Attendiamo la sincronizzazione dei socket tra le istanze tramite Redis
         await new Promise(resolve => setTimeout(resolve, 200));
 
         // Interroghiamo PresenceManager (che userà ioInstance di Server 2, l'ultimo inizializzato)

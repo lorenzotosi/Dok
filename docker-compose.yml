@@ -18,9 +18,9 @@ services:
       - MONGO_URI=${MONGO_URI:-mongodb://mongo:27017/dok}
       - REDIS_URL=${REDIS_URL:-redis://redis:6379}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
-    volumes: # TODO da tenere solo durante lo sviluppo
-      - ./server:/app
-      - /app/node_modules
+#    volumes: # utile per lo sviluppo
+#      - ./server:/app
+#      - /app/node_modules
     depends_on:
       - mongo
       - redis
@@ -33,9 +33,9 @@ services:
       - MONGO_URI=${MONGO_URI:-mongodb://mongo:27017/dok}
       - REDIS_URL=${REDIS_URL:-redis://redis:6379}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
-    volumes: # TODO da tenere solo durante lo sviluppo
-      - ./server:/app
-      - /app/node_modules
+#    volumes: # Utile per lo sviluppo
+#      - ./server:/app
+#      - /app/node_modules
     depends_on:
       - mongo
       - redis
