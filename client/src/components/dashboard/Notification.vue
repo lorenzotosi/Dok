@@ -11,9 +11,6 @@ const dropdownRef = ref<HTMLElement | null>(null);
 
 const toggleDropdown = () => {
   isOpen.value = !isOpen.value;
-  if (isOpen.value) {
-    // Potremmo voler segnare come lette all'apertura o al click sulla singola
-  }
 };
 
 useClickOutside(dropdownRef, () => {
@@ -26,7 +23,7 @@ const handleNotificationClick = async (notification: INotification) => {
   }
   
   if (notification.link) {
-    router.push(notification.link);
+    await router.push(notification.link);
     isOpen.value = false;
   }
 };
@@ -35,7 +32,6 @@ const handleNotificationDelete = async (notification: INotification) => {
   await notificationStore.deleteNotification(notification._id);
 };
 
-// Formattazione data più leggibile
 const timeAgo = (date: string) => {
   const now = new Date();
   const past = new Date(date);
@@ -131,10 +127,6 @@ onMounted(() => {
             </div>
           </div>
         </div>
-        
-        <!--<div class="dropdown-footer">
-          <button class="view-all-btn">Vedi tutte le attività</button>
-        </div>-->
       </div>
     </Transition>
   </div>
@@ -195,7 +187,7 @@ onMounted(() => {
   position: absolute;
   top: calc(100% + 12px);
   right: 0;
-  width: 360px; /* Industria Standard: 320-400px */
+  width: 360px;
   max-height: 500px;
   background: rgba(30, 41, 59, 0.85);
   backdrop-filter: blur(12px);
@@ -243,12 +235,11 @@ onMounted(() => {
 
 .dropdown-content {
   flex: 1;
-  overflow-y: auto; /* Scorrimento richiesto */
+  overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
 }
 
-/* Custom scrollbar for webkit */
 .dropdown-content::-webkit-scrollbar {
   width: 6px;
 }
@@ -374,7 +365,6 @@ onMounted(() => {
   color: #f1f5f9;
 }
 
-/* Bottone Cestino */
 .delete-btn {
   position: absolute;
   top: 16px;
@@ -405,12 +395,10 @@ onMounted(() => {
   box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
-/* Se c'è il pallino, lo nascondiamo se il cestino è visibile per pulizia */
 .notification-item:hover .unread-dot {
   opacity: 0;
 }
 
-/* Transizione */
 .fade-slide-enter-active,
 .fade-slide-leave-active {
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);

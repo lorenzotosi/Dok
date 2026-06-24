@@ -160,7 +160,7 @@ export const registerDocumentHandlers = (io: Server, socket: Socket) => {
                     });
                     return count;
                 }
-                if (typeof insertOp === 'object' && insertOp !== null) return 1; // Embed/Immagini
+                if (typeof insertOp === 'object' && insertOp !== null) return 1;
                 return 0;
             };
 

@@ -131,7 +131,6 @@ const executeCommand = (action: () => void) => {
       </button>
     </div>
 
-    <!-- Palette fluttuante -->
     <div v-if="showColorPalette" class="color-palette-bar">
       <button
         v-for="color in PREDEFINED_COLORS"

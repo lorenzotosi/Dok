@@ -48,9 +48,9 @@ const canDeleteComment = (comment: any) => {
   const isEditor = documentData.value?.sharedWith?.some(
     (s: any) => (s.userId?._id || s.userId) === currentUserId && s.role === 'editor'
   );
-  if (isEditor) return true;
+  return !!isEditor;
   
-  return false;
+
 };
 
 const formatDate = (dateStr: string) => {
@@ -570,7 +570,6 @@ onMounted(async () => {
   cursor: not-allowed;
 }
 
-/* Animations */
 .comment-list-enter-active,
 .comment-list-leave-active {
   transition: all 0.25s ease;

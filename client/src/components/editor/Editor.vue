@@ -116,17 +116,6 @@ watch(canEdit, (newEditableState) => {
   cursor: text; 
 }
 
-/*
-:deep(.ProseMirror) {
-  min-height: 24cm;
-  outline: none;
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 11pt;
-  line-height: 1.5;
-  color: #000000;
-}
-*/
-
 :deep(.ProseMirror) {
   min-height: 600px;
   outline: none;
@@ -172,15 +161,6 @@ watch(canEdit, (newEditableState) => {
   user-select: none;
   white-space: nowrap;
 }
-
-/*
-@media (max-width: 768px) {
-  .document-page {
-    padding: 1rem;
-    min-height: calc(100vh - 100px);
-  }
-}
-*/
 
 @media screen and (max-width: 768px) {
   .editor-wrapper {

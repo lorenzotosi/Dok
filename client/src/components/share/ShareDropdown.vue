@@ -41,7 +41,6 @@ const handleUpdateRole = async (email: string, newRole: 'viewer' | 'editor' | 'c
   emit('refresh');
 };
 
-// Chiudi dropdown se clicchi fuori
 useClickOutside(dropdownRef, () => {
   isDropdownVisible.value = false;
 });
@@ -57,8 +56,7 @@ useClickOutside(dropdownRef, () => {
     <transition name="fade">
       <div v-if="isDropdownVisible" class="share-dropdown">
         <div class="dropdown-header">Condividi documento</div>
-        
-        <!-- Sezione 1: Aggiungi (Solo se Owner) -->
+
         <div v-if="isOwner" class="add-share-section">
           <div class="input-group">
             <input 
@@ -78,7 +76,6 @@ useClickOutside(dropdownRef, () => {
           </div>
         </div>
 
-        <!-- Info owner solo per i collaborators -->
         <div v-if="!isOwner" class="owner-informations">
           <div class="collab-info">
             <div class="collab-avatar">{{ props.ownerData.ownerId.firstName[0] }}</div>
@@ -90,7 +87,6 @@ useClickOutside(dropdownRef, () => {
           </div>
         </div>
 
-        <!-- Sezione 2: Lista Collaboratori -->
         <div class="collaborators-section">
           <div class="section-label">Persone con accesso</div>
           <div v-if="sharedWith.length === 0" class="empty-list">

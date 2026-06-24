@@ -35,6 +35,7 @@ const handleSearch = () => {
         <input v-model="searchQuery" type="text" placeholder="Cerca in Dok" @input="handleSearch"/>
       </div>
     </div>
+    <!-- TODO -->
     <!--Qui ci va il pulsante delle notifiche-->
     <div v-if="authStore.isAuthenticated()">
       <Notification />

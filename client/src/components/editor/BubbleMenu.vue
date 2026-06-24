@@ -12,7 +12,6 @@ const aiPrompt = ref('');
 const isLoading = ref(false);
 
 const shouldShow = ({ from, to }: any) => {
-  // Mostra se c'è una selezione di testo non vuota
   return from !== to;
 };
 
@@ -28,20 +27,15 @@ const handleRewrite = async () => {
 
   isLoading.value = true;
   try {
-    // 2. Chiama il backend
     const newText = await aiService.rewriteText(selectedText, prompt);
-
-    // 3. Sostituisci il testo nell'editor in modo reattivo
-    // Usiamo chain() per mantenere il focus e preservare la history
-    props.editor
++props.editor
       .chain()
       .focus()
       .insertContentAt({ from, to }, newText)
       .run();
       
-    aiPrompt.value = ''; // Reset
+    aiPrompt.value = '';
   } catch (error) {
-    // Qui potresti emettere un evento per mostrare un toast/notifica di errore
     alert('Errore durante la generazione del testo.');
   } finally {
     isLoading.value = false;
@@ -141,7 +135,6 @@ const handleRewrite = async () => {
   cursor: not-allowed;
 }
 
-/* Spinner CSS semplificato */
 .loader {
   border: 2px solid #f3f3f3;
   border-top: 2px solid white;

@@ -2,7 +2,6 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { api } from '../services/api';
 
-// come quella di mongoose
 export interface IFolder {
   _id: string;
   name: string;
@@ -12,10 +11,8 @@ export interface IFolder {
 }
 
 export const useFolderStore = defineStore('folder', () => {
-  // STATO (I dati)
   const folders = ref<IFolder[]>([]);
 
-  // AZIONI (Le funzioni che modificano i dati chiamando le API)
   const fetchFolders = async (parentId: string | null = null) => {
     try {
       const response = await api.get('/folders', { params: { parentId } });

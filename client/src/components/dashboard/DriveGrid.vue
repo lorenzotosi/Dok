@@ -26,7 +26,6 @@ const isOwner = (item: any) => {
 
 <template>
   <div class="grid-view">
-    <!-- Sezione Cartelle -->
     <section v-if="folders.length > 0" class="grid-section">
       <h3 class="section-title">Cartelle</h3>
       <div class="grid">
@@ -55,7 +54,6 @@ const isOwner = (item: any) => {
       </div>
     </section>
 
-    <!-- Sezione Documenti -->
     <section v-if="documents.length > 0" class="grid-section">
       <h3 class="section-title">File</h3>
       <div class="grid doc-grid">
@@ -116,7 +114,6 @@ const isOwner = (item: any) => {
   gap: 16px;
 }
 
-/* Card base */
 .grid-card {
   background-color: #f1f3f4;
   border: 1px solid transparent;
@@ -136,7 +133,6 @@ const isOwner = (item: any) => {
   outline-offset: 2px;
 }
 
-/* Folders */
 .folder-card {
   display: flex;
   align-items: center;
@@ -155,7 +151,6 @@ const isOwner = (item: any) => {
 .icon-folder { color: #5f6368; }
 .icon-file { color: #4285f4; }
 
-/* Documents */
 .document-card {
   display: flex;
   flex-direction: column;
@@ -199,7 +194,6 @@ const isOwner = (item: any) => {
   overflow: hidden;
 }
 
-/* Comuni */
 .name {
   font-size: 13px;
   font-weight: 500;

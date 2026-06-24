@@ -94,7 +94,6 @@ export const getSharedDocs = async (req: AuthRequest, res: Response) => {
     try {
         const userId = req.user!.id;
         const docs = await DocumentService.getSharedDocuments(userId);
-        //console.log(docs)
         res.json(docs);
     } catch (error) {
         res.status(500).json({ error: 'Errore recupero documenti condivisi' });

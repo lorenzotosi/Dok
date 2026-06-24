@@ -15,7 +15,6 @@ const authStore = useAuthStore();
 const currentSection = ref<'private' | 'public' | 'shared'>('private');
 const searchQuery = ref('');
 
-// Inizializza i socket per la dashboard passando la sezione corrente
 useDashboardSockets(currentSection);
 
 const refreshData = () => {

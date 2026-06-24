@@ -11,7 +11,6 @@ describe('Swagger Documentation API', () => {
 
     it('dovrebbe fare redirect o servire da /api-docs', async () => {
         const response = await request(app).get('/api-docs');
-        // A seconda della configurazione di Express/Swagger, può essere 200 o redirect
         expect([200, 301, 302]).toContain(response.status);
     });
 });

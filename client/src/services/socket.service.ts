@@ -6,9 +6,6 @@ class SocketClientService {
     connect(token?: string | null): void {
         if (this.socket) {
             const currentToken = (this.socket.auth as any)?.token;
-            // Se abbiamo già un socket con lo stesso token, non facciamo nulla.
-            // Il socket potrebbe essere in fase di connessione (connected: false), 
-            // ma socket.io-client gestisce la coda dei pacchetti internamente.
             if (currentToken === token) {
                 return;
             }

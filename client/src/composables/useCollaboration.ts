@@ -6,10 +6,7 @@ import { io } from 'socket.io-client';
 
 export function useCollaboration(documentId: string, token?: string) {
   const ydoc = new Y.Doc();
-  
-  // Crea una connessione socket dedicata al documento.
-  // Includendo 'documentId' nella query, Nginx userà il documentId per 
-  // le sticky session, instradando tutti i client sullo stesso server backend.
+
   const socket = io('http://localhost:3000', {
       auth: { token: token || null },
       query: { documentId },

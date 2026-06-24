@@ -25,8 +25,6 @@ export function useDocumentData(documentId: string) {
 
   const handleDocumentUpdate = (doc: any) => {
     if ((doc._id === documentId || doc.id === documentId) && documentData.value) {
-      // Evitiamo aggiornamenti se i dati sono identici per prevenire re-render inutili
-      // che possono causare errori nel DOM di Tiptap (insertBefore null)
       let changed = false;
       for (const key in doc) {
         if (doc[key] !== documentData.value[key]) {

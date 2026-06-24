@@ -2,7 +2,6 @@ import jwt from 'jsonwebtoken';
 import { UserModel, type IUser, UserRole } from '../models/User.js';
 import SiteAccessLog from "../models/SiteAccessLog.js";
 
-// Idealmente queste interfacce vanno in un file types dedicato
 export interface AuthResponse {
     user: {
         id: string;

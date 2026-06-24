@@ -54,7 +54,6 @@ const isOwner = (item: any) => {
     </div>
 
     <ul class="list-body">
-      <!-- Sezione Cartelle -->
       <li 
         v-for="folder in folders" 
         :key="folder._id" 
@@ -81,7 +80,6 @@ const isOwner = (item: any) => {
         </div>
       </li>
 
-      <!-- Sezione Documenti -->
       <li 
         v-for="document in documents" 
         :key="document._id" 

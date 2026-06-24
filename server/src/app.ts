@@ -1,6 +1,3 @@
-//questo file si occupa esclusivamente di configurare Express (middleware, rotte ecc...)
-//non deve sapere nulla di WebSocket!
-
 import express, { type Request, type Response } from 'express';
 import cors from 'cors';
 import apiRoutes from './routes/api.js';

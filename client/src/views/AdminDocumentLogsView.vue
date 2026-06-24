@@ -8,7 +8,7 @@ import AdminAccessLogTable from '../components/admin/audit/AdminAccessLogTable.v
 import AdminModificationLogTable from '../components/admin/audit/AdminModificationLogTable.vue';
 
 const route = useRoute();
-const router = useRouter(); // Risposta 3: Usato per il pulsante indietro
+const router = useRouter();
 const documentId = route.params.id as string;
 
 const logs = ref<AuditLogItem[]>([]);

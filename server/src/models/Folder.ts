@@ -14,7 +14,7 @@ const FolderSchema: Schema = new Schema({
   visibility: { type: String, enum: ['private', 'public'], default: 'private' },
 }, { 
   timestamps: true,
-  optimisticConcurrency: true //controllo sui conflitti usando __v
+  optimisticConcurrency: true
 });
 
 FolderSchema.index({ ownerId: 1 });

@@ -50,14 +50,12 @@ const isGridView = ref(true);
       </div>
     </div>
 
-    <!-- Empty state -->
     <div v-if="folders.length === 0 && documents.length === 0" class="empty-state">
       <div class="empty-icon">📂</div>
       <p class="empty-title">Nessun file presente</p>
       <p class="empty-subtitle">Questa cartella è vuota. Clicca su "Nuovo" per iniziare a lavorare.</p>
     </div>
 
-    <!-- Content -->
     <div v-else class="workspace-content">
       <DriveGrid 
         v-if="isGridView"
@@ -86,7 +84,7 @@ const isGridView = ref(true);
   flex: 1;
   display: flex;
   flex-direction: column;
-  background-color: #fff; /* Workspace bianco come in drive */
+  background-color: #fff;
   border-radius: 16px;
   margin: 16px 16px 16px 0;
   padding: 16px 24px;

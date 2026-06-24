@@ -20,14 +20,10 @@ export interface INotification {
 }
 
 export const useNotificationStore = defineStore('notification', () => {
-  // STATO
   const notifications = ref<INotification[]>([]);
   const loading = ref(false);
-
-  // GETTERS
   const unreadCount = computed(() => notifications.value.filter(n => !n.read).length);
 
-  // AZIONI
   const fetchNotifications = async () => {
     loading.value = true;
     try {
@@ -43,7 +39,6 @@ export const useNotificationStore = defineStore('notification', () => {
   const markAsRead = async (id: string) => {
     try {
       await api.put(`/notifications/${id}/read`);
-      // Aggiorna lo stato locale senza rifare la fetch
       const index = notifications.value.findIndex(n => n._id === id);
       if (index !== -1) {
         notifications.value[index].read = true;
@@ -72,7 +67,6 @@ export const useNotificationStore = defineStore('notification', () => {
     }
   };
 
-  // Funzione helper per aggiungere una notifica ricevuta via socket
   const addNotification = (notification: INotification) => {
     notifications.value.unshift(notification);
   };

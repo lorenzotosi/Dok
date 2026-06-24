@@ -1,6 +1,5 @@
 import { type Response } from 'express';
 import { FolderService } from '../services/folder.service.js';
-import { log } from 'node:console';
 import { type AuthRequest } from '../middlewares/auth.middleware.js';
 
 export const createFolder = async (req: AuthRequest, res: Response) => {
@@ -59,15 +58,11 @@ export const deleteFolder = async (req: AuthRequest, res: Response) => {
             return;
         }
 
-        //log("folderId da eliminare:", folderId);
         await FolderService.deleteFolder(folderId);
-        //log("folder eliminato:", folderId);
         const io = req.app.get('io');
         if (io) {
             if (folderToDelete.visibility === 'public') {
                 io.to('global-dashboard').emit('global-folder-deleted', folderId);
-            } else {
-                // TODO: implementare eliminazione cartella privata
             }
         }
         res.json(folderId);

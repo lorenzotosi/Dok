@@ -46,9 +46,6 @@ const navigateTo = (path: string) => {
         <hr />
 
         <nav class="menu-items">
-<!--          <button @click="navigateTo('/settings')">-->
-<!--            <span class="icon">⚙️</span> Impostazioni-->
-<!--          </button>-->
 
           <button
               v-if="authStore.user?.role === 'ADMIN'"

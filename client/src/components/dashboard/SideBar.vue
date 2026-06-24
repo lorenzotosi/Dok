@@ -60,7 +60,6 @@ const handleCreateFolder = () => {
         <span class="plus-icon">➕</span> Nuovo
       </button>
 
-      <!-- Dropdown menu -->
       <transition name="fade">
         <div v-if="showMenu" class="dropdown-menu">
           <button v-if="!showFolderInput" class="dropdown-item" @click="showFolderInput = true; showDocInput = false">

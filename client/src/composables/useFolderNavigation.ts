@@ -13,8 +13,6 @@ export function useFolderNavigation(
   folderStore: any
 ) {
   const currentFolderId = ref<string | null>(null);
-  
-  // Stack dei folder per tornare indietro (con nome per il titolo)
   const folderStack = ref<FolderStackItem[]>([
     { id: null, name: 'Il Mio Dok' }
   ]);

@@ -52,14 +52,11 @@ export function useDashboardSockets(currentSection: Ref<'private' | 'public' | '
   };
 
   const handleDocumentShared = (doc: any) => {
-    // 1. Cerchiamo se il documento esiste già in memoria (in qualunque sezione siamo)
     const index = documentStore.documents.findIndex(d => d._id === doc._id);
 
     if (index !== -1) {
-      // Se esiste, aggiorniamo il ruolo (fondamentale se passiamo da VIEWER a EDITOR)
       documentStore.documents[index] = { ...doc };
     } else {
-      // Se non esiste e siamo in 'shared', lo aggiungiamo
       if (currentSection.value === 'shared') {
         documentStore.documents.unshift(doc);
       }
@@ -68,16 +65,13 @@ export function useDashboardSockets(currentSection: Ref<'private' | 'public' | '
   };
 
   const handleDocumentUnshared = (documentId: string) => {
-    // Troviamo il documento interessato nella lista locale
     const doc = documentStore.documents.find(d => d._id === documentId);
 
-    // Se siamo nella sezione 'public' e il documento è pubblico, togliamo solo il tag 'myRole'
     if (currentSection.value === 'public' && doc?.visibility === 'public') {
       documentStore.documents = documentStore.documents.map(d =>
         d._id === documentId ? { ...d, myRole: null } : d
       );
     } else {
-      // In tutti gli altri casi (sezione 'shared' o documento privato), rimuoviamo il file dalla lista
       documentStore.documents = documentStore.documents.filter(d => d._id !== documentId);
     }
   };
@@ -123,29 +117,24 @@ export function useDashboardSockets(currentSection: Ref<'private' | 'public' | '
       socket.on('global-document-created', handleGlobalDocumentCreated);
     }
 
-    // Eventi globali o personali che possono avvenire in background
     socket.on('global-document-deleted', handleGlobalDocumentDeleted);
     socket.on('global-document-renamed', handleGlobalDocumentRenamed);
     socket.on('global-folder-created', handleGlobalFolderCreated);
     socket.on('global-folder-deleted', handleGlobalFolderDeleted);
 
-    // Ascolta sempre se qualcuno condivide qualcosa con te (stanza user:ID)
     socket.on('document-shared', handleDocumentShared);
     socket.on('document-unshared', handleDocumentUnshared);
     socket.on('document-deleted', handleDocumentDeleted);
     socket.on('document-renamed', handleDocumentRenamed);
     socket.on('private-document-created', handlePrivateDocumentCreated);
     socket.on('private-document-deleted', handlePrivateDocumentDeleted);
-    
-    // Ascolta le nuove notifiche persistenti
+
     socket.on('new-notification', (notif: any) => {
         notificationStore.addNotification(notif);
     });
   };
 
   const setupSocketSync = () => {
-    // Chiamiamo sempre connect: se il token è uguale il servizio non fa nulla,
-    // se è cambiato si riconnette automaticamente.
     socketService.connect(authStore.token || null);
 
     const socket = socketService.getSocket();
