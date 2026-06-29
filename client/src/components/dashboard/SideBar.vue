@@ -124,11 +124,6 @@ const handleCreateFolder = () => {
         <span class="icon">🌍</span>
         <span class="label">Dok globali</span>
       </button>
-
-      <button class="nav-item is-disabled" disabled>
-        <span class="icon">🗑️</span>
-        <span class="label">Cestino</span>
-      </button>
     </nav>
 
     <AuthModal :is-open="isModalOpen" @close="isModalOpen = false" />

@@ -8,6 +8,7 @@ import { useAuthStore } from '../stores/auth.store';
 import { useDocumentData } from '../composables/useDocumentData';
 import UserMenu from "../components/dashboard/UserMenu.vue";
 import { api } from '../services/api';
+import BaseModal from '../components/common/BaseModal.vue';
 
 const authStore = useAuthStore();
 const route = useRoute();
@@ -21,6 +22,8 @@ const { documentData, isLoading, fetchDocumentData, handleRename } = useDocument
 
 const newCommentText = ref('');
 const isSubmittingComment = ref(false);
+const showDeleteConfirmModal = ref(false);
+const commentIdToDelete = ref<string | null>(null);
 
 const currentUserRole = computed(() => {
   if (!authStore.isAuthenticated()) return 'viewer';
@@ -87,8 +90,14 @@ const handleSendComment = async () => {
   }
 };
 
-const handleDeleteComment = async (commentId: string) => {
-  if (!confirm('Sei sicuro di voler eliminare questo commento?')) return;
+const confirmDeleteComment = (commentId: string) => {
+  commentIdToDelete.value = commentId;
+  showDeleteConfirmModal.value = true;
+};
+
+const executeDeleteComment = async () => {
+  if (!commentIdToDelete.value) return;
+  const commentId = commentIdToDelete.value;
   
   try {
     await api.delete(`/documents/${documentId}/comments/${commentId}`);
@@ -101,6 +110,9 @@ const handleDeleteComment = async (commentId: string) => {
   } catch (error) {
     console.error("Errore durante l'eliminazione del commento:", error);
     alert("Errore durante l'eliminazione del commento");
+  } finally {
+    showDeleteConfirmModal.value = false;
+    commentIdToDelete.value = null;
   }
 };
 
@@ -195,7 +207,7 @@ onMounted(async () => {
                   <button 
                     v-if="canDeleteComment(comment)"
                     class="delete-comment-btn"
-                    @click="handleDeleteComment(comment._id)"
+                    @click="confirmDeleteComment(comment._id)"
                     title="Elimina commento"
                   >
                     ✕
@@ -230,6 +242,20 @@ onMounted(async () => {
         </div>
       </aside>
     </div>
+    
+    <BaseModal
+      :isOpen="showDeleteConfirmModal"
+      title="Conferma eliminazione"
+      @close="showDeleteConfirmModal = false"
+    >
+      <div class="delete-confirm-body">
+        <p>Sei sicuro di voler eliminare questo commento? Questa azione non può essere annullata.</p>
+        <div class="modal-actions">
+          <button class="cancel-btn" @click="showDeleteConfirmModal = false">Annulla</button>
+          <button class="danger-btn" @click="executeDeleteComment">Elimina</button>
+        </div>
+      </div>
+    </BaseModal>
   </div>
 </template>
 
@@ -605,5 +631,48 @@ onMounted(async () => {
     border-left: none;
     border-top: 1px solid #dadce0;
   }
+}
+
+.delete-confirm-body p {
+  font-size: 14px;
+  color: #5f6368;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.cancel-btn, .danger-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.cancel-btn {
+  background: white;
+  border: 1px solid #dadce0;
+  color: #3c4043;
+}
+
+.cancel-btn:hover {
+  background-color: #f8f9fa;
+  border-color: #c3c4c7;
+}
+
+.danger-btn {
+  background-color: #d93025;
+  border: none;
+  color: white;
+}
+
+.danger-btn:hover {
+  background-color: #b3241b;
 }
 </style>
