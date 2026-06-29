@@ -59,12 +59,19 @@ export const deleteDocument = async (req: AuthRequest, res: Response) => {
     try {
         const documentId = req.params.id as string;
         const ownerId = req.user!.id;
+        const role = req.user?.role
         const doc = await DocumentService.getDocumentById(documentId);
 
         if (!doc) return res.status(404).json({ error: 'Documento non trovato' });
 
-        if (doc.ownerId.toString() !== ownerId) {
-            return res.status(403).json({ error: 'Non hai il permesso di eliminare questo documento' });
+        if (doc.visibility === 'private') {
+            if (doc.ownerId.toString() !== ownerId) {
+                return res.status(403).json({ error: 'Non hai il permesso di eliminare questo documento' });
+            }
+        } else {
+            if (doc.ownerId.toString() !== ownerId && role !== 'ADMIN') {
+                return res.status(403).json({ error: 'Non hai il permesso di eliminare questo documento' });
+            }
         }
 
         const docOk = await DocumentService.deleteDocument(doc);

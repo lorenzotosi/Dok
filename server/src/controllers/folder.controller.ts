@@ -1,6 +1,7 @@
 import { type Response } from 'express';
 import { FolderService } from '../services/folder.service.js';
 import { type AuthRequest } from '../middlewares/auth.middleware.js';
+import folder from "../models/Folder.js";
 
 export const createFolder = async (req: AuthRequest, res: Response) => {
     try {
@@ -45,6 +46,7 @@ export const deleteFolder = async (req: AuthRequest, res: Response) => {
     try {
         const folderId = req.params._id as string;
         const userId = req.user!.id;
+        const role = req.user?.role
 
         const folderToDelete = await FolderService.getFolderById(folderId);
 
@@ -53,9 +55,16 @@ export const deleteFolder = async (req: AuthRequest, res: Response) => {
             return;
         }
 
-        if (folderToDelete.ownerId.toString() !== userId) {
-            res.status(403).json({ error: 'Non hai i permessi per eliminare questa cartella' });
-            return;
+        if (folderToDelete.visibility === 'private') {
+            if (folderToDelete.ownerId.toString() !== userId) {
+                res.status(403).json({ error: 'Non hai i permessi per eliminare questa cartella' });
+                return;
+            }
+        } else {
+            if (folderToDelete.ownerId.toString() !== userId && role !== 'ADMIN') {
+                res.status(403).json({ error: 'Non hai i permessi per eliminare questa cartella' });
+                return;
+            }
         }
 
         await FolderService.deleteFolder(folderId);
