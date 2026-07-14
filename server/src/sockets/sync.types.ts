@@ -7,6 +7,8 @@ export interface ActiveDocState {
 
   hasLogObserver?: boolean;
   pendingUserChars?: Map<string, { inserted: number, deleted: number }>;
+
+  isDirty: boolean;
 }
 
 export const activeDocuments = new Map<string, ActiveDocState>();

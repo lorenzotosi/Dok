@@ -63,18 +63,22 @@ const handleClientLeave = async (documentId: string, io: Server) => {
         console.log(`[GC] Nessun client in ${documentId}. Pulizia memoria...`);
         if (state.saveTimeout) clearTimeout(state.saveTimeout);
 
-        try {
-            const finalBinaryState = Y.encodeStateAsUpdate(state.ydoc);
-            const tiptapJson = TiptapTransformer.fromYdoc(state.ydoc, 'default');
-            await Document.findByIdAndUpdate(documentId, {
-                yjsState: Buffer.from(finalBinaryState),
-                tiptapJson: tiptapJson
-            });
+        if (state.isDirty) {
+            try {
+                const finalBinaryState = Y.encodeStateAsUpdate(state.ydoc);
+                const tiptapJson = TiptapTransformer.fromYdoc(state.ydoc, 'default');
+                await Document.findByIdAndUpdate(documentId, {
+                    yjsState: Buffer.from(finalBinaryState),
+                    tiptapJson: tiptapJson
+                });
 
-            await flushAuditLogs(documentId, state, io);
-            console.log(`[DB] Stato finale e log di ${documentId} salvati.`);
-        } catch (error) {
-            console.error(`[DB Errore] Salvataggio fallito per ${documentId}:`, error);
+                await flushAuditLogs(documentId, state, io);
+                console.log(`[DB] Stato finale e log di ${documentId} salvati.`);
+            } catch (error) {
+                console.error(`[DB Errore] Salvataggio fallito per ${documentId}:`, error);
+            }
+        } else {
+            console.log(`[DB] Nessuna modifica locale per ${documentId}. Salvataggio ignorato per evitare sovrascritture.`);
         }
 
         state.ydoc.destroy();
@@ -128,6 +132,7 @@ export const registerDocumentHandlers = (io: Server, socket: Socket) => {
                 saveTimeout: null,
                 hasLogObserver: false,
                 pendingUserChars: new Map<string, { inserted: number, deleted: number }>,
+                isDirty: false,
             });
         } else {
             const state = activeDocuments.get(documentId)!;
@@ -201,6 +206,7 @@ export const registerDocumentHandlers = (io: Server, socket: Socket) => {
         const userId = socket.data?.user?.id;
 
         if (state) {
+            state.isDirty = true;
             let lenBefore = 0;
             let insertedBefore = 0;
 
@@ -249,6 +255,7 @@ export const registerDocumentHandlers = (io: Server, socket: Socket) => {
                     });
 
                     await flushAuditLogs(documentId, state, io);
+                    state.isDirty = false;
                     console.log(`💾 Documento ${documentId} persistito su DB dopo inattività.`);
                 } catch (error) {
                     console.error("[Salvataggio DB] Errore nel salvataggio debounced:", error);
@@ -263,8 +270,8 @@ export const registerDocumentHandlers = (io: Server, socket: Socket) => {
 
     socket.on('leave-document', async (documentId: string) => {
         if (!socket.rooms.has(documentId)) return;
-        socket.leave(documentId);
         await handleClientLeave(documentId, io);
+        socket.leave(documentId);
     });
 
     socket.on('disconnecting', async () => {
