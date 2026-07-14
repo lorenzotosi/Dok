@@ -2,14 +2,30 @@ import {UserModel} from '../models/User.js';
 import type {Server} from "socket.io";
 
 let ioInstance: Server;
+let isShuttingDown = false;
+const localUserSessions = new Map<string, Set<string>>();
 
 export const PresenceManager = {
 
     init(io: Server) {
         ioInstance = io;
+        isShuttingDown = false;
+        localUserSessions.clear();
+    },
+
+    setShuttingDown() {
+        console.log("[Presence] Scudo RAM: blocco dei timeout asincroni individuali.");
+        isShuttingDown = true;
     },
 
     async addConnection(userId: string, socketId: string): Promise<void> {
+        if (isShuttingDown) return;
+
+        if (!localUserSessions.has(userId)) {
+            localUserSessions.set(userId, new Set());
+        }
+        localUserSessions.get(userId)!.add(socketId);
+
         try {
             if (!ioInstance) return;
             const sockets = await ioInstance.in(`user:${userId}`).fetchSockets();
@@ -28,6 +44,16 @@ export const PresenceManager = {
     },
 
     async removeConnection(userId: string, socketId: string): Promise<void> {
+        if (isShuttingDown) return;
+
+        const userSockets = localUserSessions.get(userId);
+        if (userSockets) {
+            userSockets.delete(socketId);
+            if (userSockets.size === 0) {
+                localUserSessions.delete(userId);
+            }
+        }
+
         try {
             setTimeout(async () => {
                 try {
@@ -54,6 +80,27 @@ export const PresenceManager = {
 
         } catch (error) {
             console.error(`[Presence] Adapter Error:`, error);
+        }
+    },
+
+    async flushPresenceOnShutdown(): Promise<void> {
+        console.log(`[Shutdown - Presence] Flushing di ${localUserSessions.size} utenti dalla RAM al DB...`);
+
+        if (localUserSessions.size === 0) return;
+
+        try {
+            const now = new Date();
+            const userIdsArray = Array.from(localUserSessions.keys());
+
+            await UserModel.updateMany(
+                { _id: { $in: userIdsArray } },
+                { lastSeen: now }
+            );
+
+            console.log(`[Shutdown - Presence] Stato di ${userIdsArray.length} utenti salvato.`);
+            localUserSessions.clear();
+        } catch (error) {
+            console.error("[Shutdown - Errore Presence] Impossibile completare il flush:", error);
         }
     },
 

@@ -30,6 +30,29 @@ const flushAuditLogs = async (documentId: string, state: ActiveDocState, io: Ser
     state.pendingUserChars.clear();
 };
 
+export const flushAllDocumentsOnShutdown = async () => {
+    console.log(`[Shutdown - CRDT] Avviato flush di ${activeDocuments.size} documenti in RAM...`);
+    const promises = Array.from(activeDocuments.entries()).map(async ([documentId, state]) => {
+        if (state.saveTimeout) clearTimeout(state.saveTimeout);
+        try {
+            const finalBinaryState = Y.encodeStateAsUpdate(state.ydoc);
+            const tiptapJson = TiptapTransformer.fromYdoc(state.ydoc, 'default');
+
+            await Document.findByIdAndUpdate(documentId, {
+                yjsState: Buffer.from(finalBinaryState),
+                tiptapJson: tiptapJson
+            });
+            console.log(`[Shutdown - CRDT] Documento ${documentId} persistito.`);
+        } catch (error) {
+            console.error(`[Shutdown - Errore CRDT] Fallito salvataggio per ${documentId}:`, error);
+        } finally {
+            state.ydoc.destroy();
+        }
+    });
+    await Promise.all(promises);
+    activeDocuments.clear();
+};
+
 const getDocTotalLength = (node: any): number => {
     let len = 0;
     if (node instanceof Y.XmlText || node instanceof Y.Text) {
