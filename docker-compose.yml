@@ -6,9 +6,12 @@ services:
       - "3000:3000"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    restart: on-failure
     depends_on:
-      - backend1
-      - backend2
+      backend1:
+        condition: service_healthy
+      backend2:
+        condition: service_healthy
 
   # Il Primo "Server"
   backend1:
@@ -21,9 +24,18 @@ services:
 #    volumes: # utile per lo sviluppo
 #      - ./server:/app
 #      - /app/node_modules
+    restart: on-failure
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s # Da tempo a Node di avviarsi
     depends_on:
-      - mongo
-      - redis
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   # Il Secondo "Server"
   backend2:
@@ -36,17 +48,37 @@ services:
 #    volumes: # Utile per lo sviluppo
 #      - ./server:/app
 #      - /app/node_modules
+    restart: on-failure
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
     depends_on:
-      - mongo
-      - redis
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
-  # Il Database Unico Condiviso
   mongo:
     image: mongo:latest
     ports:
       - "27017:27017"
+    restart: on-failure
+    healthcheck:
+      test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   redis:
     image: redis:alpine
     ports:
       - "6379:6379"
+    restart: on-failure
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
