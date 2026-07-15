@@ -34,37 +34,33 @@ async function handleGracefulShutdown(signal: string) {
 
     console.log(`\n🛑 [${signal}] Ricevuto segnale di terminazione. Avvio pipeline di spegnimento...`);
 
-    httpServer.close(async (err) => {
-        if (err) console.error("[Shutdown] Errore durante la chiusura del server HTTP:", err);
-        console.log("[Shutdown] Server HTTP chiuso. Il Load Balancer instraderà i client sul nodo superstite.");
-
-        try {
-            await PresenceManager.flushPresenceOnShutdown();
-            await flushAllDocumentsOnShutdown();
-
-            console.log("[Shutdown] Disconnessione dei client WebSocket locali...");
-            io.close();
-
-            console.log("[Shutdown] Disconnessione da Redis e MongoDB...");
-            if (redisClient.isOpen) {
-                await redisClient.quit();
-            }
-            if (mongoose.connection.readyState === 1) {
-                await mongoose.connection.close();
-            }
-
-            console.log("[Shutdown] Pipeline completata senza perdite di dati. Processo terminato.");
-            process.exit(0);
-        } catch (shutdownError) {
-            console.error("[Shutdown Fatal] Errore critico durante la pipeline:", shutdownError);
-            process.exit(1);
-        }
-    });
-
-    setTimeout(() => {
-        console.error("⚠️ [Shutdown Force] Spegnimento bloccato (Timeout 10s). Forzatura uscita!");
+    const watchdog = setTimeout(() => {
+        console.error("[Shutdown Force] Spegnimento bloccato (Timeout). Forzatura uscita!");
         process.exit(1);
-    }, 10000);
+    }, 8000);
+
+    try {
+        await PresenceManager.flushPresenceOnShutdown();
+        await flushAllDocumentsOnShutdown();
+
+        console.log("[Shutdown] Disconnessione forzata dei client e stop al server HTTP...");
+        io.close();
+
+        console.log("[Shutdown] Disconnessione da Redis e MongoDB...");
+        if (redisClient.isOpen) {
+            await redisClient.quit();
+        }
+        if (mongoose.connection.readyState === 1) {
+            await mongoose.connection.close();
+        }
+
+        clearTimeout(watchdog);
+        console.log("[Shutdown] Pipeline completata senza perdite di dati. Processo terminato.");
+        process.exit(0);
+    } catch (shutdownError) {
+        console.error("[Shutdown Fatal] Errore critico durante la pipeline:", shutdownError);
+        process.exit(1);
+    }
 }
 
 process.on('SIGTERM', () => handleGracefulShutdown('SIGTERM')); // Inviato da Orchestrator Docker
