@@ -1,6 +1,6 @@
 import type {NextFunction, Request, Response} from 'express';
 import jwt, {type JwtPayload} from 'jsonwebtoken';
-import {UserRole} from '../models/User.js';
+import {UserModel, UserRole} from '../models/User.js';
 
 export interface AuthRequest extends Request {
     user?: { id: string; role: UserRole };
@@ -75,10 +75,28 @@ export const optionalAuth = (req: AuthRequest, res: Response, next: NextFunction
     next();
 };
 
-export const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction): void => {
-    if (!req.user || req.user.role !== UserRole.ADMIN) {
-        res.status(403).json({ error: 'Accesso negato. Privilegi di amministratore richiesti.' });
-        return;
+export const requireAdmin = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        if (!req.user || req.user.role !== UserRole.ADMIN) {
+            res.status(403).json({ error: 'Accesso negato. Privilegi di amministratore richiesti.' });
+            return;
+        }
+
+        const currentUser = await UserModel.findById(req.user.id).select('role');
+
+        if (!currentUser) {
+            res.status(401).json({ error: 'Utente non trovato nel sistema.' });
+            return;
+        }
+
+        if (currentUser.role !== 'ADMIN') {
+            res.status(403).json({ error: 'Accesso negato. I privilegi di amministratore sono stati revocati.' });
+            return;
+        }
+        next();
+
+    } catch (error) {
+        console.error('[AUTH MIDDLEWARE] Errore verifica privilegi admin:', error);
+        res.status(500).json({ error: 'Errore interno durante la verifica dei permessi.' });
     }
-    next();
 };
