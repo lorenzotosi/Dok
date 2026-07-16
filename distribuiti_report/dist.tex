@@ -18,7 +18,7 @@
 \author{
     Lorenzo Tosi \\ \emailaddr{lorenzo.tosi10@studio.unibo.it}
     \and
-    Alessandro Stefani \\ \emailaddr{author2@gmail.com}
+    Alessandro Stefani \\ \emailaddr{alessandro.stefani10@studio.unibo.it}
 }
 
 \date{\today}
@@ -28,19 +28,21 @@
 \maketitle
 
 \begin{abstract}
-Dok is a distributed, real-time collaborative document editing platform implemented as a
-web application. It allows multiple users to create, share, and simultaneously edit text
-documents. The system is built on a client--server architecture
-in which the backend is horizontally scaled across two \textbf{Node.js/Express} server instances,
-load-balanced by an \textbf{Nginx} reverse proxy. Real-time collaboration is achieved through
+Dok is a distributed, real-time collaborative document editing platform implemented as a web application.
+It allows multiple users to create, share, and simultaneously edit text documents.
+The system is built on a client--server architecture in which the backend is horizontally scaled across
+two \textbf{Node.js/Express} server instances, load-balanced by an Active-Passive \textbf{Nginx} cluster managed
+via \textbf{Keepalived} (VRRP).
+Real-time collaboration is achieved through
 \textbf{Yjs} Conflict-free Replicated Data Types (CRDTs) transported over \textbf{Socket.io}
 WebSocket connections; cross-instance event propagation is coordinated via a shared \textbf{Redis}
-Pub/Sub adapter, which also enables cluster-wide user-presence tracking. Persistent state is stored
-in a \textbf{MongoDB} document database. Documents are organised in folders and can be
-made public or private, with sharing policies (\textit{viewer}, \textit{commenter},
-\textit{editor}) enforced through \textbf{JWT}-based authentication and role-based access control. An administrative dashboard provides real-time platform-wide
-statistics, audit trails, user presence information, and site-access logs. The entire infrastructure
-is containerised with \textbf{Docker Compose}, making deployment reproducible with a single command.
+Pub/Sub adapter, which also enables cluster-wide user-presence tracking.
+Persistent state is stored in a \textbf{MongoDB} document database.
+Documents are organised in folders and can be made public or private, with document-level
+sharing policies (\textit{viewer}, \textit{commenter},\textit{editor}) enforced at the service layer.
+Global platform access and administrative privileges are secured through JWT-based authentication and Role-Based Access Control.
+An administrative dashboard provides real-time platform-wide statistics, audit trails, user presence information, and site-access logs.
+The entire infrastructure is containerised with \textbf{Docker Compose}, making deployment reproducible.
 \end{abstract}
 
 \section*{Disclaimer}
@@ -56,17 +58,16 @@ and take(s) full responsibility for the content of the final report/artifact.
 \subsection{Type of Product}
 
 Dok is a \textbf{web application with a graphical user interface}, accessible from any modern
-browser without additional software installation. It combines a single-page application (SPA)
-frontend, built with Vue~3 and Vite, with a horizontally scalable REST and WebSocket backend.
+browser without additional software installation.
+It combines a single-page application (SPA) frontend, built with Vue~3 and Vite, with a horizontally scalable REST and WebSocket backend.
 
 \subsection{Use-Case Description}
-
 Dok targets teams of knowledge workers---students, researchers, and professionals---who need
 to collaborate on written documents in real time from geographically dispersed locations.
 
 \paragraph{What the system does.}
 Users create rich-text documents (formatted paragraphs, headings, inline styling) and folders
-to organise them. They can keep documents private, publish them to a global feed, or share them
+to organise them. They can create private documents, create them in a global feed, or share them
 selectively with other registered users under a specific permission level. Multiple users who
 have access to the same document can edit it concurrently: their changes converge automatically
 through CRDT semantics, and their cursor positions are broadcast live to collaborators. Inline
@@ -317,10 +318,13 @@ A central design decision is \textbf{where edit consistency is enforced}. Rather
 The infrastructural components, as defined in the \texttt{docker-compose.yml}, are:
 
 \begin{itemize}
-  \item \textbf{Nginx} (\texttt{nginx:alpine}): A single entry point on port~3000.
-  It terminates incoming HTTP and WebSocket connections and forwards them to the upstream
-  cluster. WebSocket upgrade headers (\texttt{Upgrade}, \texttt{Connection}) are forwarded
-  explicitly. The real client IP is passed via \texttt{X-Real-IP}.
+  \item \textbf{Nginx HA Cluster} (\texttt{nginx-master} and \texttt{nginx-backup}):
+  Two instances of Nginx coupled with Keepalived, acting as an Active-Passive reverse proxy.
+  Keepalived uses the VRRP protocol in \textit{unicast} mode to manage a floating Virtual IP,
+  ensuring High Availability at the proxy layer.
+  \item \textbf{Entrypoint} (\texttt{haproxy:alpine}):
+  A lightweight TCP proxy used exclusively in the local Docker Compose environment
+  to map the host's port 3000 to the internal Nginx VIP.
   \item \textbf{backend1} and \textbf{backend2}: two replicas of the Node.js application, built from \texttt{server/Dockerfile}. They are intentionally identical to demonstrate horizontal scaling.
   \item \textbf{mongo} (\texttt{mongo:latest}): the single shared document database, exposed on port 27017.
   \item \textbf{redis} (\texttt{redis:alpine}): the pub/sub broker for Socket.IO cross-instance messaging, exposed on port 6379.
@@ -340,8 +344,9 @@ map $arg_documentId $route_key {
 }
 upstream websocket_cluster {
     hash $route_key consistent;
-    server backend1:3000;
-    server backend2:3000;
+    server backend1:3000 max_fails=1 fail_timeout=3s;
+    server backend2:3000 max_fails=1 fail_timeout=3s;
+
 }
 \end{verbatim}
 \end{quote}
@@ -475,9 +480,25 @@ milliseconds, without any polling.
 \textbf{Backend behaviour.} Each backend is event-driven and single-threaded (Node.js). Its components behave as follows:
 
 \begin{itemize}
-  \item \textit{Document handler} (stateful, per document). On \texttt{join-document} it lazily loads the CRDT from MongoDB and registers a deep observer on the Yjs XML fragment. The observer inspects each CRDT transaction's \texttt{origin} (which the server sets to the editing user's id when applying a remote update) and accumulates inserted characters per user into \texttt{pendingUserChars}; this provides attribution for the audit log without per-keystroke database writes. On every \texttt{crdt-update} it resets a 3-second debounce timer: when editing pauses for 3~seconds, the full binary state and the Tiptap JSON projection are persisted. This \emph{debounced persistence} is the main mechanism that keeps database write load proportional to \emph{editing sessions} rather than to \emph{keystrokes}, addressing the performance concern of \cref{ds-features}.
-  \item \textit{Presence manager} (stateful, per user). On connection it joins a per-user room \texttt{user:<id>}; because the room is shared across backends through Redis, the count of sockets in the room is a cluster-wide online indicator. On disconnect it waits a 3-second \emph{grace period} before declaring the user offline: if a new connection appears within the window (a transient network flap or a device switch) the offline transition is cancelled. Only when the room is genuinely empty does it update \texttt{lastSeen} in the database and emit \texttt{presence\_update} to the admin room.
-  \item \textit{Notification manager} (stateless facade over the socket instance). It is initialised
+  \item \textit{Document handler} (stateful, per document).
+  On \texttt{join-document} it lazily loads the CRDT from MongoDB and registers a deep observer on the Yjs XML fragment.
+  The observer inspects each CRDT transaction's \texttt{origin} (which the server sets to the editing user's id
+  when applying a remote update) and accumulates inserted characters per user into \texttt{pendingUserChars};
+  this provides attribution for the audit log without per-keystroke database writes. On every \texttt{crdt-update}
+  it resets a 3-second debounce timer: when editing pauses for 3~seconds, the full binary state and the Tiptap JSON
+  projection are persisted. This \emph{debounced persistence} is the main mechanism that keeps database write load
+  proportional to \emph{editing sessions} rather than to \emph{keystrokes}, addressing the performance concern of \cref{ds-features}.
+  \item \textit{Presence manager} (stateful, per user).
+  On connection it joins a per-user room \texttt{user:<id>}; because the room is shared across backends through Redis,
+  the count of sockets in the room is a cluster-wide online indicator.
+  To support multi-tab and multi-device sessions, it employs a dual-tracking strategy.
+  Globally, it leverages the Redis adapter to count sockets across the cluster via \texttt{fetchSockets()}.
+  Locally, it maintains a \texttt{Map<string, Set<string>>} in RAM mapping user IDs to their local socket IDs.
+  On disconnect, it waits a 3-second \emph{grace period} before querying the global cluster state;
+  if the cluster-wide socket count for that user reaches zero, it updates \texttt{lastSeen} in the database and
+  emits \texttt{presence\_update} to the admin room. The local RAM map is crucial for the Graceful Shutdown flush.
+
+  \item \textit{Notification manager} (stateless facade over the socket instance).  It is initialised
     once at startup with a reference to the Socket.IO \texttt{Server} object and exposes a set of
     domain-level methods called by the service layer after each mutating operation:
     \begin{itemize}
@@ -508,8 +529,6 @@ milliseconds, without any polling.
     \includegraphics[scale=0.22]{diagrammi/states.png}
     \caption{Document lifecycle inside server.}
 \end{figure}
-
-
 
 \subsection{Data and Consistency Issues}\label{data-and-consistency-issues}
 
@@ -548,6 +567,20 @@ If one instance crashes, Nginx's upstream health-check mechanism stops routing n
 connections to it, and clients will reconnect to the surviving instance. The Redis adapter
 state (room membership) reconstructs automatically as clients reconnect.
 
+\paragraph{Load Balancer High Availability (Active-Passive).}
+To eliminate the reverse proxy as a SPOF, the infrastructure deploys two Nginx instances coupled with Keepalived.
+Using the Virtual Router Redundancy Protocol configured in \emph{unicast} mode
+(to cleanly bypass multicast routing restrictions of containerised environments) the nodes negotiate a floating Virtual IP.
+If the \texttt{nginx-master} container crashes, \texttt{nginx-backup} detects the missing heartbeats, claims the VIP,
+and assumes routing duties without dropping client traffic.
+
+\paragraph{Development Environment vs. Production Topology.}
+It is worth specifying that the reference Docker Compose deployment introduces an \texttt{entrypoint} container (HAProxy)
+to easily route local host traffic (\texttt{localhost:3000}) to the internal Keepalived Virtual IP.
+While this container technically represents a Single Point of Failure within the local simulation, it is strictly a development artifact.
+In a production environment, this component would be absent, as external DNS records would direct client traffic
+straight to the VIP managed by the Active-Passive Nginx cluster.
+
 \paragraph{Grace period for network flap.}
 The \texttt{PresenceManager.removeConnection} method waits 3~seconds before marking a user
 offline and updating \texttt{lastSeen}. This handles transient network interruptions and
@@ -569,11 +602,29 @@ Errors in background tasks (metric updates, sharing metric refreshes) are caught
 but do not propagate to the calling request, preventing auxiliary failures from disrupting
 the primary user action.
 
+\paragraph{Graceful Shutdown and Fast Failover.}
+To prevent data loss during container termination, the Node.js instances implement a synchronous state-lock mechanism.
+Upon receiving a \texttt{SIGTERM} or \texttt{SIGINT} signal, the backend raises an \texttt{isShuttingDown} flag that halts all asynchronous
+socket disconnection timers.
+It immediately performs a flush of the ephemeral RAM state (active Yjs CRDTs and local User Sessions) directly to MongoDB.
+Crucially, rather than waiting for long-lived WebSocket connections to drain naturally, which would cause
+the process to hang indefinitely, the server proactively severs all active sockets (\texttt{io.close()}).
+This forced TCP termination allows both the Nginx load balancer and the Vue.js clients to detect the node's
+unavailability, triggering the exponential backoff and a fast failover to the surviving replica,
+while guaranteeing data consistency.
+An 8-second watchdog timer ensures the process exits cleanly even if database queries hang.
+
 \subsection{Availability}\label{availability}
 
-\textbf{Caching.} There is intentionally little caching: the in-memory \texttt{activeDocuments} map is effectively a \emph{session cache} of live documents, present only on the owning backend. The \texttt{tiptapJson} projection persisted alongside the CRDT acts as a pre-computed rendering cache so that read-only opens do not need to run the Yjs$\rightarrow$Tiptap transformation.
+\textbf{Caching.} There is intentionally little caching: the in-memory \texttt{activeDocuments} map
+is effectively a \emph{session cache} of live documents, present only on the owning backend.
+The \texttt{tiptapJson} projection persisted alongside the CRDT acts as a pre-computed rendering cache
+so that read-only opens do not need to run the Yjs$\rightarrow$Tiptap transformation.
 
-\textbf{Load balancing.} Nginx performs load balancing with the consistent-hashing strategy described in \cref{infrastructure}. This simultaneously balances connection load and enforces session stickiness, which is what makes the single-replica-per-document design correct. For pure REST traffic (no \texttt{documentId}), client-IP hashing provides a fairer distribution.
+\textbf{Load balancing.} Nginx performs load balancing with the consistent-hashing strategy described in \cref{infrastructure}.
+This simultaneously balances connection load and enforces session stickiness,
+which is what makes the single-replica-per-document design correct.
+For pure REST traffic (no \texttt{documentId}), client-IP hashing provides a fairer distribution.
 
 \textbf{Network partitioning.} Because all backend instances share MongoDB and Redis, a partition between the two instances
 would be detected by the Redis adapter (connection errors logged), but MongoDB reads/writes
@@ -598,8 +649,9 @@ accidental exposure in query results.
 \paragraph{Authorisation.}
 Three layers of access control are enforced:
 \begin{enumerate}
-  \item \textbf{Endpoint-level RBAC}: \texttt{requireAuth} (any valid JWT) and
-  \texttt{requireAdmin} (JWT with \texttt{role === ADMIN}) middleware guard route groups.
+  \item \textbf{Endpoint-level RBAC}: \texttt{requireAuth} validates the JWT signature,
+  while \texttt{requireAdmin} implements a \textbf{Stale Data Defense} by querying the database
+  to ensure the administrator privileges have not been revoked during the token's lifespan.
   \item \textbf{Document-level ownership checks}: Service methods verify \texttt{ownerId}
   or \texttt{sharedWith} membership before performing mutations.
   \item \textbf{Comment-level role checks}: Comment creation and deletion enforce the four
@@ -819,12 +871,14 @@ non-development environment.
 
 \subsection{Docker Compose Architecture}
 
-The \texttt{docker-compose.yml} defines five services:
+The \texttt{docker-compose.yml} defines seven services:
 
 \begin{description}
-  \item[\texttt{nginx}] Built from \texttt{nginx:alpine}; mounts \texttt{nginx.conf}
-  read-only; exposes port~3000 to the host; depends on \texttt{backend1} and
-  \texttt{backend2}.
+  \item[\texttt{nginx-master}, \texttt{nginx-backup}]
+  Built from a custom Dockerfile based on \texttt{nginx:alpine}, installing Keepalived.
+  They are assigned static IPs on a custom subnet to allow VRRP unicast communication and VIP assignment,
+  requiring \texttt{NET\_ADMIN} capabilities.
+  \item[\texttt{entrypoint}] \texttt{haproxy:alpine} image; exposes port 3000 to the host and blindly forwards TCP traffic to the VIP (\texttt{172.20.0.100}).
   \item[\texttt{backend1}, \texttt{backend2}] Built from \texttt{server/Dockerfile}
   (Node.js~22-Alpine); receive the environment variables from \texttt{.env}; depend on
   \texttt{mongo} and \texttt{redis}.
@@ -858,7 +912,7 @@ docker compose up --build
 \end{verbatim}
 
 \paragraph{Expected outcome.}
-After approximately 30--60 seconds for image builds, all five containers start. MongoDB and
+After approximately 30--60 seconds for image builds, all seven containers start. MongoDB and
 Redis emit ready signals visible in the Docker Compose logs.
 
 \subsection{Frontend Development}
@@ -950,6 +1004,29 @@ Administrators access the admin panel from the navigation bar. Available views:
 
 \paragraph{Weaknesses.}
 
+\subsection{Alessandro Stefani}
+
+\paragraph{Role.}
+Infrastructure, Security, and Distributed State Management.
+I focused on designing the stateless authentication architecture, cluster-wide observability,
+inter-node communication via the Redis backplane, and application-level fault-tolerance mechanisms.
+
+\paragraph{Strengths.}
+My primary strength was bridging the gap between application logic and distributed infrastructure.
+I designed the \textbf{Distributed Observability} system (the Admin Dashboard) inserting in our project the Redis Pub/Sub adapter
+to aggregate real-time WebSocket presence and audit logs across isolated backend instances.
+Furthermore, I engineered the \textbf{Graceful Shutdown and RAM Shield} pipeline: overcoming the hanging callback problem
+of long-lived WebSockets, my implementation synchronously flushes ephemeral RAM data to MongoDB
+and then proactively severs TCP connections to trigger an Nginx failover.
+Finally, I successfully eliminated the load balancer SPOF by designing an \textbf{Active-Passive Nginx cluster}.
+By configuring Keepalived VRRP in \emph{unicast} mode, I bypassed the multicast traffic limitations of the Docker network,
+achieving High Availability at the proxy layer also.
+
+\paragraph{Weaknesses.}
+I underestimated the complexity of graceful teardowns in stateful WebSocket architectures,
+which led to race conditions between socket disconnection events and database closures
+(a problem I later fixed by introducing the synchronous state lock).
+
 
 \section{Future Works}\label{future-works}
 
@@ -967,7 +1044,6 @@ Discuss possible future works, improvements, extensions, and optimizations.
   \item[\textbf{Document export.}] Since \texttt{tiptapJson} is already stored alongside the
   Yjs binary state, adding server-side PDF or DOCX export (e.g., via \texttt{pandoc} or a
   headless browser) would be straightforward.
-
 
   \item[\textbf{Full Docker integration of the frontend.}] Adding the Vite build and an
   Nginx static-file server for the frontend to the Docker Compose stack would make the full
