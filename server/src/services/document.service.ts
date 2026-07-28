@@ -110,6 +110,7 @@ export class DocumentService {
         const fullDoc = await Document.findById(id)
             .populate('ownerId', 'firstName lastName')
             .populate('sharedWith.userId', 'firstName lastName email')
+            .populate('comments.userId', 'firstName lastName email')
             .lean();
 
         if (fullDoc) {
@@ -151,6 +152,7 @@ export class DocumentService {
         const docForNotify = await Document.findById(id)
             .populate('ownerId', 'firstName lastName')
             .populate('sharedWith.userId', 'firstName lastName email')
+            .populate('comments.userId', 'firstName lastName email')
             .lean() as any;
 
         if (docForNotify) {
@@ -184,6 +186,7 @@ export class DocumentService {
         const docForNotify = await Document.findById(id)
             .populate('ownerId', 'firstName lastName')
             .populate('sharedWith.userId', 'firstName lastName email')
+            .populate('comments.userId', 'firstName lastName email')
             .lean() as any;
 
         if (docForNotify) {

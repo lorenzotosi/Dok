@@ -52,7 +52,9 @@ const editor = useEditor({
     CollaborationCaret.configure({
       provider: provider,
       user: {
-        name: authStore.user?.firstName + ' ' + authStore.user?.lastName || 'Utente' + Math.random().toString(36).substring(2, 7),
+        name: authStore.isAuthenticated() && authStore.user
+          ? `${authStore.user.firstName} ${authStore.user.lastName}`
+          : 'Utente Anonimo',
         color: getRandomColor(),
       },
     }),
@@ -100,7 +102,7 @@ watch(canEdit, (newEditableState) => {
   align-items: center;
   background-color: transparent; 
   width: 100%;
-  padding: 1rem;
+  padding: 0 1rem 1rem 1rem;
 }
 
 .document-page {

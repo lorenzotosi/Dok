@@ -160,6 +160,20 @@ const executeCommand = (action: () => void) => {
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: sticky;
+  top: 0;
+  background-color: #f8f9fa;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  z-index: 100;
+}
+
+@media screen and (max-width: 768px) {
+  .toolbar-container {
+    background-color: #ffffff;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
 }
 
 .toolbar {
@@ -168,10 +182,6 @@ const executeCommand = (action: () => void) => {
   background: #edf2fa;
   padding: 0.4rem 1rem;
   border-radius: 40px;
-  margin-bottom: 2rem;
-  position: sticky;
-  top: 1rem;
-  z-index: 10;
   max-width: 95vw;
   overflow-x: auto;
   white-space: nowrap;

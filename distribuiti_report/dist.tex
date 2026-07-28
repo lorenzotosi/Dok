@@ -62,8 +62,9 @@ browser without additional software installation.
 It combines a single-page application (SPA) frontend, built with Vue~3 and Vite, with a horizontally scalable REST and WebSocket backend.
 
 \subsection{Use-Case Description}
-Dok targets teams of knowledge workers---students, researchers, and professionals---who need
-to collaborate on written documents in real time from geographically dispersed locations.
+Dok targets teams of knowledge workers, such as students, researchers, and professionals, who need
+to collaborate on written documents in real time from multiple locations.
+
 
 \paragraph{What the system does.}
 Users create rich-text documents (formatted paragraphs, headings, inline styling) and folders
@@ -71,7 +72,7 @@ to organise them. They can create private documents, create them in a global fee
 selectively with other registered users under a specific permission level. Multiple users who
 have access to the same document can edit it concurrently: their changes converge automatically
 through CRDT semantics, and their cursor positions are broadcast live to collaborators. Inline
-comments allow asynchronous annotation without disrupting the editing flow. An integrated AI
+comments allow asynchronous annotation. An integrated AI
 assistant (backed by Google Gemini) can rewrite any selected passage following a free-text
 instruction. An administrator role provides platform-wide oversight: real-time user-presence,
 per-user file-system trees, usage statistics, audit logs of document accesses and modifications,
@@ -102,7 +103,7 @@ Distribution addresses several independent needs:
   \item \textbf{Concurrency and real-time collaboration.} Multiple users may edit the same
   document simultaneously. A single-process server would create a bottleneck and a single
   point of failure; horizontal scaling across multiple server instances, coordinated by Redis,
-  removes both obstacles.
+  addresses these issues.
   \item \textbf{Fault tolerance.} Running at least two backend replicas behind a load balancer
   ensures that the failure of one instance does not render the service unavailable.
   \item \textbf{Resource sharing.} All backend instances share a single MongoDB database and a
@@ -119,7 +120,7 @@ Distribution addresses several independent needs:
 
 \begin{description}
   \item[Dok] The name of the platform and the informal term for a document managed within it.
-  \item[CRDT] Conflict-free Replicated Data Type---a data structure that can be merged from
+  \item[CRDT] Conflict-free Replicated Data Type, a data structure that can be merged from
   multiple concurrent sources without conflicts.
   \item[Yjs state] The binary serialisation of a Yjs document, stored in MongoDB and used to
   restore in-memory state when a document room is created.
@@ -235,12 +236,11 @@ Distribution addresses several independent needs:
 
 \begin{enumerate}
   \item[\textbf{IC-1}] The backend shall be implemented in \textbf{TypeScript} on
-  \textbf{Node.js}, chosen for the ecosystem's excellent WebSocket support and the team's
-  proficiency.
+  \textbf{Node.js}, chosen for the ecosystem's WebSocket support.
   \item[\textbf{IC-2}] The frontend shall be a \textbf{Vue~3} SPA, chosen for its reactive
-  component model and first-class TypeScript integration.
-  \item[\textbf{IC-3}] Real-time collaboration shall be built on \textbf{Yjs} CRDTs, the
-  de-facto standard for operation-based collaborative editing without a central OT server.
+  component model and TypeScript integration.
+  \item[\textbf{IC-3}] Real-time collaboration shall be built on \textbf{Yjs} CRDTs for
+  operation-based collaborative editing without a central OT server.
   \item[\textbf{IC-4}] The entire backend stack shall be containerised with \textbf{Docker}
   to enable one-command deployment and reproducible environments.
   \item[\textbf{IC-5}] The AI feature shall use the \textbf{Google Gemini} API
@@ -292,7 +292,7 @@ memory and flushed lazily to avoid per-keystroke database writes.
 
 \paragraph{Economy.}
 The use of free-tier-compatible managed services (MongoDB, Redis) in the Docker Compose
-setup keeps operational costs minimal for small deployments.
+setup minimizes operational costs.
 
 
 \section{Design}\label{design}
@@ -304,9 +304,9 @@ This chapter presents the strategies used to meet the requirements of \cref{requ
 Dok follows a classic \textbf{client--server, three-tier architecture} with a \emph{stateless application tier} and a \emph{shared state tier}:
 
 \begin{itemize}
-  \item \textbf{Presentation tier} --- a Vue 3 SPA running in the user's browser.
-  \item \textbf{Application tier} --- one or more identical Node.js processes exposing both a REST API (Express) and a WebSocket endpoint (Socket.IO). This tier is \emph{stateless with respect to HTTP} but holds \emph{ephemeral session state} for the documents currently being edited (the in-memory Yjs documents).
-  \item \textbf{State tier} --- a single MongoDB instance for persistence and a single Redis instance used as a Socket.IO pub/sub backbone.
+  \item \textbf{Presentation tier}: a Vue 3 SPA running in the user's browser.
+  \item \textbf{Application tier}: one or more identical Node.js processes exposing both a REST API (Express) and a WebSocket endpoint (Socket.IO). This tier is \emph{stateless with respect to HTTP} but holds \emph{ephemeral session state} for the documents currently being edited (the in-memory Yjs documents).
+  \item \textbf{State tier}: a single MongoDB instance for persistence and a single Redis instance used as a Socket.IO pub/sub backbone.
 \end{itemize}
 
 The chosen style is a \emph{service-oriented, horizontally scalable monolith}: each backend instance is a replica of the same application, and the load balancer distributes requests among them. This style is appropriate because the dominant workload (live editing) is interactive and benefits from low-latency, sticky connections, while the REST workload is stateless and trivially parallelisable. Distribution is achieved by \emph{replication of the application code} rather than by partitioning the domain across microservices, which keeps the system simple while still allowing scale-out.
@@ -366,12 +366,12 @@ The hash key is the \texttt{documentId} query parameter when present, and the cl
 \textbf{Domain entities.} The persisted domain model, expressed as Mongoose schemas, consists of:
 
 \begin{itemize}
-  \item \texttt{User} --- \texttt{email} (unique), \texttt{passwordHash}, \texttt{role} (\texttt{USER}|\texttt{ADMIN}), \texttt{firstName}, \texttt{lastName}, \texttt{lastSeen}, plus timestamps.
-  \item \texttt{Document} --- \texttt{title}, \texttt{ownerId}, \texttt{folderId}, \texttt{visibility} (\texttt{private}|\texttt{public}), an array \texttt{sharedWith} of \{\texttt{userId}, \texttt{role}\}, an array \texttt{comments} of \{\texttt{userId}, \texttt{content}\}, the binary \texttt{yjsState} (the serialised CRDT), and a \texttt{tiptapJson} projection for rendering.
-  \item \texttt{Folder} --- \texttt{name}, \texttt{ownerId}, \texttt{parentId}, \texttt{visibility}.
-  \item \texttt{Notification} --- \texttt{recipient}, \texttt{sender}, \texttt{type} (\texttt{SHARE}|\texttt{PERM\_CHANGE}|\texttt{DOCUMENT\_DELETE}|\texttt{SYSTEM}), \texttt{title}, \texttt{message}, \texttt{documentId}, \texttt{read}, \texttt{link}.
-  \item \texttt{AuditLog} --- \texttt{documentId}, \texttt{userId}, \texttt{type} (\texttt{access}|\texttt{modification}), \texttt{charactersInserted}.
-  \item \texttt{SiteAccessLog} --- \texttt{userId}, \texttt{loginAt}, \texttt{logoutAt}, \texttt{ipAddress}.
+  \item \texttt{User}: \texttt{email} (unique), \texttt{passwordHash}, \texttt{role} (\texttt{USER}|\texttt{ADMIN}), \texttt{firstName}, \texttt{lastName}, \texttt{lastSeen}, plus timestamps.
+  \item \texttt{Document}: \texttt{title}, \texttt{ownerId}, \texttt{folderId}, \texttt{visibility} (\texttt{private}|\texttt{public}), an array \texttt{sharedWith} of \{\texttt{userId}, \texttt{role}\}, an array \texttt{comments} of \{\texttt{userId}, \texttt{content}\}, the binary \texttt{yjsState} (the serialised CRDT), and a \texttt{tiptapJson} projection for rendering.
+  \item \texttt{Folder}: \texttt{name}, \texttt{ownerId}, \texttt{parentId}, \texttt{visibility}.
+  \item \texttt{Notification}: \texttt{recipient}, \texttt{sender}, \texttt{type} (\texttt{SHARE}|\texttt{PERM\_CHANGE}|\texttt{DOCUMENT\_DELETE}|\texttt{SYSTEM}), \texttt{title}, \texttt{message}, \texttt{documentId}, \texttt{read}, \texttt{link}.
+  \item \texttt{AuditLog}: \texttt{documentId}, \texttt{userId}, \texttt{type} (\texttt{access}|\texttt{modification}), \texttt{charactersInserted}.
+  \item \texttt{SiteAccessLog}: \texttt{userId}, \texttt{loginAt}, \texttt{logoutAt}, \texttt{ipAddress}.
 \end{itemize}
 
 \textbf{In-memory state.} Alongside the persisted model, each backend holds a \texttt{Map<string, ActiveDocState>} of documents currently being edited. Each entry contains the live \texttt{Y.Doc}, a \texttt{clientsCount}, a debounced \texttt{saveTimeout}, and a \texttt{pendingUserChars} map used to aggregate modification audit logs. This ephemeral state is the unit that is pinned to a single backend by the consistent-hashing router.
@@ -422,10 +422,10 @@ The lifecycle of a collaborative editing session is the canonical interaction:
 
 
 \paragraph{Real-time file-system event propagation.}
-Beyond the collaborative editing channel, Redis plays a second, equally important role: it is the
+Beyond the collaborative editing channel, Redis acts as the
 backbone for propagating \emph{structural changes} to the file system in real time. When a user
-performs an action that modifies the shared state of the dashboard---creating, renaming, or deleting
-a document, or sharing/unsharing it with a collaborator---the service layer invokes the
+performs an action that modifies the shared state of the dashboard (creating, renaming, or deleting
+a document, or sharing/unsharing it with a collaborator), the service layer invokes the
 \texttt{NotificationManager}, which emits targeted Socket.IO events to one or more rooms.
 Because the Socket.IO Redis adapter is active, these emissions are transparently forwarded to
 \emph{all} backend instances, so every connected client receives the update regardless of which
@@ -465,8 +465,8 @@ mutating REST call completes (e.g., \texttt{PUT /api/documents/share}), the serv
 \texttt{io.to(\ldots).emit(\ldots)} on the local Socket.IO server instance. The Redis adapter
 serialises the emission and publishes it to the appropriate Redis channel; every other backend
 instance subscribed to that channel delivers it to its locally connected clients. The result is
-that the client who \emph{initiated} the REST action and the clients who are affected by it---even
-if they are connected to \emph{different} backend instances---all observe the updated state within
+that the client who \emph{initiated} the REST action and the clients who are affected by it, even
+if they are connected to \emph{different} backend instances, all observe the updated state within
 milliseconds, without any polling.
 
 \begin{figure}[H]
@@ -516,12 +516,12 @@ milliseconds, without any polling.
     routing the event to the correct set of recipients (a single user room, a document room, the
     global dashboard, or the admin dashboard). Because the Socket.IO Redis adapter is attached to the
     same \texttt{io} instance, every emission is automatically replicated across all backend instances:
-    the \texttt{NotificationManager} is therefore completely stateless and instance-agnostic---it
+    the \texttt{NotificationManager} is therefore completely stateless and instance-agnostic: it
     emits locally and Redis takes care of cluster-wide delivery.
   \item \textit{Auth middleware} (stateless). Validates the JWT on every protected HTTP route and on the socket handshake; for sockets, an absent token is tolerated (guest), while an invalid token is rejected.
 \end{itemize}
 
-\textbf{Who updates the state.} The single source of truth for a document's content is the in-memory CRDT on the owning backend; it is updated by the \texttt{crdt-update} handler and periodically checkpointed to MongoDB by the debounce/flush logic. All other durable state (users, folders, sharing, notifications, logs) is updated synchronously by the service layer in response to REST commands, against the shared MongoDB. Because the CRDT guarantees convergence, no component needs to coordinate with others to ``update the state correctly'' --- replicas simply apply commutative updates.
+\textbf{Who updates the state.} The single source of truth for a document's content is the in-memory CRDT on the owning backend; it is updated by the \texttt{crdt-update} handler and periodically checkpointed to MongoDB by the debounce/flush logic. All other durable state (users, folders, sharing, notifications, logs) is updated synchronously by the service layer in response to REST commands, against the shared MongoDB. Because the CRDT guarantees convergence, no component needs to coordinate with others to "update the state correctly": replicas simply apply commutative updates.
 
 
 \begin{figure}[H]
@@ -813,7 +813,7 @@ requiring no external infrastructure.
     \item \textbf{Persistence on disconnect}: a client edits a document and disconnects; the
     test waits and then fetches the document from MongoDB, verifying that \texttt{yjsState}
     is non-empty and that the content reconstructed from it matches the original text
-    (``Hello Auto-Save!'').
+    ("Hello Auto-Save!").
   \end{itemize}
 
   \item[\texttt{tests/swagger.test.ts}] Confirms that the Swagger UI endpoint returns
@@ -934,7 +934,7 @@ The Vite dev server is pre-configured to proxy API requests to
 
 \subsection{Registration and Login}
 
-Navigate to \texttt{http://localhost:5173}. Click ``Register'' and provide a first name,
+Navigate to \texttt{http://localhost:5173}. Click "Register" and provide a first name,
 last name, email address, and password. The first account created is automatically promoted
 to Administrator. Subsequent registrations create regular user accounts. After registration,
 you are redirected to the dashboard and a JWT is stored in the browser.
@@ -943,9 +943,9 @@ you are redirected to the dashboard and a JWT is stored in the browser.
 
 The main dashboard shows three panels:
 \begin{itemize}
-  \item \textbf{My Doks}---private documents and folders owned by the current user.
-  \item \textbf{Public Doks}---all public documents on the platform.
-  \item \textbf{Shared with me}---documents that other users have shared with the current
+  \item \textbf{My Doks}: private documents and folders owned by the current user.
+  \item \textbf{Public Doks}: all public documents on the platform.
+  \item \textbf{Shared with me}: documents that other users have shared with the current
   user.
 \end{itemize}
 Documents can be created, renamed, and deleted from this view. Clicking a document opens
@@ -960,7 +960,7 @@ text alignment, headings, bullet and numbered lists, blockquotes, and undo/redo.
 Active collaborators' cursors appear in real time, labelled with their name and a unique
 colour.
 
-To share the document, use the ``Share'' button in the top-right corner; enter the
+To share the document, use the "Share" button in the top-right corner; enter the
 recipient's email address and choose a role:
 \begin{itemize}
   \item \textbf{Viewer}: can read the document only.
@@ -970,7 +970,7 @@ recipient's email address and choose a role:
 \end{itemize}
 
 The AI assistant is accessed by selecting text and clicking the AI button in the bubble
-menu; type a natural-language instruction (e.g., ``make this more concise'') and confirm.
+menu; type a natural-language instruction (e.g., "make this more concise") and confirm.
 
 \subsection{Notifications}
 
@@ -997,12 +997,40 @@ Administrators access the admin panel from the navigation bar. Available views:
 \subsection{Lorenzo Tosi}
 
 \paragraph{Role.}
-
+Distributed Real-Time Collaboration, Nginx Routing, and WebSocket Connection Management.
+I designed and implemented the document-specific routing strategy for collaborative
+editing. Inspired by the Google Docs model, I configured Nginx to route all users
+editing the same document to the same backend instance. I also implemented the
+WebSocket connections, rooms, and events used for collaborative editing, user presence,
+and real-time dashboard updates.
 
 \paragraph{Strengths.}
+My primary strength was implementing the \textbf{Document-Specific Collaboration
+Connection} mechanism. Inspired by the Google Docs model, I designed each editor to
+create a dedicated Socket.IO connection containing the \texttt{documentId}. This allows
+the Nginx routing strategy to keep collaborators of the same document on a consistent
+backend instance. I also improved the join/leave lifecycle and presence handling,
+addressing stale or ``ghost'' socket connections.
 
+I also implemented real-time application features on top of the distributed
+infrastructure. I implemented the \textbf{Real-Time Dashboard Synchronisation} flow:
+when a public document is created, or when a document is shared with a user, the
+relevant dashboard updates immediately through Socket.IO events. Public-document events
+are delivered through the \texttt{global-dashboard} room, while sharing events are
+delivered through per-user rooms. These mechanisms leverage the existing Socket.IO
+Redis adapter to work across backend instances.
+
+Finally, I implemented integration tests for the distributed core. The tests start two
+real Socket.IO instances sharing Redis and MongoDB, and verify cross-instance presence,
+CRDT update propagation, and persistence of the final document state.
 
 \paragraph{Weaknesses.}
+I underestimated the complexity of propagating document-sharing and document-creation
+events in real time. Initially, I thought that emitting a Socket.IO event from the
+backend would be sufficient to update the user interface. Instead, I had to define the
+correct delivery scope for each event: public-document events are sent to the global
+dashboard room, while sharing events are sent to per-user rooms. The clients also need
+to subscribe to the relevant events and update their local state consistently.
 
 \subsection{Alessandro Stefani}
 
