@@ -86,7 +86,10 @@ const handleClientLeave = async (documentId: string, io: Server) => {
 
     if (state.clientsCount <= 0) {
         console.log(`[GC] Nessun client in ${documentId}. Pulizia memoria...`);
-        if (state.saveTimeout) clearTimeout(state.saveTimeout);
+        if (state.saveTimeout) {
+            clearTimeout(state.saveTimeout);
+            state.saveTimeout = null;
+        }
 
         if (state.isDirty) {
             if (state.isDirty) {
@@ -297,24 +300,30 @@ export const registerDocumentHandlers = (io: Server, socket: Socket) => {
 
             socket.to(documentId).emit('crdt-update', update);
 
-            if (state.saveTimeout) clearTimeout(state.saveTimeout);
-            state.saveTimeout = setTimeout(async () => {
-                try {
-                    const binaryState = Y.encodeStateAsUpdate(state.ydoc);
-                    const tiptapJson = TiptapTransformer.fromYdoc(state.ydoc, 'default');
+            if (!state.saveTimeout) {
+                state.saveTimeout = setTimeout(async () => {
+                    state.saveTimeout = null;
+                    if (state.isDirty) {
+                        const binaryState = Y.encodeStateAsUpdate(state.ydoc);
+                        const tiptapJson = TiptapTransformer.fromYdoc(state.ydoc, 'default');
 
-                    await Document.findByIdAndUpdate(documentId, {
-                        yjsState: Buffer.from(binaryState),
-                        tiptapJson: tiptapJson
-                    });
+                        state.isDirty = false;
+                        try {
+                            await Document.findByIdAndUpdate(documentId, {
+                                yjsState: Buffer.from(binaryState),
+                                tiptapJson: tiptapJson
+                            });
 
-                    await flushAuditLogs(documentId, state, io);
-                    state.isDirty = false;
-                    console.log(`💾 Documento ${documentId} persistito su DB dopo inattività.`);
-                } catch (error) {
-                    console.error("[Salvataggio DB] Errore nel salvataggio debounced:", error);
-                }
-            }, 3000);
+                            await flushAuditLogs(documentId, state, io);
+                            state.isDirty = false;
+                            console.log(`[Checkpoint] 💾 Documento ${documentId} persistito su DB.`);
+                        } catch (error) {
+                            console.error("[Salvataggio DB] Errore nel checkpointing periodico:", error);
+                            state.isDirty = true;
+                        }
+                    }
+                }, 3000);
+            }
         }
     });
 
