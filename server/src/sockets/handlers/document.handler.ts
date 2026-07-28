@@ -5,6 +5,8 @@ import Document from '../../models/Document.js';
 import AuditLog from '../../models/AuditLog.js';
 import { activeDocuments, type ActiveDocState } from '../sync.types.js';
 
+const pendingDocumentLoads = new Map<string, Promise<void>>();
+
 const flushAuditLogs = async (documentId: string, state: ActiveDocState, io: Server) => {
     if (!state.pendingUserChars) return;
 
@@ -87,27 +89,59 @@ const handleClientLeave = async (documentId: string, io: Server) => {
         if (state.saveTimeout) clearTimeout(state.saveTimeout);
 
         if (state.isDirty) {
-            try {
+            if (state.isDirty) {
                 const finalBinaryState = Y.encodeStateAsUpdate(state.ydoc);
                 const tiptapJson = TiptapTransformer.fromYdoc(state.ydoc, 'default');
-                await Document.findByIdAndUpdate(documentId, {
+
+                Document.findByIdAndUpdate(documentId, {
                     yjsState: Buffer.from(finalBinaryState),
                     tiptapJson: tiptapJson
+                }).then(() => {
+                    return flushAuditLogs(documentId, state, io);
+                }).then(() => {
+                    console.log(`[DB] Stato finale e log di ${documentId} salvati.`);
+                }).catch(error => {
+                    console.error(`[DB Errore] Salvataggio fallito per ${documentId}:`, error);
                 });
-
-                await flushAuditLogs(documentId, state, io);
-                console.log(`[DB] Stato finale e log di ${documentId} salvati.`);
-            } catch (error) {
-                console.error(`[DB Errore] Salvataggio fallito per ${documentId}:`, error);
+            } else {
+                console.log(`[DB] Nessuna modifica locale per ${documentId}. Salvataggio ignorato.`);
             }
-        } else {
-            console.log(`[DB] Nessuna modifica locale per ${documentId}. Salvataggio ignorato per evitare sovrascritture.`);
-        }
 
-        state.ydoc.destroy();
-        activeDocuments.delete(documentId);
+            state.destroyTimer = setTimeout(() => {
+                const currentState = activeDocuments.get(documentId);
+                if (currentState && currentState.clientsCount <= 0) {
+                    console.log(`[GC] Grace period scaduto per ${documentId}. Pulizia definitiva della memoria.`);
+                    currentState.ydoc.destroy();
+                    activeDocuments.delete(documentId);
+                }
+            }, 10000);
+        }
     }
 };
+
+const createDokAccessLog = async (userId: any, documentId: string, io: Server ) => {
+    if (userId) {
+        try {
+            const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000);
+            const recentLog = await AuditLog.findOne({
+                documentId,
+                userId,
+                type: 'access',
+                createdAt: { $gte: fiveMinsAgo }
+            });
+
+            if (!recentLog) {
+                const log = await AuditLog.create({ documentId, userId, type: 'access' });
+                const populatedLog = await log.populate('userId', 'firstName lastName email _id');
+
+                const safeLog = JSON.parse(JSON.stringify(populatedLog.toObject({ virtuals: true })));
+                io.to(`admin_logs:${documentId}`).emit('new_audit_log', safeLog);
+            }
+        } catch (err) {
+            console.error("[Join] Errore salvataggio log di accesso:", err);
+        }
+    }
+}
 
 export const registerDocumentHandlers = (io: Server, socket: Socket) => {
     socket.on('join-document', async (documentId: string) => {
@@ -115,54 +149,51 @@ export const registerDocumentHandlers = (io: Server, socket: Socket) => {
         socket.join(documentId);
 
         const userId = socket.data?.user?.id;
-
-        if (userId) {
-            try {
-                const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000);
-                const recentLog = await AuditLog.findOne({
-                    documentId,
-                    userId,
-                    type: 'access',
-                    createdAt: { $gte: fiveMinsAgo }
-                });
-
-                if (!recentLog) {
-                    const log = await AuditLog.create({ documentId, userId, type: 'access' });
-                    const populatedLog = await log.populate('userId', 'firstName lastName email _id');
-
-                    const safeLog = JSON.parse(JSON.stringify(populatedLog.toObject({ virtuals: true })));
-                    io.to(`admin_logs:${documentId}`).emit('new_audit_log', safeLog);
-                }
-            } catch (err) {
-                console.error("[Join] Errore salvataggio log di accesso:", err);
-            }
-        }
+        await createDokAccessLog(userId, documentId, io)
 
         if (!activeDocuments.has(documentId)) {
-            const docFromDb = await Document.findById(documentId);
-            if (!docFromDb) {
-                socket.emit('error', { message: 'Documento non trovato' });
-                return;
-            }
-            const ydoc = new Y.Doc();
-            if (docFromDb && docFromDb.yjsState && docFromDb.yjsState.length > 0) {
-                Y.applyUpdate(ydoc, new Uint8Array(docFromDb.yjsState));
-            }
+            if (pendingDocumentLoads.has(documentId)) {
+                await pendingDocumentLoads.get(documentId);
+            } else {
+                const loadPromise = (async () => {
+                    const docFromDb = await Document.findById(documentId);
+                    if (!docFromDb) {
+                        throw new Error('Documento non trovato');
+                    }
+                    const ydoc = new Y.Doc();
+                    if (docFromDb.yjsState && docFromDb.yjsState.length > 0) {
+                        Y.applyUpdate(ydoc, new Uint8Array(docFromDb.yjsState));
+                    }
 
-            activeDocuments.set(documentId, {
-                ydoc,
-                clientsCount: 1,
-                saveTimeout: null,
-                hasLogObserver: false,
-                pendingUserChars: new Map<string, { inserted: number, deleted: number }>,
-                isDirty: false,
-            });
-        } else {
-            const state = activeDocuments.get(documentId)!;
-            state.clientsCount += 1;
+                    activeDocuments.set(documentId, {
+                        ydoc,
+                        clientsCount: 0,
+                        saveTimeout: null,
+                        hasLogObserver: false,
+                        pendingUserChars: new Map<string, { inserted: number, deleted: number }>(),
+                        isDirty: false,
+                    });
+                })();
+                pendingDocumentLoads.set(documentId, loadPromise);
+
+                try {
+                    await loadPromise;
+                } catch (error) {
+                    socket.emit('error', { message: (error as Error).message });
+                    pendingDocumentLoads.delete(documentId);
+                    return;
+                }
+                pendingDocumentLoads.delete(documentId);
+            }
         }
 
         const state = activeDocuments.get(documentId)!;
+        if (state.destroyTimer) {
+            clearTimeout(state.destroyTimer);
+            state.destroyTimer = null;
+            console.log(`[GC] Failover mascherato, timer di distruzione annullato per ${documentId}`);
+        }
+        state.clientsCount += 1;
 
         if (!state.hasLogObserver) {
             state.hasLogObserver = true;

@@ -4,7 +4,7 @@ export interface ActiveDocState {
   ydoc: Y.Doc;
   clientsCount: number;
   saveTimeout?: NodeJS.Timeout | null;
-
+  destroyTimer?: NodeJS.Timeout | null;
   hasLogObserver?: boolean;
   pendingUserChars?: Map<string, { inserted: number, deleted: number }>;
 
