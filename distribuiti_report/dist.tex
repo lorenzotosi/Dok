@@ -42,7 +42,7 @@ Documents are organised in folders and can be made public or private, with docum
 sharing policies (\textit{viewer}, \textit{commenter},\textit{editor}) enforced at the service layer.
 Global platform access and administrative privileges are secured through JWT-based authentication and Role-Based Access Control.
 An administrative dashboard provides real-time platform-wide statistics, audit trails, user presence information, and site-access logs.
-The entire infrastructure is containerised with \textbf{Docker Compose}, making deployment reproducible.
+The backend infrastructure is containerised with \textbf{Docker Compose}, making deployment reproducible.
 \end{abstract}
 
 \section{Concept}\label{concept}
@@ -190,8 +190,8 @@ Distribution addresses several independent needs:
   \textit{Acceptance criterion:} Admin endpoints return HTTP~403 for non-admin tokens.
 
   \item[\textbf{FR-11}] \textbf{Automatic Document Persistence.}
-  The system shall automatically save the Yjs document state to MongoDB when editing activity
-  ceases (debounced 3-second timer) and unconditionally when the last collaborator leaves.
+  The system shall save the Yjs document state to MongoDB within 3~seconds of the first
+  unsaved update and when the last collaborator leaves.
   \textit{Acceptance criterion:} Verified in \texttt{distributed.test.ts}.
 
   \item[\textbf{FR-12}] \textbf{API Documentation.}
@@ -252,7 +252,7 @@ server~2 without any application-level code change.
 \paragraph{Fault tolerance and availability.}
 Two backend replicas guarantee that a single-instance crash does not interrupt the service.
 A 3-second grace period in the \texttt{PresenceManager} avoids misclassifying brief network
-drops as permanent disconnections (network flap handling). The debounced save mechanism and
+drops as permanent disconnections (network flap handling). The periodic checkpoint mechanism and
 the unconditional flush on last-client-leave provide durability even if a server crashes
 mid-session.
 
@@ -381,7 +381,7 @@ The hash key is the \texttt{documentId} query parameter when present, and the cl
   \item \texttt{SiteAccessLog}: \texttt{userId}, \texttt{loginAt}, \texttt{logoutAt}, \texttt{ipAddress}.
 \end{itemize}
 
-\textbf{In-memory state.} Alongside the persisted model, each backend holds a \texttt{Map<string, ActiveDocState>} of documents currently being edited. Each entry contains the live \texttt{Y.Doc}, a \texttt{clientsCount}, a debounced \texttt{saveTimeout}, and a \texttt{pendingUserChars} map used to aggregate modification audit logs. This ephemeral state is the unit that is pinned to a single backend by the consistent-hashing router.
+\textbf{In-memory state.} Alongside the persisted model, each backend holds a \texttt{Map<string, ActiveDocState>} of documents currently being edited. Each entry contains the live \texttt{Y.Doc}, a \texttt{clientsCount}, a scheduled \texttt{saveTimeout}, and a \texttt{pendingUserChars} map used to aggregate modification audit logs. This ephemeral state is the unit that is pinned to a single backend by the consistent-hashing router.
 
 \textbf{Mapping entities to infrastructure.} Persistent entities live in the shared MongoDB, accessible from every backend. The live editing state (the CRDT) lives in the memory of exactly one backend per document --- the one selected by Nginx. Awareness (caret positions, colour, user name) is ephemeral and not persisted; it flows only through the socket layer.
 
@@ -491,10 +491,10 @@ milliseconds, without any polling.
   On \texttt{join-document} it lazily loads the CRDT from MongoDB and registers a deep observer on the Yjs XML fragment.
   The observer inspects each CRDT transaction's \texttt{origin} (which the server sets to the editing user's id
   when applying a remote update) and accumulates inserted characters per user into \texttt{pendingUserChars};
-  this provides attribution for the audit log without per-keystroke database writes. On every \texttt{crdt-update}
-  it resets a 3-second debounce timer: when editing pauses for 3~seconds, the full binary state and the Tiptap JSON
-  projection are persisted. This \emph{debounced persistence} is the main mechanism that keeps database write load
-  proportional to \emph{editing sessions} rather than to \emph{keystrokes}, addressing the performance concern of \cref{ds-features}.
+  this provides attribution for the audit log without per-keystroke database writes. When the first
+  unsaved update arrives, the handler schedules a checkpoint after 3~seconds. Further updates do
+  not reset the timer, so the checkpoint stores the latest state collected during that interval.
+  This keeps the database write load lower than the editing event rate.
   \item \textit{Presence manager} (stateful, per user).
   On connection it joins a per-user room \texttt{user:<id>}; because the room is shared across backends through Redis,
   the count of sockets in the room is a cluster-wide online indicator.
@@ -528,7 +528,7 @@ milliseconds, without any polling.
   \item \textit{Auth middleware} (stateless). Validates the JWT on every protected HTTP route and on the socket handshake; for sockets, an absent token is tolerated (guest), while an invalid token is rejected.
 \end{itemize}
 
-\textbf{Who updates the state.} The single source of truth for a document's content is the in-memory CRDT on the owning backend; it is updated by the \texttt{crdt-update} handler and periodically checkpointed to MongoDB by the debounce/flush logic. All other durable state (users, folders, sharing, notifications, logs) is updated synchronously by the service layer in response to REST commands, against the shared MongoDB. Because the CRDT guarantees convergence, no component needs to coordinate with others to "update the state correctly": replicas simply apply commutative updates.
+\textbf{Who updates the state.} The single source of truth for a document's content is the in-memory CRDT on the owning backend; it is updated by the \texttt{crdt-update} handler and periodically checkpointed to MongoDB by the checkpoint/flush logic. All other durable state (users, folders, sharing, notifications, logs) is updated synchronously by the service layer in response to REST commands, against the shared MongoDB. Because the CRDT guarantees convergence, no component needs to coordinate with others to "update the state correctly": replicas simply apply commutative updates.
 
 
 \begin{figure}[H]
@@ -546,12 +546,11 @@ MongoDB document with embedded comments and sharing metadata, avoiding expensive
 JOIN-equivalent operations.
 
 \paragraph{CRDT consistency.}
-Document content is maintained as a Yjs \texttt{Y.Doc}. Yjs implements a LOGOOT-inspired
-CRDT with vector-clock based causality. Because CRDT merges are commutative, associative,
-and idempotent, concurrent edits from any number of clients always converge to the same
-final state without requiring a central coordinator or Operational Transformation. The server
-holds the canonical in-memory CRDT state for each active document and serialises it to
-MongoDB on a periodic basis.
+Document content is maintained as a Yjs \texttt{Y.Doc}. Yjs implements a CRDT based on
+the YATA algorithm. Its updates can be applied in any order and still converge to the same
+document state. This does not require a central coordinator or Operational Transformation.
+The server holds the in-memory state for each active document and periodically saves it to
+MongoDB.
 
 \paragraph{Optimistic concurrency.}
 The \texttt{Document} and \texttt{Folder} Mongoose schemas use \\
@@ -579,7 +578,8 @@ To eliminate the reverse proxy as a SPOF, the infrastructure deploys two Nginx i
 Using the Virtual Router Redundancy Protocol configured in \emph{unicast} mode
 (to cleanly bypass multicast routing restrictions of containerised environments) the nodes negotiate a floating Virtual IP.
 If the \texttt{nginx-master} container crashes, \texttt{nginx-backup} detects the missing heartbeats, claims the VIP,
-and assumes routing duties without dropping client traffic.
+and assumes routing duties. Existing WebSocket connections are interrupted briefly while
+the clients reconnect through the backup instance.
 
 \paragraph{Development Environment vs. Production Topology.}
 It is worth specifying that the reference Docker Compose deployment introduces an \texttt{entrypoint} container (HAProxy)
@@ -594,11 +594,10 @@ offline and updating \texttt{lastSeen}. This handles transient network interrupt
 multi-tab scenarios: if the socket reconnects within the grace period, the user is never
 declared offline.
 
-\paragraph{Debounced persistence and flush-on-close.}
-The dual save strategy (3-second debounce \emph{plus} unconditional flush when
-\texttt{clientsCount} reaches zero) ensures that the maximum data loss window is bounded by
-the debounce interval. Even a sudden server crash at most loses 3~seconds of edits for
-documents that had active clients on that instance at the time of failure.
+\paragraph{Periodic checkpointing and flush-on-close.}
+The save strategy combines a 3-second checkpoint with a final flush when
+\texttt{clientsCount} reaches zero. Under normal operation, this keeps the amount of
+unsaved editing data close to the checkpoint interval.
 
 \paragraph{LLM retry logic.}
 The \texttt{LLMEngine} retries failed Gemini API calls up to 3 times before surfacing an
@@ -617,8 +616,7 @@ It immediately performs a flush of the ephemeral RAM state (active Yjs CRDTs and
 Crucially, rather than waiting for long-lived WebSocket connections to drain naturally, which would cause
 the process to hang indefinitely, the server proactively severs all active sockets (\texttt{io.close()}).
 This forced TCP termination allows both the Nginx load balancer and the Vue.js clients to detect the node's
-unavailability, triggering the exponential backoff and a fast failover to the surviving replica,
-while guaranteeing data consistency.
+unavailability. The clients then reconnect to the surviving replica using exponential backoff.
 An 8-second watchdog timer ensures the process exits cleanly even if database queries hang.
 
 \subsection{Availability}\label{availability}
@@ -633,11 +631,11 @@ This simultaneously balances connection load and enforces session stickiness,
 which is what makes the single-replica-per-document design correct.
 For pure REST traffic (no \texttt{documentId}), client-IP hashing provides a fairer distribution.
 
-\textbf{Network partitioning.} Because all backend instances share MongoDB and Redis, a partition between the two instances
-would be detected by the Redis adapter (connection errors logged), but MongoDB reads/writes
-from each instance would still succeed independently. The system makes no formal
-partition-tolerance guarantees; it prioritises consistency and availability under the
-assumption that intra-datacenter network partitions are rare.
+\textbf{Network partitioning.} The backend instances do not communicate directly, but both
+depend on Redis and MongoDB. If a backend loses its connection to Redis, cross-instance
+events and presence tracking stop working on that instance. If it loses MongoDB, persistence
+and database-backed API operations fail. The system does not provide formal partition
+tolerance and assumes a reliable internal network.
 
 \subsection{Security}\label{security}
 
