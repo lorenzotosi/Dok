@@ -45,14 +45,6 @@ An administrative dashboard provides real-time platform-wide statistics, audit t
 The entire infrastructure is containerised with \textbf{Docker Compose}, making deployment reproducible.
 \end{abstract}
 
-\section*{Disclaimer}
-
-During the preparation of this work, the author(s) used an AI-assisted coding assistant to support code scaffolding, refactoring, and the drafting of parts of this report.
-
-After using this tool/service,
-the author(s) reviewed and edited the content as needed
-and take(s) full responsibility for the content of the final report/artifact.
-
 \section{Concept}\label{concept}
 
 \subsection{Type of Product}
@@ -293,6 +285,21 @@ memory and flushed lazily to avoid per-keystroke database writes.
 \paragraph{Economy.}
 The use of free-tier-compatible managed services (MongoDB, Redis) in the Docker Compose
 setup minimizes operational costs.
+
+\subsection{Non-Relevant Distributed System Features}
+
+\paragraph{Strict consistency.}
+Strict consistency is not required for document editing. Yjs handles concurrent changes
+and allows each copy of the document to converge without a global lock.
+
+\paragraph{Heterogeneity.}
+Heterogeneity between backend instances is not relevant to the project. Both instances
+run the same Node.js application inside identical Docker containers.
+
+\paragraph{Economy and strict operating costs.}
+Strict operating costs were not a main requirement. Dok is an academic project designed
+to run through Docker Compose on standard hardware, without a specific cloud platform.
+
 
 
 \section{Design}\label{design}
@@ -804,7 +811,7 @@ requiring no external infrastructure.
     use the \texttt{RedisAdapter} class.
     \item \textbf{Presence propagation}: a client connects to server~1;
     \texttt{PresenceManager.isUserOnline} (querying through the Redis adapter of server~2)
-    returns \texttt{true}. After disconnection and the 3.5-second grace period, the user is
+    returns \texttt{true}. After disconnection and the 3-second grace period, the user is
     correctly marked offline and \texttt{lastSeen} is updated in MongoDB.
     \item \textbf{CRDT synchronisation across instances}: client~A connects to server~1,
     client~B to server~2; both join the same document room. Client~A emits a
@@ -939,6 +946,17 @@ last name, email address, and password. The first account created is automatical
 to Administrator. Subsequent registrations create regular user accounts. After registration,
 you are redirected to the dashboard and a JWT is stored in the browser.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.3]{distribuiti_report/diagrammi/screen/login.png}
+    \caption{Login.}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.3]{distribuiti_report/diagrammi/screen/register.png}
+    \caption{Register.}
+\end{figure}
+
 \subsection{Dashboard}
 
 The main dashboard shows three panels:
@@ -950,6 +968,12 @@ The main dashboard shows three panels:
 \end{itemize}
 Documents can be created, renamed, and deleted from this view. Clicking a document opens
 the collaborative editor.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.30]{distribuiti_report/diagrammi/screen/loggeduser.png}
+    \caption{Dashboard.}
+\end{figure}
 
 \subsection{Collaborative Editor}
 
@@ -972,24 +996,87 @@ recipient's email address and choose a role:
 The AI assistant is accessed by selecting text and clicking the AI button in the bubble
 menu; type a natural-language instruction (e.g., "make this more concise") and confirm.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.3]{distribuiti_report/diagrammi/screen/doc.png}
+    \caption{The document.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.3]{distribuiti_report/diagrammi/screen/share.png}
+    \caption{Sharing.}
+\end{figure}
+
 \subsection{Notifications}
 
 The bell icon in the navigation bar shows the unread notification count. Notifications are
 delivered in real time when a document is shared with you or your permissions are changed.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.3]{distribuiti_report/diagrammi/screen/notifica.png}
+    \caption{Notifications.}
+\end{figure}
+
 \subsection{Administrator Dashboard}
 
-Administrators access the admin panel from the navigation bar. Available views:
+Administrators access the admin panel from the navigation bar.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.3]{distribuiti_report/diagrammi/screen/admin/adminAccess.png}
+    \caption{Admin Dashboard Access Point.}
+\end{figure}
+
+Available views:
 \begin{itemize}
   \item \textbf{User list}: all registered users with online/offline status (live),
   registration date, and quick access to their details.
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.3]{distribuiti_report/diagrammi/screen/admin/admin.png}
+    \caption{Admin Homepage.}
+\end{figure}
+
   \item \textbf{User detail}: per-user metrics (documents created, shared), file-system
   tree (private, public, shared documents), and access-log history.
-  \item \textbf{Statistics}: platform-wide aggregated charts (users, documents, folders,
-  sharing activity, site-access trends by hour/weekday/day-of-month).
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.3]{distribuiti_report/diagrammi/screen/admin/user.png}
+    \caption{User info.}
+\end{figure}
+
+  \item \textbf{Dok detail}: Brief details about creation date, visibility and share of the selected Dok on the user's file-system tree (Dok and folders names are obscured if not public).
+  
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.3]{distribuiti_report/diagrammi/screen/admin/dokDetails.png}
+    \caption{Dok info.}
+\end{figure}
+
   \item \textbf{Document logs}: real-time audit trail of access and modification events for
   any document.
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.3]{distribuiti_report/diagrammi/screen/admin/dokLogs.png}
+    \caption{Dok Access and Modification Logs.}
+\end{figure}
+
+  \item \textbf{Statistics}: aggregated statistics across the platform (users, documents, folders,
+  sharing activity, site-access trends by hour / weekday / day-of-month).
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.3]{distribuiti_report/diagrammi/screen/admin/stats.png}
+    \caption{Global stats.}
+\end{figure}
+
   \item \textbf{Global access logs}: all login/logout events across all users.
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.3]{distribuiti_report/diagrammi/screen/admin/globalLogs.png}
+    \caption{Access logs.}
+\end{figure}
 \end{itemize}
 
 \section{Self-evaluation}\label{self-evaluation}
@@ -1043,10 +1130,10 @@ inter-node communication via the Redis backplane, and application-level fault-to
 My primary strength was bridging the gap between application logic and distributed infrastructure.
 I designed the \textbf{Distributed Observability} system (the Admin Dashboard) inserting in our project the Redis Pub/Sub adapter
 to aggregate real-time WebSocket presence and audit logs across isolated backend instances.
-Furthermore, I engineered the \textbf{Graceful Shutdown and RAM Shield} pipeline: overcoming the hanging callback problem
+Furthermore, I engineered the \textbf{Graceful Shutdown} pipeline: overcoming the hanging callback problem
 of long-lived WebSockets, my implementation synchronously flushes ephemeral RAM data to MongoDB
-and then proactively severs TCP connections to trigger an Nginx failover.
-Finally, I successfully eliminated the load balancer SPOF by designing an \textbf{Active-Passive Nginx cluster}.
+and then severs TCP connections to trigger an Nginx failover.
+Finally, I eliminated the load balancer SPOF by designing an \textbf{Active-Passive Nginx cluster}.
 By configuring Keepalived VRRP in \emph{unicast} mode, I bypassed the multicast traffic limitations of the Docker network,
 achieving High Availability at the proxy layer also.
 
@@ -1057,8 +1144,6 @@ which led to race conditions between socket disconnection events and database cl
 
 
 \section{Future Works}\label{future-works}
-
-Discuss possible future works, improvements, extensions, and optimizations.
 
 \begin{description}
   \item[\textbf{MongoDB Replica Set.}] Deploy MongoDB as a three-node replica set (one
@@ -1078,7 +1163,6 @@ Discuss possible future works, improvements, extensions, and optimizations.
   application deployable with a single \texttt{docker compose up} command.
 \end{description}
 
-\bibliographystyle{plain}
-\bibliography{references}
+
 
 \end{document}
